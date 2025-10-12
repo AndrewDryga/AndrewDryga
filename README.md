@@ -22,7 +22,7 @@ Elixir • Phoenix/LiveView • PostgreSQL • RabbitMQ • Redis • Terraform 
 - [Blockchain-like integrity for gov DBs]( https://medium.com/nebo-15/bringing-blockchain-properties-to-the-centralized-government-databases-5e5d4094404f)  
 - [How to automatically run stale tests in Elixir]( https://medium.com/@andrew_dryga/run-stale-tests-on-file-change-in-elixir-6f8aac829973)
 
-**All posts on Medium:** <https://medium.com/@andrew_dryga>
+All posts on Medium: <https://medium.com/@andrew_dryga>
 
 ## Connect
 🌐 <https://dryga.com> • ✉️ andrew@dryga.com • 💼 [LinkedIn](https://www.linkedin.com/in/andrew-dryga-bb382557/)
