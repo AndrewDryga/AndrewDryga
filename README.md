@@ -7,7 +7,7 @@ Engineering leader & hands-on Elixir/infra engineer who turns messy systems into
 - Previously led engineering to 3×+ revenue growth to 8 figures in year one by shipping new products fast, paying down tech debt, and hiring top talent.
 - Delivered national-scale healthcare systems (NHS of Ukraine, used daily by 30M+ people and virtually all hospitals for reimbursements, medical records, e-prescriptions, and more) and large fintech platforms (P2P lending for one of the largest lenders in Europe, e-wallets).
 - Maintainer of [Nebo15](http://github.com/nebo15) org (e.g., `sage`, `logger_json`, `confex`, `ecto_mnesia`) and active contributor in the Elixir ecosystem.
-- Ex-founder. Startups didn’t survive; the skills did.
+- Ex-founder. Startups didn’t survive; the skills did, and so did my love of being proactive and wearing many hats.
 
 ## Toolbox
 
