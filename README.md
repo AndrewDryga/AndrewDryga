@@ -7,19 +7,37 @@ Engineering leader & hands-on Elixir/infra engineer who turns messy systems into
 - Previously led engineering to 3×+ revenue growth by shipping new products fast, paying down tech debt, and hiring top talent.
 - Delivered national-scale healthcare systems (NHS of Ukraine) and large fintech platforms (P2P lending, e-wallets).
 - Maintainer of [Nebo15](http://github.com/nebo15) org (e.g., `sage`, `logger_json`, `confex`, `ecto_mnesia`) and active contributor in the Elixir ecosystem.
+- Ex-founder. Startups didn’t survive; the skills did.
 
 ## Toolbox
-Elixir • Phoenix/LiveView • Tailwind • PostgreSQL • RabbitMQ • Terraform • Kubernetes • GCP • AWS • CI/CD • Observability • Cost optimization • Product management • UX • Spreadsheets
+
+**Backend**
+Elixir · Phoenix/LiveView
+
+**Frontend / Design**
+HTML * JavaScript * Tailwind · UX
+
+**Data & Messaging**
+PostgreSQL · RabbitMQ · TypeSense · Redis
+
+**Infra & Cloud**
+Terraform · Kubernetes · GCP · AWS
+
+**DevOps / SRE**
+CI/CD · Observability
+
+**FinOps / Strategy**
+Cost optimization · Product management · Spreadsheets · SEO · Marketing
 
 ## Writing
 
 **Quick reads by project/topic**
-- [Sage / Sagas in Elixir]( https://medium.com/nebo-15/introducing-sage-a-sagas-pattern-implementation-in-elixir-3ad499f236f6)  
-- [Elixir runtime config & deploys]( https://medium.com/nebo-15/runtime-configuration-migrations-and-deployment-for-elixir-applications-6295b892fa6a)  
-- [NHS on Elixir & Kubernetes]( https://medium.com/nebo-15/national-health-service-on-elixir-and-kubernetes-b1c2551f0dbb)  
-- [Designing a P2P lending platform (Elixir)]( https://medium.com/nebo-15/designing-a-p2p-lending-platform-with-elixir-in-mind-ffb323bf7252)  
-- [Sensitive file uploads (signed URLs/GCP)]( https://medium.com/nebo-15/alternative-approach-for-sensitive-file-uploads-53f8f62b5d72)  
-- [Blockchain-like integrity for gov DBs]( https://medium.com/nebo-15/bringing-blockchain-properties-to-the-centralized-government-databases-5e5d4094404f)  
+- [Sage / Sagas in Elixir]( https://medium.com/nebo-15/introducing-sage-a-sagas-pattern-implementation-in-elixir-3ad499f236f6)
+- [Elixir runtime config & deploys]( https://medium.com/nebo-15/runtime-configuration-migrations-and-deployment-for-elixir-applications-6295b892fa6a)
+- [NHS on Elixir & Kubernetes]( https://medium.com/nebo-15/national-health-service-on-elixir-and-kubernetes-b1c2551f0dbb)
+- [Designing a P2P lending platform (Elixir)]( https://medium.com/nebo-15/designing-a-p2p-lending-platform-with-elixir-in-mind-ffb323bf7252)
+- [Sensitive file uploads (signed URLs/GCP)]( https://medium.com/nebo-15/alternative-approach-for-sensitive-file-uploads-53f8f62b5d72)
+- [Blockchain-like integrity for gov DBs]( https://medium.com/nebo-15/bringing-blockchain-properties-to-the-centralized-government-databases-5e5d4094404f)
 - [How to automatically run stale tests in Elixir]( https://medium.com/@andrew_dryga/run-stale-tests-on-file-change-in-elixir-6f8aac829973)
 
 All posts on Medium: <https://medium.com/@andrew_dryga>
