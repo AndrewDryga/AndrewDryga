@@ -9,7 +9,7 @@ Engineering leader & hands-on Elixir/infra engineer who turns messy systems into
 - Maintainer of [Nebo15](http://github.com/nebo15) org (e.g., `sage`, `logger_json`, `confex`, `ecto_mnesia`) and active contributor in the Elixir ecosystem.
 
 ## Toolbox
-Elixir • Phoenix/LiveView • PostgreSQL • RabbitMQ • Redis • Terraform • Kubernetes • GCP • AWS • CI/CD • Observability • Cost optimization
+Elixir • Phoenix/LiveView • PostgreSQL • RabbitMQ • Terraform • Kubernetes • GCP • AWS • CI/CD • Observability • Cost optimization
 
 ## Writing
 
