@@ -3,7 +3,7 @@
 Engineering leader & hands-on Elixir/infra engineer who turns messy systems into resilient, cost-efficient platforms.
 
 - Scaled & operated Elixir systems at ~25k RPS (peaks 120k) across 70+ services, rebuilt infra with Terraform, and drove ~$1M/yr in savings through right-sizing and smarter networking.
-- Founding engineer @ Firezone (open-source Zero Trust access) — built the control plane & dashboard, 99.99%+ uptime on GCP with IaC.
+- Ex. Founding engineer @ [Firezone](https://github.com/firezone/firezone/) (open-source Zero Trust access) — built the control plane & dashboard, 99.99%+ uptime on GCP with IaC.
 - Previously led engineering to 3×+ revenue growth by shipping new products fast, paying down tech debt, and hiring top talent.
 - Delivered national-scale healthcare systems (NHS of Ukraine) and large fintech platforms (P2P lending, e-wallets).
 - Maintainer of [Nebo15](http://github.com/nebo15) org (e.g., `sage`, `logger_json`, `confex`, `ecto_mnesia`) and active contributor in the Elixir ecosystem.
