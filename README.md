@@ -2,7 +2,7 @@
 
 Engineering leader & hands-on Elixir/infra engineer who turns messy systems into resilient, cost-efficient platforms.
 
-- Scaled & operated Elixir systems at ~25k RPS (peaks 120k) across 70+ services, rebuilt infra with Terraform, and drove ~$1M/yr in savings through right-sizing and smarter networking.
+- Scaled & operated Elixir systems at ~25k RPS (peaks 100k+) across tens of services, rebuilt infra with Terraform, and drove ~$1M/yr in savings through right-sizing and smarter infra in year one.
 - Ex. Founding engineer @ [Firezone](https://github.com/firezone/firezone/) (open-source Zero Trust access) — built the control plane & dashboard, 99.99%+ uptime on GCP with IaC.
 - Previously led engineering to 3×+ revenue growth to 8 figures in year one by shipping new products fast, paying down tech debt, and hiring top talent.
 - Delivered national-scale healthcare systems (NHS of Ukraine, used daily by 30M+ people and virtually all hospitals for reimbursements, medical records, e-prescriptions, and more) and large fintech platforms (P2P lending for one of the largest lenders in Europe, e-wallets).
