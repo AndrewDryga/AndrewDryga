@@ -1,0 +1,136 @@
+---
+title: "Introducing Sage — a Sagas pattern implementation in Elixir"
+description: "Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project— this article is for you."
+publishDate: 2018-05-31
+updatedDate: 2018-05-31
+tags:
+  - Architecture
+  - Elixir
+  - Sagas
+  - Distributed systems
+draft: false
+relatedProjects:
+  - sage
+---
+
+![Introducing Sage — cover](/blog/introducing-sage/hero.jpeg)
+
+## What problem are we trying to solve?
+
+Most products integrate with external systems — payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
+
+Example: creating a user in your DB, provisioning a customer in Stripe, sending a welcome email, and writing an audit log. If any of those fail, you can’t magically roll back the rest with a single ACID transaction.
+
+Naive error handling quickly becomes a rat’s nest:
+- Manual side-effect tracking
+- Lots of conditional cleanups
+- Coupled error paths
+- Poor concurrency and performance
+
+You need something simpler, explicit, and composable.
+
+## Booking website example
+
+Imagine a trip booking flow where you:
+1) Book a car
+2) Book a flight
+3) Book a hotel
+4) Charge the customer’s card
+
+If step 4 fails (payment), you must cancel steps 1–3. If step 2 fails (flight), you must cancel step 1 (car) before continuing. These compensations are not always perfect “undo”—they are business actions that reverse the effects semantically (e.g., send a follow-up email instead of “unsending” the original).
+
+Without structure, this logic becomes brittle and hard to evolve.
+
+## What is a Saga?
+
+![Saga flow visualization](/blog/introducing-sage/diagram-1.jpeg)
+
+A Saga is a failure management pattern for long-lived, multi-step work that cannot be wrapped in a single database transaction.
+
+- The operation is decomposed into a sequence of steps (subtransactions).
+- Each step has a corresponding compensation that semantically reverses its effect.
+- On failure, previously completed steps are compensated in reverse order.
+
+Quoting the 1987 paper (paraphrased):
+- A long-lived transaction is a Saga if it’s a sequence of transactions that can be interleaved with others.
+- The system guarantees either all steps succeed or compensating transactions are run.
+
+In practice, you trade strict atomicity for availability and explicit compensation.
+
+## Introducing Sage
+
+![Asynchronous stages diagram](/blog/introducing-sage/diagram-async.jpeg)
+
+![Retry with savepoint diagram](/blog/introducing-sage/diagram-retry.jpeg)
+
+[Sage](https://github.com/Nebo15/sage) is a dependency-free Elixir library inspired by Sagas, designed for organizing distributed transactions across business logic and third‑party APIs.
+
+Key goals:
+- Make multi-step workflows explicit and testable
+- Keep error handling and compensation rules close to the happy path
+- Support concurrency where appropriate
+- Provide hooks for instrumentation and persistence
+
+> “It’s like Ecto.Multi but across business logic and third-party APIs.”
+
+### High-level example (pseudo-Elixir)
+
+```elixir
+Sage.new()
+|> Sage.step(:create_user, fn ctx -> Users.create(ctx.params) end,
+                         fn ctx, user -> Users.deactivate(user) end)
+|> Sage.step(:stripe_customer, fn ctx -> Stripe.create_customer(ctx.user) end,
+                              fn ctx, cust -> Stripe.delete_customer(cust.id) end)
+|> Sage.step(:provision, fn ctx -> Provisioner.setup(ctx.user, ctx.cust) end,
+                        fn ctx, ref -> Provisioner.teardown(ref) end)
+|> Sage.step(:welcome_email, fn ctx -> Mailer.send_welcome(ctx.user) end,
+                            fn ctx, _ -> Mailer.send_followup(ctx.user, :apology) end)
+|> Sage.run()
+```
+
+- Each `step/3` defines a transaction function and a compensation.
+- On failure, Sage runs compensations in reverse order.
+- Steps can be synchronous or asynchronous depending on configuration.
+
+## Features that matter
+
+- Asynchronous execution
+  - Run independent stages concurrently for better latency.
+  - Automatically wait where dependencies exist.
+
+- Retries with backoff
+  - Define retry policies and save-points for forward recovery.
+  - Use exponential backoff and jitter to avoid thundering herds.
+
+- Circuit breakers and fallbacks
+  - Continue execution with cached/default values when a service is flaky.
+
+- Ecto integration (optional)
+  - Wrap parts of Sage execution in DB transactions where it makes sense.
+  - Still compensate external effects when DB operations succeed but later steps fail.
+
+- Observability hooks
+  - Instrument stages, timings, retries, and compensations.
+
+## Tradeoffs and mental model
+
+- You’re not doing a single ACID transaction — you’re modeling a distributed, multi-step business process.
+- Compensations are business semantics, not magical inverse operations.
+- Embrace idempotency everywhere: steps and compensations should be safe to retry.
+- Build for partial failure as a first-class reality.
+
+## Benefits
+
+- Clear, declarative workflows that encapsulate multi-step business logic
+- Clean separation of “do” vs “undo” with minimal branching
+- Better concurrency and performance compared to naive sequential flows
+- Scales with complexity while staying testable and maintainable
+- Aligns with reliable, observable, cost-sane platform principles
+
+## Where to go next
+
+- Source: https://github.com/Nebo15/sage  
+- Paper (Sagas, 1987): A key conceptual reference for long-running transactions  
+- Start small: wrap one gnarly multi-step flow and add compensations where you already perform manual cleanups
+
+By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be — while still shipping what matters.

@@ -1,0 +1,849 @@
+---
+import BaseLayout from "../components/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import { featuredProjects } from "../data/projects";
+import Testimonials from "../components/islands/Testimonials.tsx";
+import { Badge } from "../components/ui/badge";
+
+const title = "Andrew Dryga — Founding Engineer";
+const description =
+  "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms—shipping what matters, measuring results, and cutting waste without slowing teams.";
+---
+
+<BaseLayout {title} {description}>
+  <Header slot="header" variant="header" />
+  <section
+    id="home"
+    class="min-h-screen flex items-center justify-center px-4 py-16 md:py-24"
+  >
+    <div class="max-w-4xl w-full">
+      <div class="space-y-8 md:space-y-10 animate-fade-in animate-delay-0">
+        <!-- Terminal-style header -->
+        <div class="font-mono text-sm text-terminal-green">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-terminal-cyan">~</span>
+            <span class="animate-pulse">▊</span>
+          </div>
+        </div>
+
+        <!-- Main heading -->
+        <div class="space-y-4">
+          <h1 class="text-5xl md:text-7xl font-bold font-sans">
+            <span class="text-foreground">Andrew</span>
+            <span class="text-terminal-cyan"> Dryga</span>
+          </h1>
+          <p class="text-2xl md:text-3xl text-muted-foreground font-mono">
+            &gt; Engineering Leader
+          </p>
+        </div>
+
+        <!-- Description -->
+        <p class="text-lg text-muted-foreground max-w-2xl leading-relaxed">
+          I lead engineering and bring value to the business by turning fragile
+          systems into reliable, observable, cost-sane platforms—shipping what
+          matters, measuring results, and cutting waste without slowing teams.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-4">
+          <a
+            href="https://github.com/andrewDryga"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center gap-2 font-mono border-2 border-terminal-cyan bg-transparent text-terminal-cyan hover:bg-terminal-cyan hover:text-background transition-all shadow-glow w-full sm:w-auto rounded-md px-5 py-3 leading-none"
+          >
+            <svg
+              class="h-5 w-5 shrink-0"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.58 2 12.124c0 4.48 2.865 8.274 6.839 9.617.5.096.683-.22.683-.487 0-.24-.009-.876-.014-1.719-2.782.61-3.37-1.36-3.37-1.36-.454-1.163-1.11-1.474-1.11-1.474-.907-.63.069-.617.069-.617 1.003.072 1.53 1.044 1.53 1.044.892 1.543 2.341 1.097 2.91.839.091-.655.35-1.097.636-1.35-2.221-.257-4.555-1.127-4.555-5.017 0-1.109.39-2.016 1.03-2.729-.104-.258-.447-1.293.098-2.695 0 0 .84-.27 2.75 1.04a9.33 9.33 0 0 1 2.505-.343c.85.004 1.705.116 2.505.343 1.91-1.31 2.748-1.04 2.748-1.04.546 1.402.203 2.437.1 2.695.64.713 1.028 1.62 1.028 2.728 0 3.9-2.338 4.757-4.566 5.01.36.315.68.934.68 1.883 0 1.359-.012 2.454-.012 2.786 0 .27.18.586.69.486A9.999 9.999 0 0 0 22 12.124C22 6.58 17.523 2 12 2z"
+              ></path>
+            </svg>
+            GitHub
+          </a>
+
+          <a
+            href="https://www.linkedin.com/in/andrew-dryga-bb382557/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center gap-2 font-mono border-2 border-terminal-green text-terminal-green hover:bg-terminal-green hover:text-background transition-all w-full sm:w-auto rounded-md px-5 py-3 leading-none"
+          >
+            <svg
+              class="h-5 w-5 shrink-0"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.226.792 24 1.771 24h20.451C23.2 24 24 23.226 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003zM6.954 20.452H3.719V9h3.235v11.452zM5.337 7.433a2.065 2.065 0 11.001-4.13 2.065 2.065 0 01-.001 4.13zM20.447 20.452h-3.554v-5.569c0-1.33-.027-3.044-1.855-3.044-1.855 0-2.14 1.448-2.14 2.946v5.667H9.343V9h3.414v1.561h.049c.476-.9 1.637-1.848 3.37-1.848 3.6 0 4.267 2.368 4.267 5.455v6.284z"
+              ></path>
+            </svg>
+            LinkedIn
+          </a>
+
+          <a
+            href="/blog"
+            class="inline-flex items-center justify-center gap-2 font-mono border-2 border-terminal-yellow text-terminal-yellow hover:bg-terminal-yellow hover:text-background transition-all w-full sm:w-auto rounded-md px-5 py-3 leading-none"
+          >
+            <svg
+              class="h-5 w-5 shrink-0"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M6 2h9a1 1 0 0 1 .8.4l3 4a1 1 0 0 1 .2.6V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm9 2H6v16h11V7h-2a2 2 0 0 1-2-2V4zm0 0v1a1 1 0 0 0 1 1h1.5L15 4zM8 10h8v2H8v-2zm0 4h8v2H8v-2z"
+              ></path>
+            </svg>
+            Blog
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div>
+        <div class="animate-fade-in animate-delay-0">
+          <p class="font-mono text-terminal-green mb-2">$ cat about.txt</p>
+          <h2 class="text-3xl md:text-4xl font-bold">
+            About <span class="text-terminal-green">Me</span>
+          </h2>
+
+          <div class="space-y-6 max-w-3xl mt-6 md:mt-8">
+            <p class="text-lg text-muted-foreground leading-relaxed">
+              I'm a multi-hat product-minded engineering leader who lives at the
+              intersection of product, infrastructure, and UX. Pragmatic by
+              default: I ship what matters, measure outcomes, cut waste, and
+              keep systems reliably boring where they should be - without
+              slowing teams.
+            </p>
+            <p class="text-lg text-muted-foreground leading-relaxed">
+              My experience spans from early-stage startups to established
+              products, always with a focus on building the right thing, the
+              right way.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 md:mt-12">
+          <div
+            class="group p-6 rounded-lg bg-card border-2 border-terminal-cyan/30 animate-fade-in animate-delay-0"
+          >
+            <div class="flex flex-col gap-4">
+              <div class="p-3 rounded-lg bg-gradient-primary w-fit">
+                <!-- Trending Up -->
+                <svg
+                  class="h-6 w-6 text-terminal-cyan"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+              </div>
+              <div class="space-y-2">
+                <h3 class="font-mono text-lg font-semibold text-foreground">
+                  Generate Revenue
+                </h3>
+                <p class="text-muted-foreground text-sm leading-relaxed">
+                  Grew revenue 3× to mid-seven figures; slashed infrastructure
+                  costs by $1M+/yr — both in year one.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="group p-6 rounded-lg bg-card border-2 border-terminal-cyan/30 animate-fade-in animate-delay-100"
+          >
+            <div class="flex flex-col gap-4">
+              <div class="p-3 rounded-lg bg-gradient-primary w-fit">
+                <!-- Globe / Impact -->
+                <svg
+                  class="h-6 w-6 text-terminal-cyan"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M2.5 12h19"></path>
+                  <path d="M12 3v18"></path>
+                </svg>
+              </div>
+              <div class="space-y-2">
+                <h3 class="font-mono text-lg font-semibold text-foreground">
+                  Make Impact
+                </h3>
+                <p class="text-muted-foreground text-sm leading-relaxed">
+                  Helped to design and build Ukraine’s national e-health
+                  platform used by 35M+ patients and 400K+ medical
+                  professionals.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="group p-6 rounded-lg bg-card border-2 border-terminal-cyan/30 animate-fade-in animate-delay-200"
+          >
+            <div class="flex flex-col gap-4">
+              <div class="p-3 rounded-lg bg-gradient-primary w-fit">
+                <!-- Gauge / Performance -->
+                <svg
+                  class="h-6 w-6 text-terminal-cyan"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M5 19a9 9 0 1 1 14 0"></path>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <path d="M12 12l4-4"></path>
+                </svg>
+              </div>
+              <div class="space-y-2">
+                <h3 class="font-mono text-lg font-semibold text-foreground">
+                  At Scale & Performance
+                </h3>
+                <p class="text-muted-foreground text-sm leading-relaxed">
+                  Single-handedly operated legacy Elixir systems and
+                  infrastructure with 100K+ RPS across tens of services.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section id="tech-stack" class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="mb-12 animate-fade-in animate-delay-0">
+        <p class="font-mono text-terminal-green mb-2">
+          $ mindscan --by-file-by-tech
+        </p>
+        <h2 class="text-3xl md:text-4xl font-bold">
+          Tech <span class="text-terminal-green">Stack</span>
+        </h2>
+      </div>
+
+      <div
+        class="bg-black border-2 border-terminal-cyan/30 rounded p-4 md:p-6 animate-fade-in shadow-[0_0_40px_rgba(0,255,255,0.15)] backdrop-blur-sm"
+      >
+        <div class="font-mono text-xs md:text-sm">
+          <!-- Column headers -->
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/30"
+          >
+            <div
+              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs"
+            >
+              technology
+            </div>
+            <div
+              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs text-right hidden md:block w-20"
+            >
+              files
+            </div>
+            <div
+              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs text-right w-24 md:w-32"
+            >
+              lines
+            </div>
+          </div>
+
+          <!-- Data rows -->
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">
+              Elixir/Phoenix/LiveView
+            </div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              890
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              1,050,234
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">JavaScript</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              289
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              287,654
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">HTML/CSS/Tailwind</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              412
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              234,567
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">PHP</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              156
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              98,765
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">Terraform/GCP/AWS</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              177
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              71,823
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">Kubernetes/Helm</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              128
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              57,891
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">PostgreSQL</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              94
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              44,876
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">Spreadsheets</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              148
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              37,654
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
+          >
+            <div class="text-terminal-cyan/90 truncate">BI dashboards</div>
+            <div
+              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
+            >
+              83
+            </div>
+            <div
+              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              27,891
+            </div>
+          </div>
+
+          <!-- SUM row -->
+          <div
+            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 pt-3 mt-2 border-t-2 border-terminal-green/30 font-bold"
+          >
+            <div class="text-terminal-green">TOTAL:</div>
+            <div
+              class="text-terminal-green text-right hidden md:block w-20 tabular-nums"
+            >
+              2,377
+            </div>
+            <div
+              class="text-terminal-green text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
+            >
+              1,911,355
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects teaser -->
+  <section id="projects" class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="mb-12 animate-fade-in animate-delay-0">
+        <p
+          class="font-mono text-terminal-green mb-2 overflow-hidden whitespace-nowrap"
+        >
+          <span class="inline-block"
+            >$ find ~/projects -type f -name "README.md"</span
+          >
+        </p>
+        <h2 class="text-4xl md:text-5xl font-bold font-sans">
+          Featured <span class="text-terminal-green">Projects</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {
+          featuredProjects.map((project, idx) => (
+            <article class="relative">
+              <div
+                class={`group p-6 rounded-lg bg-card border border-border hover:border-terminal-green transition-all duration-300 shadow-card hover:shadow-glow relative h-full flex flex-col animate-fade-in`}
+                style={`animation-delay: ${idx * 100}ms`}
+              >
+                <a
+                  href={`/projects/${project.id}/`}
+                  class="absolute inset-0 rounded-lg"
+                  aria-label={`View project: ${project.name}`}
+                />
+
+                <div class="mb-3">
+                  <h3 class="text-xl font-bold mb-2 text-foreground transition-colors group-hover:text-terminal-green">
+                    {project.name}
+                  </h3>
+                  {project.period && (
+                    <p class="text-xs font-mono text-foreground/60 mb-2">
+                      {project.period}
+                    </p>
+                  )}
+                  <p class="text-foreground/80 mb-3">{project.description}</p>
+                </div>
+
+                <div class="flex-1">
+                  <ul class="space-y-1 mb-4">
+                    {project.impact.map((item, i) => (
+                      <li class="text-sm text-foreground/90 font-mono flex items-start">
+                        <span class="text-terminal-green mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {project.tech.map((tech) => (
+                    <Badge variant="muted" className="px-2 py-1 text-xs">
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+
+                <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3">
+                  Read more →
+                </span>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="text-center mt-12">
+        <a
+          href="/projects"
+          class="inline-flex items-center justify-center font-mono border-2 border-terminal-green bg-transparent text-terminal-green hover:bg-terminal-green hover:text-background transition-all rounded-md px-5 py-3"
+        >
+          View All Projects
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Testimonials client:visible />
+  <!-- Blog teaser -->
+  <section id="blog" class="py-16 md:py-24 px-4 bg-terminal-surface/30">
+    <div class="max-w-6xl mx-auto">
+      <div class="space-y-10 md:space-y-12 animate-fade-in animate-delay-0">
+        <div class="space-y-4">
+          <div class="font-mono text-terminal-yellow text-sm">
+            $ ls -la ./blog
+          </div>
+          <h2 class="text-4xl md:text-5xl font-bold font-sans">
+            Latest <span class="text-terminal-yellow">Posts</span>
+          </h2>
+          <p class="text-lg text-muted-foreground max-w-2xl">
+            Thoughts on software engineering, distributed systems, and building
+            products.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <article
+            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-0 relative"
+          >
+            <a
+              href="/blog/introducing-sage/"
+              class="absolute inset-0 rounded-lg"
+              aria-label="Read more: Introducing Sage — a Sagas pattern implementation in Elixir"
+            ></a>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span
+                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
+                  >Architecture</span
+                >
+                <div class="font-mono text-xs text-muted-foreground">
+                  May 31
+                </div>
+              </div>
+              <h3
+                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
+              >
+                Introducing Sage — a Sagas pattern implementation in Elixir
+              </h3>
+              <p class="text-muted-foreground text-sm leading-relaxed">
+                Distributed transactions are hard and expensive, if you wonder
+                how to pragmatically handle them in a mid-size project— this
+                article is for you.
+              </p>
+              <span
+                class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
+              >
+                Read more →
+              </span>
+            </div>
+          </article>
+
+          <article
+            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-100 relative"
+          >
+            <a
+              href="/blog/run-stale-tests/"
+              class="absolute inset-0 rounded-lg"
+              aria-label="Read more: Run stale tests on file change in Elixir"
+            ></a>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span
+                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
+                  >Engineering</span
+                >
+                <div class="font-mono text-xs text-muted-foreground">
+                  Nov 12
+                </div>
+              </div>
+              <h3
+                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
+              >
+                Run stale tests on file change in Elixir
+              </h3>
+              <p class="text-muted-foreground text-sm leading-relaxed">
+                Mix is an awesome tool but most Elixir beginners not aware of
+                all its features. mix test --stale is the one them and can make
+                your workflow much better.
+              </p>
+              <span
+                class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
+              >
+                Read more →
+              </span>
+            </div>
+          </article>
+
+          <article
+            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-200 relative"
+          >
+            <a
+              href="/blog/runtime-configuration-migrations/"
+              class="absolute inset-0 rounded-lg"
+              aria-label="Read more: Runtime configuration, migrations and deployment for Elixir applications"
+            ></a>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span
+                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
+                  >DevOps</span
+                >
+                <div class="font-mono text-xs text-muted-foreground">
+                  Aug 20
+                </div>
+              </div>
+              <h3
+                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
+              >
+                Runtime configuration, migrations and deployment for Elixir
+                applications
+              </h3>
+              <p class="text-muted-foreground text-sm leading-relaxed">
+                Shortly after moving from PHP to Elixir I've faced a common
+                issue, the way how do we deploy applications is totally
+                different from the one I used to work with.
+              </p>
+              <span
+                class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
+              >
+                Read more →
+              </span>
+            </div>
+          </article>
+        </div>
+
+        <div class="flex justify-center pt-8">
+          <a
+            href="/blog"
+            class="inline-flex items-center justify-center font-mono border-2 border-terminal-yellow bg-transparent text-terminal-yellow hover:bg-terminal-yellow hover:text-background transition-all rounded-md px-5 py-3"
+          >
+            View All Posts
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="mb-12 animate-fade-in animate-delay-0">
+        <p class="font-mono text-terminal-green mb-2">
+          $ palantir persons find . -name "Andrew Dryga" > contacts.txt
+        </p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Get in <span class="text-terminal-green">Touch</span>
+        </h2>
+      </div>
+
+      <div
+        class="relative overflow-hidden p-6 rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-sm animate-fade-in animate-delay-100"
+      >
+        <div class="space-y-2">
+          <div class="text-terminal-green">$ cat contacts.txt | grep email</div>
+          <div class="text-foreground/90">
+            Email: <a
+              href="mailto:andrew@dryga.com"
+              class="text-terminal-cyan hover:text-terminal-green transition-colors"
+              >andrew@dryga.com</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4 mt-12">
+        <h3
+          class="font-mono text-sm text-muted-foreground animate-fade-in animate-delay-300"
+        >
+          Find me online
+        </h3>
+        <div class="flex flex-wrap gap-3 animate-fade-in animate-delay-400">
+          <a
+            href="https://github.com/andrewdryga"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border hover:border-terminal-cyan transition-all duration-300 shadow-card hover:shadow-glow"
+            aria-label="GitHub"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground transition-colors group-hover:text-terminal-cyan"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.58 2 12.124c0 4.48 2.865 8.274 6.839 9.617.5.096.683-.22.683-.487 0-.24-.009-.876-.014-1.719-2.782.61-3.37-1.36-3.37-1.36-.454-1.163-1.11-1.474-1.11-1.474-.907-.63.069-.617.069-.617 1.003.072 1.53 1.044 1.53 1.044.892 1.543 2.341 1.097 2.91.839.091-.655.35-1.097.636-1.35-2.221-.257-4.555-1.127-4.555-5.017 0-1.109.39-2.016 1.03-2.729-.104-.258-.447-1.293.098-2.695 0 0 .84-.27 2.75 1.04a9.33 9.33 0 0 1 2.505-.343c.85.004 1.705.116 2.505.343 1.91-1.31 2.748-1.04 2.748-1.04.546 1.402.203 2.437.1 2.695.64.713 1.028 1.62 1.028 2.728 0 3.9-2.338 4.757-4.566 5.01.36.315.68.934.68 1.883 0 1.359-.012 2.454-.012 2.786 0 .27.18.586.69.486A9.999 9.999 0 0 0 22 12.124C22 6.58 17.523 2 12 2z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://www.linkedin.com/in/andrew-dryga-bb382557/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border hover:border-terminal-cyan transition-all duration-300 shadow-card hover:shadow-glow"
+            aria-label="LinkedIn"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground transition-colors group-hover:text-terminal-cyan"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.226.792 24 1.771 24h20.451C23.2 24 24 23.226 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003zM6.954 20.452H3.719V9h3.235v11.452zM5.337 7.433a2.065 2.065 0 11.001-4.13 2.065 2.065 0 01-.001 4.13zM20.447 20.452h-3.554v-5.569c0-1.33-.027-3.044-1.855-3.044-1.855 0-2.14 1.448-2.14 2.946v5.667H9.343V9h3.414v1.561h.049c.476-.9 1.637-1.848 3.37-1.848 3.6 0 4.267 2.368 4.267 5.455v6.284z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://twitter.com/andrew_dryga"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border transition-all duration-300 hover:border-terminal-cyan shadow-card hover:shadow-glow"
+            aria-label="Twitter"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground group-hover:text-terminal-cyan transition-colors"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M22 5.92c-.77.35-1.6.58-2.47.69a4.22 4.22 0 0 0 1.85-2.32 8.4 8.4 0 0 1-2.67 1.02 4.2 4.2 0 0 0-7.15 3.83A11.93 11.93 0 0 1 3.16 4.6a4.2 4.2 0 0 0 1.3 5.6 4.17 4.17 0 0 1-1.9-.53v.05a4.2 4.2 0 0 0 3.37 4.12 4.22 4.22 0 0 1-1.89.07 4.2 4.2 0 0 0 3.92 2.91A8.43 8.43 0 0 1 2 19.55a11.87 11.87 0 0 0 6.44 1.89c7.73 0 11.96-6.41 11.96-11.96 0-.18 0-.36-.01-.54A8.5 8.5 0 0 0 22 5.92z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://facebook.com/andrew.dryga"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border hover:border-terminal-cyan transition-all duration-300 shadow-card hover:shadow-glow"
+            aria-label="Facebook"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground transition-colors group-hover:text-terminal-cyan"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M22 12.07C22 6.48 17.52 2 11.93 2S1.86 6.48 1.86 12.07c0 4.95 3.61 9.06 8.33 9.86v-6.98H7.9v-2.88h2.29V9.41c0-2.27 1.35-3.53 3.42-3.53.99 0 2.02.18 2.02.18v2.22h-1.14c-1.12 0-1.47.7-1.47 1.42v1.71h2.5l-.4 2.88h-2.1v6.98c4.72-.8 8.33-4.91 8.33-9.86z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://www.instagram.com/andrew_dryga/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border hover:border-terminal-cyan transition-all duration-300 shadow-card hover:shadow-glow"
+            aria-label="Instagram"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground transition-colors group-hover:text-terminal-cyan"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <circle cx="17.5" cy="6.5" r="1.5"></circle>
+            </svg>
+          </a>
+          <a
+            href="https://www.youtube.com/channel/UCIpDrdCfu9LscfqmVSUy43g"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border transition-all duration-300 hover:border-terminal-cyan shadow-card hover:shadow-glow"
+            aria-label="YouTube"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground group-hover:text-terminal-cyan transition-colors"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1 31.4 31.4 0 0 0 .5-5.8 31.4 31.4 0 0 0-.5-5.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://elixirforum.com/u/andrewdryga/summary"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border transition-all duration-300 hover:border-terminal-cyan shadow-card hover:shadow-glow"
+            aria-label="Elixir Forum"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground group-hover:text-terminal-cyan transition-colors"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M19.793 16.575c0 3.752-2.927 7.426-7.743 7.426-5.249 0-7.843-3.71-7.843-8.29 0-5.21 3.892-12.952 8-15.647a.397.397 0 0 1 .61.371 9.716 9.716 0 0 0 1.694 6.518c.522.795 1.092 1.478 1.763 2.352.94 1.227 1.637 1.906 2.644 3.842l.015.028a7.107 7.107 0 0 1 .86 3.4z"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://leetcode.com/u/andrewdryga/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group p-3 rounded-lg bg-card border border-border transition-all duration-300 hover:border-terminal-cyan shadow-card hover:shadow-glow"
+            aria-label="LeetCode"
+          >
+            <svg
+              class="h-5 w-5 text-muted-foreground group-hover:text-terminal-cyan transition-colors"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path
+                d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z"
+              ></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

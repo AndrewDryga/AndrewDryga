@@ -1,0 +1,104 @@
+---
+import BaseLayout from "../../components/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { Badge } from "../../components/ui/badge";
+import { allProjects, projectCategories } from "../../data/projects";
+
+const title = "Projects — Andrew Dryga";
+const description =
+  "A comprehensive list of projects I've worked on — national systems, open source, and high-impact platforms.";
+const canonical = Astro.url.href;
+
+function categoryHref(cat: string) {
+  if (!cat || cat === "All") return "/projects/";
+  const slug = cat.toLowerCase().replace(/\s+/g, "-");
+  return `/projects/category/${slug}/`;
+}
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+
+  <section class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <SectionHeader
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Projects" }]}
+        consoleLine="$ ls -la ~/projects/"
+        titleLeading="All"
+        titleAccent="Projects"
+        accentColor="green"
+        description="A comprehensive list of projects I've worked on throughout my career."
+      >
+        <div class="flex flex-wrap gap-2 mt-8 md:mt-12">
+          {
+            ["All", ...projectCategories.filter((c) => c !== "All")].map(
+              (cat) => (
+                <a
+                  href={categoryHref(cat)}
+                  class="px-3 py-1.5 rounded-md font-mono text-sm border text-muted-foreground hover:text-terminal-green hover:border-terminal-green/60 border-border transition-colors"
+                >
+                  {cat}
+                </a>
+              ),
+            )
+          }
+        </div>
+      </SectionHeader>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {
+          allProjects.map((project, idx) => (
+            <div
+              class={`group p-6 rounded-lg bg-card border border-border hover:border-terminal-green transition-all duration-300 shadow-card hover:shadow-glow relative h-full animate-fade-in`}
+              style={`animation-delay: ${idx * 100}ms`}
+            >
+              <a
+                href={`/projects/${project.id}/`}
+                class="absolute inset-0 rounded-lg"
+                aria-label={`View details for ${project.name}`}
+              />
+
+              <div class="mb-3">
+                <h3 class="text-xl font-bold mb-2 text-foreground transition-colors group-hover:text-terminal-green">
+                  {project.name}
+                </h3>
+                {project.period && (
+                  <p class="text-xs font-mono text-foreground/60 mb-2">
+                    {project.period}
+                  </p>
+                )}
+                <p class="text-foreground/80 mb-3">{project.description}</p>
+              </div>
+
+              {/* Impact bullets */}
+              <ul class="space-y-1 mb-4">
+                {project.impact.map((item, i) => (
+                  <li class="text-sm text-foreground/90 font-mono flex items-start">
+                    <span class="text-terminal-green mr-2">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Tech badges */}
+              <div class="flex flex-wrap gap-2 mb-4">
+                {project.tech.map((tech) => (
+                  <Badge variant="muted" className="px-2 py-1 text-xs">
+                    {tech}
+                  </Badge>
+                ))}
+              </div>
+
+              <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3">
+                Read more →
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

@@ -1,0 +1,172 @@
+---
+title: "Designing a P2P Lending platform with Elixir in mind"
+description: "With this post, I want to share with you the design process on one of our latest projects — a P2P marketplace that was intended to be used by hundreds of thousands of users."
+publishDate: 2017-07-09
+updatedDate: 2017-07-09
+tags:
+  - Engineering
+  - Elixir
+  - Event-Driven Architecture
+  - Domain-Driven Design
+  - Fintech
+draft: false
+relatedProjects:
+  - 4finance
+---
+
+> Stub note — the full post is being migrated. This is a concise outline that captures the core ideas and patterns behind the original write-up.
+
+## Context
+
+A P2P lending (marketplace) platform matches borrowers and investors under clear risk and compliance rules:
+- Borrowers request loans with specific terms (amount, APR, tenure).
+- Investors fund portions of loans until fully filled; funds are escrowed.
+- When filled, funds are disbursed; repayments flow back to investors pro‑rata.
+- System handles KYC/AML, risk scoring, payment rails, and regulatory reporting.
+
+This post focuses on designing a scalable, reliable, and observable system using Elixir/OTP.
+
+## Core requirements
+
+- High throughput, low-latency matching and funding operations
+- Strong consistency for balances, escrow, disbursements, and repayments
+- Idempotency and replay protection across payment provider boundaries
+- Auditable state transitions (who did what and when)
+- Clear failure compensation (e.g., partial funding, charge failures, timeouts)
+- Operational simplicity: predictable deploys, metrics, and traces
+
+## Architecture overview
+
+- Elixir + OTP for concurrency, supervision, and resiliency
+- Phoenix for APIs (public + internal service APIs)
+- Ecto + PostgreSQL for strong consistency and rich queries
+- Event-driven workflows with explicit state machines
+- Sagas (process managers) to coordinate multi-step transactions
+- Background workers for idempotent tasks and integration retries
+- Observability first: structured logs, metrics, traces
+
+```
+       ┌───────────────────────────────────────────┐
+       │                Clients / API              │
+       │ (Borrower App, Investor App, Admin Panel) │
+       └───────────────▲───────────────▲───────────┘
+                       │               │
+                REST/JSON            Webhooks
+                       │               │
+            ┌──────────┴──────────┐    │
+            │   Phoenix API(s)    │◄───┘
+            │  AuthN/Z, Validation│
+            └──────────┬──────────┘
+                       │ Commands/Queries
+         ┌─────────────▼─────────────────────┐
+         │   Domain Services (Elixir/OTP)    │
+         │  - LoanService (state machine)    │
+         │  - FundingService (escrow)        │
+         │  - RepaymentService               │
+         │  - Risk & Limits                  │
+         │  - KYC/AML Integrations           │
+         └─────────────┬─────────────────────┘
+                       │ Events (append-only)
+             ┌─────────▼──────────┐
+             │  Event Bus/Store   │
+             │ (DB + outbox table)│
+             └─────────┬──────────┘
+                       │
+         ┌─────────────▼───────────────────────┐
+         │ Process Managers (Sagas)            │
+         │ - FundingSaga                       │
+         │ - DisbursementSaga                  │
+         │ - RepaymentSaga                     │
+         │ (retries, backoff, compensation)    │
+         └─────────────┬───────────────────────┘
+                       │
+      ┌────────────────▼──────────────┐
+      │ External Providers             │
+      │ - Payments (escrow, payouts)   │
+      │ - KYC/AML                      │
+      │ - Notifications                │
+      └───────────────────────────────┘
+```
+
+## Domain model (simplified)
+
+- Borrower, Investor
+- Loan (state: draft → listed → funded → disbursed → active → settled/chargedoff)
+- Funding (many per loan; status: pending → confirmed → reversed)
+- Escrow Account, Investor Balance
+- Repayment Schedule (installments), Repayment Events
+- Ledger Entry (double-entry postings)
+
+Each aggregate has:
+- Explicit state machine with valid transitions
+- Versioning for optimistic concurrency
+- Idempotency keys on all external boundary operations
+
+## Key flows
+
+### Funding Saga
+1) Validate investor limits and loan availability
+2) Reserve funds in escrow (provider API) — idempotent
+3) Record Funding as pending; append domain event
+4) Confirm on provider webhook or synchronous success
+5) If loan fully funded → trigger Disbursement Saga
+6) On failure → reverse reservation; notify
+
+### Disbursement Saga
+1) Verify loan state (fully funded)
+2) Create payout order to borrower
+3) Await provider confirmation (webhook)
+4) Transition loan → disbursed, start schedule
+5) On failure/timeouts → retry with backoff; escalate on terminal error
+
+### Repayment Saga
+1) Generate schedule upfront (APR, fees, amortization method)
+2) Collect installment via provider (pull or borrower push)
+3) Split repayment across investors pro‑rata
+4) Post to ledger; credit investor balances
+5) Handle charge failures with retries/dunning flows
+
+## Data integrity
+
+- Double-entry ledger for all monetary movements (escrow, investor balances, payouts)
+- Outbox pattern for reliable event publication
+- Idempotent handlers (natural keys, unique constraints)
+- Optimistic concurrency and retry on conflicts
+- Background reconciliation jobs (provider vs internal ledger)
+
+## Observability
+
+- Correlation IDs across API, sagas, and provider calls
+- Metrics: time-to-fund, disbursement latency, repayment success rate, error budgets
+- Traces around saga steps and provider integrations
+- Structured logs with domain context (loan_id, investor_id, saga_name, step)
+
+## Example: Elixir-ish state transition (pseudo)
+
+```elixir
+def transition(%Loan{state: :listed} = loan, {:fund, amount, investor_id}) do
+  with :ok <- Limits.check_investor(investor_id, amount),
+       :ok <- Escrow.reserve(investor_id, amount, loan.id) do
+    {:ok, loan |> mark(:partially_funded) |> append(:funding_reserved, %{amount: amount, investor_id: investor_id})}
+  else
+    {:error, :insufficient_funds} -> {:error, :rejected}
+    {:error, :provider_timeout} -> {:retry, backoff: :exponential}
+  end
+end
+```
+
+## Trade-offs
+
+- Event-driven flows + sagas add coordination complexity but yield resilience across provider boundaries.
+- Strong consistency where money moves; eventual consistency for projections and read models.
+- Prefer boring primitives (PostgreSQL, queues, idempotency) over exotic infrastructure.
+
+## What’s next
+
+- A full migration of the original post with diagrams, real code snippets, and deeper dives into:
+  - Risk/lifecycle modeling
+  - Ledger design and reconciliation
+  - Handling provider webhooks safely
+  - Detailed error and retry strategies
+
+If you’re building a P2P marketplace and want to discuss specifics (escrow, ledgering, reconciliation, or sagas), feel free to reach out.

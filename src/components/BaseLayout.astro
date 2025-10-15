@@ -1,0 +1,145 @@
+---
+import "../styles/global.css";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  noIndex?: boolean;
+  ogImage?: string;
+}
+
+const {
+  title = "Andrew Dryga — Founding Engineer",
+  description = "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms—shipping what matters, measuring results, and cutting waste without slowing teams.",
+  canonical,
+  ogImage,
+  noIndex = false,
+} = Astro.props;
+
+// Derive canonical URL from site + current path if not explicitly provided
+const site = Astro.site ?? new URL("https://dryga.com/");
+const url = canonical ?? new URL(Astro.url.pathname ?? "/", site).toString();
+const ogImageUrl = ogImage
+  ? (ogImage.startsWith("http") ? ogImage : new URL(ogImage, site).toString())
+  : new URL("/og-default.jpg", site).toString();
+
+// Public env var for Mixpanel; set in deployment as PUBLIC_MIXPANEL_TOKEN
+const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+
+    <meta name="description" content={description} />
+    <link rel="canonical" href={url} />
+
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f14" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0b0f14" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="dryga.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:image" content={ogImageUrl} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="mixpanel-token" content={MIXPANEL_TOKEN ?? ""} />
+
+    <script type="application/ld+json" is:inline>
+      {JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "dryga.com",
+        url: site.toString(),
+        potentialAction: {
+          "@type": "SearchAction",
+          target: new URL("/blog/?q={search_term_string}", site).toString(),
+          "query-input": "required name=search_term_string",
+        },
+      })}
+    </script>
+
+    {noIndex && <meta name="robots" content="noindex, nofollow, noarchive" />}
+
+    <!-- Icons and manifest placeholders (replace with actual assets in public/) -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Preload critical fonts (self-hosted WOFF2). Ensure files exist in /public/fonts -->
+    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin />
+
+
+
+    <!-- Mixpanel (privacy-aware; respects Do Not Track) -->
+    <script type="module" is:inline>
+      const token = (document.querySelector('meta[name="mixpanel-token"]')?.getAttribute("content")) || "";
+      const isDev = import.meta.env.DEV;
+      const dnt =
+        (navigator.doNotTrack === "1") ||
+        (window.doNotTrack === "1") ||
+        (navigator.msDoNotTrack === "1");
+
+      if (token && !dnt) {
+        try {
+          const mpMod = await import("mixpanel-browser");
+          const mixpanel = mpMod.default;
+          mixpanel.init(token, {
+            debug: !!isDev,
+            track_pageview: true,
+            persistence: "localStorage"
+          });
+
+          // Track initial page load
+          mixpanel.track("Page View", {
+            path: location.pathname + location.search,
+            title: document.title
+          });
+
+          // Optional: track outbound link clicks
+          const onClick = (e) => {
+            const a = e.target.closest("a[href]");
+            if (!a) return;
+            const url = a.getAttribute("href");
+            try {
+              const sameOrigin = a.origin === location.origin;
+              mixpanel.track("Link Click", { url, sameOrigin });
+            } catch {}
+          };
+          addEventListener("click", onClick, { capture: true });
+        } catch (err) {
+          // Silently ignore Mixpanel init errors in production
+        }
+      }
+    </script>
+  </head>
+  <body class="h-full bg-background text-foreground antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-terminal-surface focus:text-terminal-cyan focus:outline-none focus:ring-2 focus:ring-terminal-cyan px-3 py-2 rounded-md font-mono text-sm"
+    >
+      Skip to content
+    </a>
+
+    <div id="app" class="min-h-screen flex flex-col">
+      <slot name="header" />
+      <main id="main" class="flex-1">
+        <slot />
+      </main>
+      <slot name="footer" />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+This is a placeholder Open Graph image for dryga.com.
+
+Replace this file with a real 1200x630 JPG that matches the brand style.
+Guidelines:
+- Size: 1200 x 630 px
+- Format: JPEG (progressive), sRGB, ~70–80% quality
+- Background: subtle gradient using brand tokens (terminal cyan/green)
+- Foreground: site name “dryga.com” and subtitle “Founding Engineer” in Inter + JetBrains Mono
+- Optional elements: soft glow/shadow card effect
+
+Suggested composition:
+- Background gradient: from hsl(180 100% 50% / 0.15) to hsl(120 100% 50% / 0.10) over a deep slate base (hsl(220 15% 10%))
+- Title: “Andrew Dryga” (Inter Bold, 80–96px, tracking-tight)
+- Accent dot or cursor: terminal-cyan
+- Subtitle: “Founding Engineer” (JetBrains Mono, 28–36px)
+- Padding: 72–96px from edges
+- Contrast: WCAG AA for text
+
+Notes:
+- This placeholder is non-binary text and not a valid JPEG.
+- It exists to avoid 404s while the real OG image is produced.
+- Update BaseLayout references remain at /og-default.jpg.
+
+Designer handoff:
+- Export final OG to this exact path: public/og-default.jpg
+- Also provide variants for light/dark if desired, but keep default here.

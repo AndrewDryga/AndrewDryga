@@ -1,0 +1,99 @@
+---
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+export type AccentColor = "green" | "yellow" | "cyan";
+
+export interface Props {
+  // Title options:
+  // - Use `title` to render a single string
+  // - Or split into parts with `titleLeading`, `titleAccent`, `titleTrailing`
+  title?: string;
+  titleLeading?: string;
+  titleAccent?: string;
+  titleTrailing?: string;
+
+  // Accent color used for the console line and the accented title part
+  accentColor?: AccentColor;
+
+  // Optional terminal-style console line shown above the title
+  consoleLine?: string;
+
+  // Breadcrumbs: e.g., [{ label: "Home", href: "/" }, { label: "Blog" }]
+  breadcrumbs?: BreadcrumbItem[];
+
+  // Short description under the title
+  description?: string;
+
+  // Optional extra classes for the header element wrapper
+  class?: string;
+}
+
+const {
+  title,
+  titleLeading = "",
+  titleAccent = "",
+  titleTrailing = "",
+  accentColor = "green",
+  consoleLine,
+  breadcrumbs = [],
+  description,
+  class: className = "",
+} = Astro.props as Props;
+
+const accentTextClass =
+  accentColor === "yellow"
+    ? "text-terminal-yellow"
+    : accentColor === "cyan"
+    ? "text-terminal-cyan"
+    : "text-terminal-green";
+
+const consoleTextClass = accentTextClass;
+
+// Determine how to render the title: either as a full string or split parts
+const useSplitTitle = !!(titleLeading || titleAccent || titleTrailing);
+---
+
+<header class={["mb-10", className].filter(Boolean).join(" ")}>
+  {breadcrumbs.length > 0 && (
+    <nav class="font-mono text-sm text-muted-foreground mb-2" aria-label="breadcrumb">
+      {breadcrumbs.map((b, i) => (
+        <>
+          {b.href ? (
+            <a href={b.href} class="transition-colors hover:text-foreground">{b.label}</a>
+          ) : (
+            <span class="text-foreground">{b.label}</span>
+          )}
+          {i < breadcrumbs.length - 1 && <span class="mx-2 text-foreground/50">/</span>}
+        </>
+      ))}
+    </nav>
+  )}
+
+  {consoleLine && (
+    <div class={["font-mono text-sm mb-2", consoleTextClass].join(" ")}>{consoleLine}</div>
+  )}
+
+  <h1 class="text-4xl md:text-5xl font-bold font-sans">
+    {useSplitTitle ? (
+      <>
+        {titleLeading && <span class="text-foreground">{titleLeading} </span>}
+        {titleAccent && <span class={accentTextClass}>{titleAccent}</span>}
+        {titleTrailing && <span class="text-foreground"> {titleTrailing}</span>}
+      </>
+    ) : (
+      <span class="text-foreground">{title}</span>
+    )}
+  </h1>
+
+  {description && (
+    <p class="text-muted-foreground max-w-2xl mt-3 leading-relaxed">
+      {description}
+    </p>
+  )}
+
+  <!-- Consumers can inject controls like filters below via default slot -->
+  <slot />
+</header>

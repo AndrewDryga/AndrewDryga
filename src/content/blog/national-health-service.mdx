@@ -1,0 +1,223 @@
+---
+title: "National Health Service, on Elixir and Kubernetes"
+description: "A look at building Ukraine’s national-scale eHealth platform with Elixir, Kubernetes, and pragmatic architecture for reliability and scale."
+publishDate: 2017-08-03
+updatedDate: 2017-08-03
+tags:
+  - Architecture
+  - Elixir
+  - Kubernetes
+  - eHealth
+draft: false
+relatedProjects:
+  - ehealth
+---
+
+![National Health Service — eHealth platform cover](/blog/national-health-service/hero.webp)
+
+By this post, I want to share a second awesome project that we built on Elixir, React.js+Redux.js and Kubernetes — eHealth for the National Health Service of Ukraine. It was born as one of the major steps in reforms occurring in our healthcare and would affect every single person in the country.
+
+Edit, August 2018: it is in production for more than a year, more than 22 million people (50% of the population) are signed up. Last time I went to a private clinic I was offered to use this system to get services for free, instead of paying pretty expensive bills. It works, grows and I’m proud of it.
+
+There is lots of space for features and improvements though. And it is completely open sourced under Apache license.
+
+This article is close to the original implementation but contains features that were planned to be delivered in upcoming production releases. Also, I can miss some changes; it is not possible to remember all of them forever.
+
+The goals section reveals things how I see them; this is not an official position of a development team or the project office.
+
+## Project goals
+
+Ukraine is moving in the direction of digitalization of all its services. We are trying to rely on technology and transparency, which should make corruption hard. All other options are constantly failing — our country is struggling with it.
+
+One of the steps in this area is a medical reform that is starting in our country. In my opinion, we really need a better way to manage taxpayers’ money — the legacy process that we acquired from the USSR is not efficient and does not oppose corruption.
+
+### How it works right now?
+
+Each clinic has its own region (list of postal codes) that it is responsible for and submits an annual report on the number of people that have residence addresses that match this region. For each thousand of patients, it receives some money from the healthcare budget that could be used to pay salaries to the medical personnel.
+
+To change residence people need to do lots of paperwork (literally spend up to a few days) and almost always own an apartment in a city where they want to live. For most of the people I know, residence address doesn’t match their actual address. Because of this, reports are extremely inaccurate.
+
+Also, they can be faked by adding “dead souls” (not really existing people). On a country scale, it is extremely hard and expensive to find out that this happened. We do not have a centralized citizens database, and only inconsistent parts split across many separate government services. We do not even know the actual number of residents in the country! I know that people are working on this problem, but this task will take years to be accomplished.
+
+Some clinics would even refuse to accept residents from other country regions, even when they actually live nearby for years.
+
+Patient data is another painful part for most of the people, it is stored in paper form with handwritten notes within the clinic of residence.
+
+Paper receipts are creating large space for corruption for pharmaceutical companies and drug stores — they can bribe doctors to give prescriptions with a certain brand and suggest buying them in a specific drug store. After the drug purchase the receipt can be thrown away, leaving no evidence of a crime.
+
+### How is it going to work?
+
+Each patient can see a list of all doctors and clinics in the country on an official website, come to the chosen place, and sign a digital declaration — a three-party agreement between doctor, patient, and the National Health Service of Ukraine. An OTP code which is sent to a patient’s phone or a full scan copy of all his documents is required to authorize a signature from the patient side.
+
+After signing the declaration a medical service provider (MSP) can take care of his patient and receive medical reimbursement on a monthly basis. If a patient is not happy with the quality of service — he is free to sign a new declaration with any other MSP; the old one would terminate so money will “follow the patient.”
+
+In theory, it will create true market conditions between medical service providers and increase the quality of service. Doctors would try to have many patients under their care. They would know each other for longer periods of time, which creates an additional positive impact on a patient’s health.
+
+Private clinics with higher costs are also free to enter reform and reduce their prices by receiving part of the money from the government. All they need — sign an agreement and use software that is integrated with NHS API.
+
+Patient data must be securely stored in a centralized database and available only for authorized by a patient medical personnel.
+
+Prescriptions should be digitalized so that it would be easy to apply data science to find and fight fraud. They would allow a patient to get some medicine for free, National Health Service compensates its cost to the drug store.
+
+### Summary for the requirements and additional context
+
+- Start using digital documents instead of papers
+- Create new processes for medical reimbursement
+- Improve trust in the relationship between citizens and government by introducing transparency on all steps of development and operations, from open sourced code to the public, depersonalized reports for medical reimbursements on top of immutable data
+- From 2018 must be used by all doctors that are part of reform, by law
+- Provide space for innovation and open market relations for third-party medical information system providers. API for them should be easy to use and must not dictate what system to build on top of it
+- Resource limits for the first release: 4 months, ~10 developers, few analysts, and a few business people. Also, the project office (which was a customer for us) helped us during all development
+- Aim on security — sensitive data must be encrypted, fake‑prone and accessible only for authorized users
+- High regulations. Eventually, all data must be stored in certified data centers on the territory of Ukraine. And we will need to pass extremely complicated compliance process
+
+## Breaking up the requirements
+
+Drone® view of the architecture
+
+![High-level system diagram](/blog/national-health-service/arch-2.webp)
+
+### Integration Layer (IL)
+
+This is one of our architecture patterns that was extracted during P2P marketplace development. It’s nice to have a single component that is responsible for all business logic and uses all other microservices and SaaS APIs to achieve its goals.
+
+It stores temporary data for create/update requests. Eg. when you want to change password — we will send you an email and the reset code would be stored in the database that belongs to IL. But since the data has an explicit TTL, it could be truncated on a daily basis.
+
+### Master Patient Index (MPI)
+
+Key responsibilities:
+- Securely store patient personal data
+- Provide API that allows finding a patient without disclosing sensitive fields and to fetch all data when patient MPI ID is known
+- Merge records that were duplicated due to human errors
+
+This component allows performing a search query over patient data, but it returns an error when too many results are matching search criteria; returns an additional question when there are just a few matches, and the MPI ID when only one record is matched.
+
+In future, we could even give a few fake options to catch people that are surfing the database without practical reasons.
+
+Record linkage is done by fetching all new records and matching them against the rest of the database with coefficients applied to each field. As a result, we are getting a probability that both records are matching a single actual patient. Duplicates are deactivated and a pointer to the parent record is added. Because of this, all other systems should expect to receive the parent entity even when they are fetching record by MPI ID.
+
+There are many sophisticated approaches that must be considered in the future: rolling hash functions, stemming strings before comparing their values, and even some machine learning techniques.
+
+Why is it separated into a microservice? From day one we planned to hand off this component to a separate government division that takes care of citizens’ data. And it is easier to build a separate security perimeter around it, rather than applying the same requirements to all other components.
+
+### Partner Relationship Management (PRM)
+
+Key responsibilities:
+- Store legal entities, their personnel, and all sorts of related data
+- Provide a CRUD abstraction on top of it with some additional constraints
+
+You can notice that we are using Class Table Inheritance on objects in PRM to deal with dynamic schemas with variable attributes. We know that new entities are on the way and made sure that we can extend them by simply adding new tables.
+
+Lately, we started to discuss merging all this stuff into the integration layer, since there are no practical benefits of running them separately.
+
+![Integration Layer, services overview](/blog/national-health-service/arch-1.webp)
+
+### Operations (OPS)
+
+Key responsibilities:
+- Store declarations, receipts, and other large-volume operational data with a high level of trust
+- Provide this data for capitation reports generation
+- Focus on IO performance
+
+We decided to start with PostgreSQL which is easier to integrate because of battle-tested Ecto adapter, and move to other storage that horizontally scales for writes in the future.
+
+To achieve the required level of trust, we planned to add a blockchain‑alike approach to the way we store data.
+
+### Media Content Storage (MCS)
+
+Key responsibility: securely store uploaded documents.
+
+Implementation details are described in a separate article.
+
+### Reports
+
+Key responsibility: build monthly capitation reports for NHS.
+
+To separate production workloads from reporting, it runs on a replicated database. Data ingress is done with pglogical, which allows performing streaming replication only for specific fields from specific tables in different databases.
+
+An additional benefit of this approach is that we can run reports and analysis on depersonalized data, reducing security requirements for this component.
+
+The data is fetched from a database with Ecto.Repo.stream/2 and sent to the Gandalf decision engine (yet another open source project we did in past) to apply grouping rules that may be changed over time.
+
+Reports are sent to a public Google Cloud Storage bucket.
+
+## Deployment, CI and so on
+
+All this runs on Google Container Engine (a hosted Kubernetes cluster) with plans to migrate to a Ukrainian DC that provides cloud on top of OpenStack.
+
+For production we are using two clusters — back‑end and front‑end. This allows us to apply a hard constraint on communication patterns between them. Front‑end should not be able to access private APIs directly, without authentication. Kubernetes has a NetworkPolicy to solve it.
+
+### Configuration
+
+Deployment configuration is stored in a private repo, each branch corresponds to a separate environment (we have 4 of them: dev, demo, pre‑production, production) and engineers are editing pod description, push changes to that repo and run:
+
+kubectl apply -f my_pod.yaml
+
+I’ve built several bash helpers to simplify routine operations — connecting to the pod or a database, creating and restoring backups or even connecting to the Erlang node with Observer.
+
+Eventually, the team started to complain that this seems too complicated — there were issues when you simply forget to change some environment variables. And pod descriptions started to vary from environment to environment, so automatic merging does not work anymore.
+
+To address this issue our DevOps is working on replacing YAML configuration with Helm charts so that we can store everything in a single branch and review files side‑by‑side.
+
+Production secrets are encrypted with git‑crypt.
+
+All environment‑related configuration is done via environment variables. (Business configuration is stored in a separate Integration Layer table.)
+
+### CI
+
+To test and build containers we use Travis CI, its pipeline looks like this:
+- Bump version (each change in master is a separate version)
+- Run ExUnit tests
+- Run ExCoveralls and submit the report to Coveralls
+- Run dogma and credo
+- Build a container, wait and run a sanity check for it to make sure there were no errors that lead to instant crashes
+- Create a git and container tags with appropriate version and push them upstream
+
+### Monitoring
+
+We use Datadog for monitoring with a basic Kubernetes integration and periodic SQL queries to the databases for business‑related metrics.
+
+### Backups
+
+We use pghoard that creates a base‑backup every 6 hours and WAL logs archives that are received through a PostgreSQL stream replication protocol. Everything is encrypted and persisted to Google Cloud Storage.
+
+## Lessons learned
+
+### Pay attention to the volumes exposed in a Dockerfile
+
+We had an issue where all data in a database were lost on a pod restart even though a persistent volume was attached to it.
+
+By double checking pod and the rest of configuration, I wasn’t able to find anything that looked suspicious. Even more — all files in a folder where PV is attached were persisted, only the PGDATA directory was erased on each start.
+
+This made me think that there are some bugs in our docker entrypoint script, but it exactly matched a similar script from an official image, except the part that is responsible for backups and does not delete anything.
+
+Digging deeper I’ve noticed that the official image, which we switched to about a week before an incident, exposes a volume under the default PGDATA directory. We are attaching PV one level above it so that we can replace PGDATA with another one restored from a backup.
+
+I’ve rebuilt our image by copying the official Dockerfile and removing the line that exposed the volume. The problem has disappeared. This was the right trail even though Google wasn’t able to give an instant answer why it happened.
+
+When a Docker container starts it looks for volumes that must be mounted. When there is a volume exposed by the Dockerfile and not used by Kubernetes, it mounts it to an empty directory on the host. This is a feature that allows Docker to make sure that containers that run together with Docker Compose would persist all data without any additional configuration.
+
+### Handling upstream errors in the integration layer
+
+There is a simple approach that would allow you to reply to most requests without side‑effects — use HTTP PUT verb and make sure it is idempotent (creates or updates entities completely) on the upstream services.
+
+### How to sell Elixir?
+
+In my opinion, the first things the customer is looking for — trust, which is derived from the expertise of the team members, proven track record, and ability to take right decisions. On the technology side of sale expect that a customer may worry about vendor lock on technologies that are planned to be used in a project.
+
+Elixir is not a silver bullet and it does not fit any project, but when you are sure it really fits the customer’s needs — tell them why it is so great and what would be the main benefits of using it in this particular project.
+
+Avoid doing so by listing language properties from the official web site. Eg. availability is one of the core properties that are required by most of the people that are looking for development teams irrespective of the technology stack.
+
+It is a great idea to provide references on the projects that already use Elixir. When they are in the same domain — it’s even better. That’s why I’m writing these articles — now you have a few additional references.
+
+Tell about development velocity that it allows to achieve, which reduces both cost and the time to market.
+
+And add some emotional context — do you really enjoy Elixir? Be passionate, in a good way.
+
+I was extremely happy to hear from the project office technology lead these words:
+
+“It’s not the technology stack what brings vendor lock.”
+
+## Thanks
+
+I want to thank everybody who participated in this development — our team, project office, sponsors and people from the Government that are supporting reforms. All this would be definitely not possible without you. I wish all of us a good journey and even more interesting accomplishments in the future.

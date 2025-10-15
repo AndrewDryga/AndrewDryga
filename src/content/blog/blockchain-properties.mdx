@@ -1,0 +1,135 @@
+---
+title: "Bringing blockchain properties to centralized government databases"
+description: "How to design for immutability, auditability, and tamper evidence without running a blockchain in production."
+publishDate: 2017-07-27
+updatedDate: 2017-07-27
+tags:
+  - Database
+  - Architecture
+  - Security
+  - Immutability
+  - Audit
+relatedProjects:
+  - ehealth
+draft: false
+---
+
+> This is a stub of the original article. A full migration is in progress. Below is a concise outline capturing the core ideas and implementation patterns.
+
+## Why “blockchain properties” without a blockchain?
+
+In regulated environments (e.g., government health systems, finance), we often need:
+- Tamper-evident history (immutability)
+- Strong audit trails (who, what, when)
+- Verifiable integrity at rest and in motion
+- Non-repudiation for critical actions
+
+You don’t always need a blockchain to get these properties. With the right primitives, a centralized system can emulate most of the guarantees while preserving operational simplicity and performance.
+
+## Properties to emulate
+
+- Immutability (append-only histories, no destructive updates)
+- Tamper evidence (hash-chaining, verifiable digests)
+- Non-repudiation (digital signatures by actors or services)
+- Time-ordering (monotonic sequence, trusted timestamps)
+- Auditability (complete, queryable event trails)
+
+## Building blocks
+
+1) Append-only event log
+- Store domain events as immutable records.
+- Never update or delete historical events; derive state by folding events or projecting to read models.
+
+2) Hash-chaining
+- Each event E_n includes a `prev_hash` referencing `hash(E_{n-1})`.
+- Any mutation in history breaks the chain.
+- Periodically anchor chain heads (or checkpoints) in a separate trust domain (e.g., external timestamping service).
+
+3) Merkle trees for batch integrity
+- For daily/hourly batches, compute a Merkle root over events.
+- Persist the root separately (e.g., in a write-once bucket or a different storage account/project).
+- Verifies membership and integrity of individual events efficiently.
+
+4) Digital signatures
+- Sign critical events with a service or user-held key.
+- Store signature and public key reference; verify on read or audit.
+- For machine actors, use KMS/HSM-managed keys with rotation and attestation.
+
+5) Verifiable snapshots
+- Periodically materialize state snapshots with:
+  - Snapshot hash (over canonical serialization)
+  - Reference to the event chain head (height, hash)
+- Enable fast integrity checks and time-travel validation.
+
+6) Trusted timestamping
+- Use a monotonic sequence and a trusted clock source.
+- Optionally anchor daily Merkle roots to an external notary or public timestamping service for additional assurance.
+
+## Practical schema sketch
+
+Events (append-only):
+- id (UUID, sortable)
+- aggregate_id (entity identifier)
+- created_at (timestamp)
+- actor_id (user/service)
+- type (domain event)
+- payload (JSONB)
+- prev_hash (bytes)
+- hash (bytes)
+- signature (bytes, optional)
+- signing_key_id (ref, optional)
+
+Anchors (periodic integrity points):
+- period_start / period_end
+- merkle_root
+- chain_head_id / chain_head_hash
+- external_anchor_ref (optional)
+- created_at
+
+Snapshots (materialized state with proofs):
+- aggregate_id
+- as_of_event_id
+- state (JSONB)
+- state_hash
+- chain_head_hash
+- created_at
+
+## Verification routines
+
+- Chain verification:
+  - Recompute `hash(event)`; follow `prev_hash` linkage back from head.
+- Batch verification:
+  - Recompute Merkle root from events; compare to stored root.
+- Signature verification:
+  - Verify signature over canonical event representation with stored public key.
+- Snapshot verification:
+  - Recompute `state_hash`; validate it corresponds to the event chain as-of `as_of_event_id`.
+
+## Operational notes
+
+- Keep canonical encodings stable (e.g., JSON Canonical Form or protobuf), otherwise hashes/signatures break.
+- Separate roles and storage for anchors (defense-in-depth).
+- Rotate keys with clear lineage; store verification metadata alongside events.
+- Make audits cheap: ship background jobs that verify a random sample + nightly full-batch.
+
+## Trade-offs
+
+- You gain strong tamper-evidence and auditability with familiar infrastructure.
+- You do not gain decentralized consensus or trust minimization across multiple independent operators.
+- You must invest in careful canonicalization, key management, and verification tooling.
+
+## When to reach for a real blockchain
+
+- Multi-party trust minimization between independent and adversarial operators.
+- On-chain programmability and settlement requirements.
+- Public verifiability without dependence on a central operator.
+
+## Summary
+
+You can deliver most “blockchain-like” assurances in centralized systems by combining:
+- Append-only event sourcing
+- Hash chaining and Merkle roots
+- Digital signatures and trusted timestamps
+- Verifiable snapshots and routine audits
+
+This approach keeps systems operationally simple, performant, and compatible with existing governance while providing strong guarantees that matter in government and regulated environments.

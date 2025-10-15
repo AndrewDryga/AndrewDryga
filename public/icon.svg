@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  role="img"
+  aria-labelledby="title desc"
+  width="512"
+  height="512"
+>
+  <title id="title">Site Icon</title>
+  <desc id="desc">Rounded square with a simple lightning monogram</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="24" height="24" rx="4" fill="url(#g)"/>
+
+  <!-- Monogram / Bolt -->
+  <path
+    d="M13 3L5 13h6l-2 8 8-10h-6l2-8z"
+    fill="#ffffff"
+    fill-opacity="0.92"
+  />
+</svg>

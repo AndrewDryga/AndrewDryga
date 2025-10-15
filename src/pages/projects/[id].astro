@@ -1,0 +1,502 @@
+---
+import BaseLayout from "../../components/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import { allProjects } from "../../data/projects";
+import { blogPosts } from "../../data/blogPosts";
+
+export async function getStaticPaths() {
+  return allProjects.map((p) => ({
+    params: { id: p.id },
+  }));
+}
+
+const { id } = Astro.params;
+const project = allProjects.find((p) => p.id === id);
+
+if (!project) {
+  // In practice this should never happen due to getStaticPaths
+  // but we safeguard to avoid a confusing blank page.
+  throw new Error(`Project not found for id=${id}`);
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL(`/projects/${project.id}/`, site).toString();
+const title = `${project.name} — Andrew Dryga`;
+const description = project.description;
+
+const isEHealth = project.id === "ehealth";
+
+// Related blog articles: explicit project.relatedPostIds and external article links only
+const explicitIds = new Set(project.relatedPostIds || []);
+const explicitRelated = blogPosts
+  .filter((p) => explicitIds.has(p.id))
+  .map((p) => ({
+    title: p.title,
+    url: p.link.endsWith("/") ? p.link : `${p.link}/`,
+    category: p.category,
+    date: p.date,
+    excerpt: p.excerpt,
+    external: false as const,
+  }));
+
+const externalRelated = (project.links || [])
+  .filter((l) => l.type === "article")
+  .map((l) => ({
+    title: l.label,
+    url: l.url,
+    category: "External",
+    date: "",
+    excerpt: "",
+    external: true as const,
+  }));
+
+const relatedArticles = [...explicitRelated, ...externalRelated].slice(0, 6);
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+
+  <main class="min-h-screen bg-background">
+    <div class="max-w-6xl mx-auto px-4 py-12 md:py-16">
+      <!-- Header -->
+      <div class="mb-12 animate-fade-in">
+        <nav class="font-mono text-sm text-muted-foreground mb-2" aria-label="breadcrumb">
+          <a href="/" class="transition-colors hover:text-foreground">Home</a>
+          <span class="mx-2 text-foreground/50">/</span>
+          <a href="/projects" class="transition-colors hover:text-foreground">Projects</a>
+          <span class="mx-2 text-foreground/50">/</span>
+          <span class="text-foreground">{project.name}</span>
+        </nav>
+        <p class="font-mono text-terminal-green mb-3">$ cat ./projects/{project.id}/README.md</p>
+        <h1 class="text-4xl md:text-5xl font-bold font-sans mb-4 leading-tight">
+          {project.name}
+        </h1>
+        {project.period && (
+          <div class="flex items-center gap-2 font-mono text-sm text-muted-foreground mb-4">
+            <!-- Calendar icon -->
+            <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            <span>{project.period}</span>
+          </div>
+        )}
+        <p class="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl">
+          {project.description}
+        </p>
+      </div>
+
+      {isEHealth && (
+        <>
+          <!-- Terminal Status Display -->
+          <div class="mb-12 bg-terminal-surface border-2 border-terminal-cyan/30 rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,255,255,0.15)] animate-fade-in">
+            <div class="bg-terminal-bg border-b border-terminal-cyan/30 px-4 py-2 flex items-center gap-2">
+              <div class="flex gap-1.5" aria-hidden="true">
+                <div class="w-3 h-3 rounded-full bg-destructive/80"></div>
+                <div class="w-3 h-3 rounded-full bg-secondary/80"></div>
+                <div class="w-3 h-3 rounded-full bg-accent/80"></div>
+              </div>
+              <span class="font-mono text-xs text-muted-foreground">system_status --live</span>
+            </div>
+
+            <div class="p-6 md:p-8 font-mono">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-terminal-cyan">
+                    <!-- Users icon -->
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span class="text-xs uppercase tracking-wider">Patients</span>
+                  </div>
+                  <div class="text-2xl md:text-3xl font-bold text-terminal-green">35M+</div>
+                  <div class="text-xs text-muted-foreground">Active users nationwide</div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-terminal-cyan">
+                    <!-- Activity icon -->
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12H18l-3 7-4-14-3 7H2" />
+                    </svg>
+                    <span class="text-xs uppercase tracking-wider">Professionals</span>
+                  </div>
+                  <div class="text-2xl md:text-3xl font-bold text-terminal-yellow">400K+</div>
+                  <div class="text-xs text-muted-foreground">Medical staff registered</div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-terminal-cyan">
+                    <!-- Building icon -->
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 21h18" />
+                      <path d="M5 21V8l7-3 7 3v13" />
+                      <path d="M9 21V10h6v11" />
+                    </svg>
+                    <span class="text-xs uppercase tracking-wider">Facilities</span>
+                  </div>
+                  <div class="text-2xl md:text-3xl font-bold text-terminal-green">16K+</div>
+                  <div class="text-xs text-muted-foreground">Healthcare locations</div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-terminal-cyan">
+                    <!-- Calendar icon -->
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                    <span class="text-xs uppercase tracking-wider">Timeline</span>
+                  </div>
+                  <div class="text-2xl md:text-3xl font-bold text-terminal-yellow">6mo</div>
+                  <div class="text-xs text-muted-foreground">From zero to production</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Architecture -->
+          <div class="mb-12">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+              System Architecture
+            </h2>
+
+            <div class="bg-black border-2 border-terminal-yellow/40 rounded-lg p-6 md:p-8 overflow-x-auto shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+              <pre class="font-mono text-[10px] md:text-xs text-terminal-green/80 leading-relaxed">
+{`
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                         CLIENT APPLICATIONS                             │
+    │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────────────┐  │
+    │  │  Patient   │  │   Doctor   │  │  Hospital  │  │  Pharmacy       │  │
+    │  │   Portal   │  │   Portal   │  │   Portal   │  │  Portal         │  │
+    │  └──────┬─────┘  └──────┬─────┘  └──────┬─────┘  └──────┬──────────┘  │
+    └─────────┼────────────────┼────────────────┼────────────────┼────────────┘
+              │                │                │                │
+              └────────────────┴────────────────┴────────────────┘
+                                       │
+    ┌──────────────────────────────────▼──────────────────────────────────────┐
+    │                          API GATEWAY LAYER                              │
+    │  ┌────────────────────────────────────────────────────────────────────┐ │
+    │  │  Authentication • Rate Limiting • Request Routing • SSL/TLS       │ │
+    │  └────────────────────────────────────────────────────────────────────┘ │
+    └──────────────────────────────────▲──────────────────────────────────────┘
+                                       │
+    ┌──────────────────────────────────▼──────────────────────────────────────┐
+    │                    MICROSERVICES APPLICATION LAYER                      │
+    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐ │
+    │  │   Patient    │  │    Doctor    │  │ E-Prescription│ │ Medication │ │
+    │  │  Management  │  │  Management  │  │   Service     │ │  Registry  │ │
+    │  └──────┬───────┘  └──────┬───────┘  └──────┬────────┘ └─────┬──────┘ │
+    │  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼────────┐ ┌─────▼──────┐ │
+    │  │   Medical    │  │  Healthcare  │  │ Reimbursement │ │   Claims   │ │
+    │  │   Records    │  │   Facility   │  │   Service     │ │  Processing│ │
+    │  └──────────────┘  └──────────────┘  └───────────────┘ └────────────┘ │
+    │                                                                          │
+    │                   Built with Elixir/Phoenix + OTP                       │
+    └──────────────────────────────────▲──────────────────────────────────────┘
+                                       │
+    ┌──────────────────────────────────▼──────────────────────────────────────┐
+    │                     KUBERNETES ORCHESTRATION                            │
+    │  ┌──────────────────────────────────────────────────────────────────┐  │
+    │  │  Auto-scaling • Load Balancing • Health Checks • Self-healing   │  │
+    │  └──────────────────────────────────────────────────────────────────┘  │
+    └──────────────────────────────────▲──────────────────────────────────────┘
+                                       │
+    ┌──────────────────────────────────▼──────────────────────────────────────┐
+    │                          DATA & STORAGE LAYER                           │
+    │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────────────┐  │
+    │  │ PostgreSQL │  │   Redis    │  │   Object   │  │  Audit Logs     │  │
+    │  │ (Primary)  │  │  (Cache)   │  │  Storage   │  │  (Compliance)   │  │
+    │  └────────────┘  └────────────┘  └────────────┘  └─────────────────┘  │
+`}
+              </pre>
+            </div>
+          </div>
+
+          <!-- Core Features & Capabilities -->
+          <div class="mb-12">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+              Core Features & Capabilities
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <!-- Medical Records -->
+              <div class="bg-card border border-border p-6 rounded-lg hover:border-terminal-cyan/50 transition-all">
+                <div class="flex items-start gap-4">
+                  <div class="p-3 rounded-lg bg-terminal-cyan/10 border border-terminal-cyan/30">
+                    <!-- FileText icon -->
+                    <svg class="w-6 h-6 text-terminal-cyan" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-mono font-bold text-lg mb-2 text-terminal-cyan">Medical Records</h3>
+                    <p class="text-sm text-muted-foreground leading-relaxed">
+                      Centralized electronic health records providing doctors instant access to patient history, diagnoses,
+                      treatments, and test results across all healthcare facilities.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- E-Prescriptions -->
+              <div class="bg-card border border-border p-6 rounded-lg hover:border-terminal-green/50 transition-all">
+                <div class="flex items-start gap-4">
+                  <div class="p-3 rounded-lg bg-terminal-green/10 border border-terminal-green/30">
+                    <!-- Activity icon -->
+                    <svg class="w-6 h-6 text-terminal-green" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12H18l-3 7-4-14-3 7H2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-mono font-bold text-lg mb-2 text-terminal-green">E-Prescriptions</h3>
+                    <p class="text-sm text-muted-foreground leading-relaxed">
+                      Digital prescription system allowing doctors to prescribe electronically, pharmacies to dispense accurately,
+                      and patients to track their medications.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reimbursements -->
+              <div class="bg-card border border-border p-6 rounded-lg hover:border-terminal-yellow/50 transition-all">
+                <div class="flex items-start gap-4">
+                  <div class="p-3 rounded-lg bg-terminal-yellow/10 border border-terminal-yellow/30">
+                    <!-- Server icon -->
+                    <svg class="w-6 h-6 text-terminal-yellow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="2" width="20" height="8" rx="2" />
+                      <rect x="2" y="14" width="20" height="8" rx="2" />
+                      <path d="M6 6h.01M6 18h.01" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-mono font-bold text-lg mb-2 text-terminal-yellow">Reimbursements</h3>
+                    <p class="text-sm text-muted-foreground leading-relaxed">
+                      Automated medical reimbursement processing including insurance claims, government subsidies, and payment verification.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Facility Management -->
+              <div class="bg-card border border-border p-6 rounded-lg hover:border-terminal-cyan/50 transition-all">
+                <div class="flex items-start gap-4">
+                  <div class="p-3 rounded-lg bg-terminal-cyan/10 border border-terminal-cyan/30">
+                    <!-- Building icon -->
+                    <svg class="w-6 h-6 text-terminal-cyan" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 21h18" />
+                      <path d="M5 21V8l7-3 7 3v13" />
+                      <path d="M9 21V10h6v11" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-mono font-bold text-lg mb-2 text-terminal-cyan">Facility Management</h3>
+                    <p class="text-sm text-muted-foreground leading-relaxed">
+                      Comprehensive facility registry with accreditation tracking, resource management, and integration with national infrastructure.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Achievements -->
+          <div class="mb-12">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+
+              Technical Achievements
+            </h2>
+
+            <div class="bg-terminal-surface border-2 border-terminal-green/30 rounded-lg p-6 md:p-8 shadow-[0_0_40px_rgba(34,197,94,0.15)]">
+              <div class="font-mono space-y-4">
+                <div class="flex items-start gap-3 p-4 hover:bg-terminal-green/5 transition-colors rounded border-l-4 border-terminal-green">
+                  <span class="text-terminal-green text-xl flex-shrink-0">✓</span>
+                  <div>
+                    <div class="text-terminal-cyan font-bold mb-1">Lightning-Fast Development</div>
+                    <div class="text-sm text-foreground/80">Built and deployed a national healthcare system in just 6 months with a lean team</div>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 hover:bg-terminal-green/5 transition-colors rounded border-l-4 border-terminal-yellow">
+                  <span class="text-terminal-yellow text-xl flex-shrink-0">✓</span>
+                  <div>
+                    <div class="text-terminal-cyan font-bold mb-1">National Scale from Day One</div>
+                    <div class="text-sm text-foreground/80">Architected to handle 35M+ users and 400K+ medical professionals with high availability</div>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 hover:bg-terminal-green/5 transition-colors rounded border-l-4 border-terminal-cyan">
+                  <span class="text-terminal-cyan text-xl flex-shrink-0">✓</span>
+                  <div>
+                    <div class="text-terminal-cyan font-bold mb-1">Open Source Leadership</div>
+                    <div class="text-sm text-foreground/80">Open-sourced for transparency, security audits, and community contributions</div>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 hover:bg-terminal-green/5 transition-colors rounded border-l-4 border-terminal-green">
+                  <span class="text-terminal-green text-xl flex-shrink-0">✓</span>
+                  <div>
+                    <div class="text-terminal-cyan font-bold mb-1">Cloud-Native Architecture</div>
+                    <div class="text-sm text-foreground/80">Kubernetes-based deployment with auto-scaling and self-healing</div>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 hover:bg-terminal-green/5 transition-colors rounded border-l-4 border-terminal-yellow">
+                  <span class="text-terminal-yellow text-xl flex-shrink-0">✓</span>
+                  <div>
+                    <div class="text-terminal-cyan font-bold mb-1">Fault-Tolerant Design</div>
+                    <div class="text-sm text-foreground/80">Leveraged Elixir/OTP for reliable, concurrent processing</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      <!-- Tech Stack Terminal -->
+      <div class="mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+          Technology Stack
+        </h2>
+
+        <div class="bg-terminal-bg border-2 border-terminal-cyan/30 rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,255,255,0.2)]">
+          <div class="bg-terminal-surface/50 border-b border-terminal-cyan/30 px-4 py-2">
+            <span class="font-mono text-xs text-terminal-green">$ tree ./tech -L 1</span>
+          </div>
+          <div class="p-6 font-mono space-y-2">
+            {project.tech.map((tech, idx) => (
+              <div class="flex items-center gap-3 text-sm hover:bg-terminal-cyan/5 p-2 rounded transition-colors">
+                <span class="text-terminal-cyan">├──</span>
+                <!-- Database icon -->
+                <svg class="w-4 h-4 text-terminal-yellow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5" />
+                  <path d="M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6" />
+                </svg>
+                <span class="text-terminal-green font-bold">{tech}</span>
+              </div>
+            ))}
+            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+              <span class="text-terminal-cyan">└──</span>
+              <span class="text-xs">{project.tech.length} technologies</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Impact Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+
+          Impact & Results
+        </h2>
+
+        <div class="bg-black border-2 border-terminal-green/40 rounded-lg p-6 md:p-8 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+          <div class="font-mono space-y-4">
+            {project.impact.map((item, idx) => (
+              <div class="flex items-start gap-4 p-4 hover:bg-terminal-green/5 transition-all rounded-lg border border-transparent hover:border-terminal-green/30 group">
+                <div class="flex-shrink-0 mt-1">
+                  <div class="w-8 h-8 rounded-lg bg-terminal-green/10 border border-terminal-green/30 flex items-center justify-center group-hover:bg-terminal-green/20 transition-colors">
+                    <span class="text-terminal-green font-bold">{idx + 1}</span>
+                  </div>
+                </div>
+                <span class="text-foreground/90 text-sm md:text-base leading-relaxed">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Links -->
+      {project.links.length > 0 && (
+        <div class="mb-12">
+          <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+            Resources & Links
+          </h2>
+          <div class="flex flex-wrap gap-4">
+            {project.links.map((link) => (
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 font-mono border-2 border-terminal-cyan text-terminal-cyan hover:bg-terminal-cyan hover:text-background transition-all rounded-md px-5 py-3 shadow-[0_0_20px_rgba(0,255,255,0.2)] hover:shadow-[0_0_30px_rgba(0,255,255,0.4)]"
+              >
+                <!-- Icon: GitHub/External -->
+                {link.type === "github" ? (
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                    <path
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M12 2C6.477 2 2 6.58 2 12.124c0 4.48 2.865 8.274 6.839 9.617.5.096.683-.22.683-.487 0-.24-.009-.876-.014-1.719-2.782.61-3.37-1.36-3.37-1.36-.454-1.163-1.11-1.474-1.11-1.474-.907-.63.069-.617.069-.617 1.003.072 1.53 1.044 1.53 1.044.892 1.543 2.341 1.097 2.91.839.091-.655.35-1.097.636-1.35-2.221-.257-4.555-1.127-4.555-5.017 0-1.109.39-2.016 1.03-2.729-.104-.258-.447-1.293.098-2.695 0 0 .84-.27 2.75 1.04a9.33 9.33 0 0 1 2.505-.343c.85.004 1.705.116 2.505.343 1.91-1.31 2.748-1.04 2.748-1.04.546 1.402.203 2.437.1 2.695.64.713 1.028 1.62 1.028 2.728 0 3.9-2.338 4.757-4.566 5.01.36.315.68.934.68 1.883 0 1.359-.012 2.454-.012 2.786 0 .27.18.586.69.486A9.999 9.999 0 0 0 22 12.124C22 6.58 17.523 2 12 2z"
+                    />
+                  </svg>
+                ) : (
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <path d="M15 3h6v6" />
+                    <path d="M10 14L21 3" />
+                  </svg>
+                )}
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related Blog Articles */}
+      {relatedArticles.length > 0 && (
+        <div class="mb-12">
+          <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+            Related Blog Articles
+          </h2>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {relatedArticles.map((a, index) => (
+              <article
+                class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in relative"
+                style={`animation-delay: ${index * 100}ms`}
+              >
+                <a
+                  href={a.url}
+                  class="absolute inset-0 rounded-lg"
+                  aria-label={`Read more: ${a.title}`}
+                  {...(a.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                ></a>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+                      {a.category}
+                    </span>
+                    {!a.external && a.date && (
+                      <div class="font-mono text-xs text-muted-foreground">
+                        {new Date(a.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </div>
+                    )}
+                  </div>
+                  <h3 class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow">
+                    {a.title}
+                  </h3>
+                  {a.excerpt && (
+                    <p class="text-muted-foreground text-sm leading-relaxed">
+                      {a.excerpt}
+                    </p>
+                  )}
+                  <span class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                    Read more →
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+  </main>
+
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

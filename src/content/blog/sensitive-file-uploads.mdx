@@ -1,0 +1,231 @@
+---
+title: "Alternative approach for sensitive file uploads"
+description: "Designing a secure, privacy‑preserving upload flow for documents like national IDs without proxying raw bytes through your app servers."
+publishDate: 2017-07-25
+updatedDate: 2017-07-25
+tags:
+  - Security
+  - Privacy
+  - Uploads
+  - Encryption
+  - S3
+  - Pre-signed URLs
+draft: false
+relatedProjects: []
+---
+
+> Stub note — this is a concise migration of the original idea.
+> The full post will be extended with diagrams and code samples.
+
+Handling sensitive files (IDs, medical docs, financial statements) naively can expose you to unnecessary risk: app servers become a data hotspot, logs might leak content types and sizes, and retention is easy to get wrong. This approach keeps raw bytes off your servers, applies defense‑in‑depth, and makes auditing/retention explicit.
+
+## Threat model (quick)
+
+- Interception in transit (user → storage)
+- Compromise of app servers or build artifacts
+- Over‑permissive object storage (buckets, ACLs)
+- Long‑lived credentials/URLs
+- PII leakage through file names/paths/metadata
+- Insecure processing pipeline (virus scanning, content sniffing)
+- Retention without deletion, lack of auditability
+
+## Goals
+
+- Zero raw bytes through application servers
+- Short‑lived credentials for upload/download
+- No PII in object keys, no guessable names
+- Encryption at rest (KMS) + optional client‑side encryption
+- Strong audit: who uploaded, when, what (hashed), where
+- Bounded retention, explicit lifecycle and redaction
+- Async scanning/validation; quarantine on failure
+
+## Architecture overview
+
+1) Client requests an upload session (intended document type, size, mime)
+2) Server authorizes user and issues a one‑time, short‑lived pre‑signed upload URL (or POST fields) for object storage (e.g., S3/Cloudflare R2/GCS)
+3) Client optionally encrypts locally, uploads directly to object storage
+4) Object storage emits event → processing queue (quarantine bucket/prefix by default)
+5) Workers process:
+   - Anti‑virus scan (ClamAV or vendor)
+   - Content sniffing (magic numbers) vs declared type
+   - Size limits, image dimensions if applicable
+   - Compute SHA‑256 digest, store metadata
+6) If all checks pass → move to “clean” prefix, emit “ready” event to app
+7) App persists reference, retention policy, and audit entry
+8) Access is via short‑lived pre‑signed GET URLs; server checks authorization then mints
+
+This keeps raw bytes out of your app, minimizes credential scope, and creates a single, auditable control plane.
+
+## Server: create upload session (pseudo)
+
+You can implement in any stack; the key is short‑lived, least‑privilege credentials and random object keys.
+
+```ts
+// @noErrors
+// Pseudo TypeScript (Node) – concepts apply to any language
+type UploadIntent = {
+  kind: "national_id" | "invoice" | "medical_record";
+  maxBytes: number;
+  contentType: string; // expected, validated server-side
+};
+
+type CreateUploadResp = {
+  objectKey: string;            // random, no PII
+  uploadUrl: string;            // pre-signed PUT/POST
+  expiresAt: string;            // ISO timestamp, short-lived (e.g., 5 min)
+  encryption?: {                 // optional, for client-side crypto
+    alg: "AES-GCM";
+    keyId: string;              // app-level key registry id (wrapped by KMS)
+  };
+  policy: {
+    maxBytes: number;
+    contentType: string;
+  };
+};
+
+async function createUploadSession(userId: string, intent: UploadIntent): Promise<CreateUploadResp> {
+  assertAuthorized(userId, intent.kind);
+
+  // Generate non-guessable object key (no PII, no file extension required)
+  const objectKey = `uploads/quarantine/${randomUUID()}`;
+
+  // Mint short-lived pre-signed URL with minimal scope
+  const { url, expiresAt } = await mintPresignedPutUrl({
+    bucket: process.env.UPLOAD_BUCKET!,
+    key: objectKey,
+    expiresInSeconds: 300, // 5 min
+    contentType: intent.contentType,
+    // server-side encryption at rest is still enforced by bucket policy (KMS)
+  });
+
+  // Persist an upload intent record for auditing and later correlation
+  await db.upload_intents.insert({
+    id: randomUUID(),
+    user_id: userId,
+    object_key: objectKey,
+    kind: intent.kind,
+    expected_content_type: intent.contentType,
+    max_bytes: intent.maxBytes,
+    status: "INITIATED",
+    expires_at: new Date(Date.now() + 5 * 60_000)
+  });
+
+  return {
+    objectKey,
+    uploadUrl: url,
+    expiresAt,
+    policy: {
+      maxBytes: intent.maxBytes,
+      contentType: intent.contentType
+    }
+  };
+}
+```
+
+Client uploads directly to `uploadUrl`; the app never proxies the bytes.
+
+## Optional: client‑side encryption
+
+If you want to avoid the storage provider from seeing plaintext (in addition to KMS‑at‑rest):
+
+```ts
+// @noErrors
+// Browser WebCrypto (simplified)
+const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]);
+const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit nonce
+const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, fileBytes);
+
+// Upload enc to pre-signed URL; send iv + wrapped key to server
+await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: enc });
+
+// Send metadata for later decrypt (server keeps key wrapped in KMS)
+await fetch("/api/uploads/finalize", {
+  method: "POST",
+  body: JSON.stringify({
+    objectKey,
+    contentType: "application/octet-stream",
+    iv: Array.from(iv),
+    keyId: await wrapKeyWithKMS(key) // app-defined helper
+  })
+});
+```
+
+This is optional; many regulated environments accept KMS‑at‑rest plus strict access controls. If you do client‑side crypto, ensure you can still scan (decrypt in a secured worker with short‑lived unwrap) or move scanning pre‑encryption (trade‑off).
+
+## Processing pipeline (workers)
+
+- Trigger source: Object storage event on `uploads/quarantine/*`
+- Steps:
+  - Enforce max size (early reject)
+  - AV scan; if infected → delete/quarantine + audit + alert
+  - Magic number/content sniffing → must match allowed types for `kind`
+  - Compute SHA‑256; store as integrity digest
+  - Extract safe metadata (dimensions, pages) without PII
+- If OK:
+  - Move to `uploads/clean/<uuid>` (atomic copy + delete)
+  - Tag with retention class (e.g., `retention=30d`, `legal_hold=false`)
+  - Emit domain event “upload.ready” with `objectKeyClean`, `digest`, `kind`, `owner`
+
+Keep processors in a separate trust domain from app servers; least privilege IAM for `quarantine/*` read and `clean/*` write.
+
+## Access pattern (download)
+
+- App checks authorization for the resource (ownership, role, consent)
+- Mint short‑lived pre‑signed GET URL (e.g., 2–5 minutes)
+- Log/audit access: who, when, IP, purpose if applicable
+- Optional: watermarking on the fly (if image/PDF), or serve via controlled proxy that injects watermark
+
+Never grant wide list/get permissions; users should only obtain time‑boxed URLs.
+
+## Object key hygiene
+
+- Never embed user identifiers, names, emails, or original filenames in keys
+- Prefer random UUID keys; keep metadata (original filename) in DB, not in the key
+- Enforce bucket‑level policies: deny public ACLs, force KMS, block unencrypted puts
+
+Example key layout:
+
+```
+uploads/
+  quarantine/
+    3a1d6f1e-... (raw, pending checks)
+  clean/
+    7bf2c9a4-... (ready for use)
+  deleted/
+    ... (optional: tombstoned for grace period)
+```
+
+## Retention & deletion
+
+- Set lifecycle policies at bucket level (auto‑expire quarantine after N hours)
+- Application enforces business retention (e.g., 30–180 days) and explicit deletion on user request
+- Use object locks/legal holds only when legally required
+- Redact or rotate references in your DB; prevent “dangling references”
+
+## Auditing
+
+Maintain an append‑only audit log:
+
+- `who` (user id/service account)
+- `action` (`upload.intent`, `upload.finalize`, `scan.ok`, `scan.fail`, `download.request`, `download.issued`, `delete`)
+- `when` (timestamp)
+- `what` (object key, digest, kind)
+- `where` (IP/user agent if available)
+- `why` (free text or policy code, optional)
+
+Ship logs to a separate storage/project with immutability (WORM) for a fixed period.
+
+## Checklist
+
+- [ ] App never proxies raw upload bytes
+- [ ] Pre‑signed URLs short‑lived, least privilege, content‑type/size constrained
+- [ ] Random, PII‑free object keys
+- [ ] KMS encryption at rest (bucket policy enforces SSE‑KMS)
+- [ ] Optional client‑side encryption with secure unwrap in workers
+- [ ] AV scan + content sniffing before “clean” promotion
+- [ ] Strict IAM separation (quarantine vs clean, workers vs app)
+- [ ] Short‑lived pre‑signed GET for access; full audit on access
+- [ ] Lifecycle rules for quarantine expiry and business retention
+- [ ] Comprehensive, append‑only audit logs exported to immutable storage
+
+This pattern reduces the blast radius, keeps your servers out of the hot path, and gives you predictable, auditable control over sensitive documents—without sacrificing UX.

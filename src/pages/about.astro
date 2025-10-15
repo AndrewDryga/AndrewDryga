@@ -1,0 +1,193 @@
+---
+import BaseLayout from "../components/BaseLayout.astro";
+import Header from "../components/Header.astro";
+
+const title = "About — Andrew Dryga";
+const description =
+  "I’m a founding engineer focused on reliability, observability, and building cost-sane platforms that ship real value without slowing teams.";
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/about/", site).toString();
+
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Andrew Dryga",
+  url: new URL("/", site).toString(),
+  mainEntityOfPage: canonical,
+  jobTitle: "Founding Engineer",
+  description:
+    "Founding engineer focused on reliability, observability, and building cost-sane platforms that ship real value.",
+  sameAs: [
+    "https://github.com/andrewDryga",
+    "https://www.linkedin.com/in/andrew-dryga-bb382557/",
+    "https://elixirforum.com/u/andrewdryga/summary",
+    "https://leetcode.com/u/andrewdryga/"
+  ]
+};
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+  <section class="px-4 py-12 md:py-16">
+    <div class="max-w-6xl mx-auto">
+      <!-- Terminal-style header -->
+      <div class="font-mono text-sm text-terminal-green mb-3 flex items-center gap-2">
+        <span class="text-terminal-cyan">~/about</span>
+        <span class="animate-pulse">▊</span>
+      </div>
+
+      <!-- Page title -->
+      <header class="mb-10 md:mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold font-sans">
+          <span class="text-foreground">About</span>
+          <span class="text-terminal-cyan">.</span>
+        </h1>
+        <p class="text-muted-foreground mt-3 max-w-2xl">
+          I lead engineering and bring value to the business by turning fragile systems into reliable,
+          observable, cost-sane platforms—shipping what matters, measuring results, and cutting waste
+          without slowing teams.
+        </p>
+      </header>
+
+      <!-- Bio -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-10">
+        <article class="space-y-6">
+          <section class="rounded-lg border border-border bg-card/40 shadow-card p-5 md:p-6">
+            <h2 class="text-xl md:text-2xl font-semibold mb-3">
+              Background
+            </h2>
+            <p class="text-muted-foreground">
+              Over the last decade, I’ve helped teams scale products and platforms with a pragmatic,
+              observability-first approach. My bias is toward small, high-leverage changes that improve
+              reliability and reduce costs—without introducing complexity or ceremony.
+            </p>
+            <p class="text-muted-foreground mt-3">
+              I enjoy building clear, measurable feedback loops: instrumentation, SLOs, budgets, and
+              dashboards that reflect reality. It’s how we keep teams moving fast without gambling on
+              stability or spend.
+            </p>
+          </section>
+
+          <section class="rounded-lg border border-border bg-card/40 shadow-card p-5 md:p-6">
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">
+              What I do
+            </h2>
+            <ul class="grid gap-3 md:gap-2">
+              <li class="flex items-start gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-terminal-cyan"></span>
+                <div>
+                  <p class="font-medium">Platform reliability and simplification</p>
+                  <p class="text-muted-foreground">Reduce failure modes; remove incidental complexity; build boring, scalable primitives.</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-terminal-cyan"></span>
+                <div>
+                  <p class="font-medium">Observability and cost visibility</p>
+                  <p class="text-muted-foreground">Metrics, traces, logs, and clear budgets that keep business and engineering aligned.</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-terminal-cyan"></span>
+                <div>
+                  <p class="font-medium">Lean delivery</p>
+                  <p class="text-muted-foreground">Ship in thin slices. Measure impact. Iterate. Remove rather than add when possible.</p>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <section class="rounded-lg border border-border bg-card/40 shadow-card p-5 md:p-6">
+            <h2 class="text-xl md:text-2xl font-semibold mb-4">
+              Values
+            </h2>
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="rounded-md border border-border/60 p-4 bg-background/40">
+                <p class="font-mono text-sm text-terminal-cyan mb-1">{">"} Clarity</p>
+                <p class="text-muted-foreground">Simple interfaces, explicit contracts, crisp docs. Clarity compounds.</p>
+              </div>
+              <div class="rounded-md border border-border/60 p-4 bg-background/40">
+                <p class="font-mono text-sm text-terminal-cyan mb-1">{">"} Leverage</p>
+                <p class="text-muted-foreground">Prefer moves that reduce future work: deprecations, internal platforms, automation.</p>
+              </div>
+              <div class="rounded-md border border-border/60 p-4 bg-background/40">
+                <p class="font-mono text-sm text-terminal-cyan mb-1">{">"} Ownership</p>
+                <p class="text-muted-foreground">End-to-end responsibility—from design through on-call and cost. No diffusion.</p>
+              </div>
+              <div class="rounded-md border border-border/60 p-4 bg-background/40">
+                <p class="font-mono text-sm text-terminal-cyan mb-1">{">"} Respect reality</p>
+                <p class="text-muted-foreground">Measure first principles: latency, error rates, spend, and time-to-ship.</p>
+              </div>
+            </div>
+          </section>
+        </article>
+
+        <!-- Quick facts / contact -->
+        <aside class="space-y-6">
+          <div class="rounded-lg border border-border bg-card/40 shadow-card p-5 md:p-6">
+            <h2 class="text-lg md:text-xl font-semibold mb-3">Focus areas</h2>
+            <ul class="flex flex-wrap gap-2">
+              {["Platform", "SRE", "Observability", "Perf", "Cost", "DX", "CI/CD", "Infra"].map((chip) => (
+                <li class="inline-flex items-center font-mono text-xs px-2 py-1 rounded border border-terminal-cyan/30 text-terminal-cyan">
+                  #{chip}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="rounded-lg border border-border bg-card/40 shadow-card p-5 md:p-6">
+            <h2 class="text-lg md:text-xl font-semibold mb-3">Get in touch</h2>
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+              <a
+                href="https://github.com/andrewDryga"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center font-mono border-2 border-terminal-cyan bg-transparent text-terminal-cyan hover:bg-terminal-cyan hover:text-background transition-all shadow-glow rounded-md px-4 py-2"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/andrew-dryga-bb382557/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center font-mono border-2 border-terminal-green text-terminal-green hover:bg-terminal-green hover:text-background transition-all rounded-md px-4 py-2"
+              >
+                LinkedIn
+              </a>
+              <a
+                href="/blog/"
+                class="inline-flex items-center justify-center font-mono border-2 border-terminal-yellow text-terminal-yellow hover:bg-terminal-yellow hover:text-background transition-all rounded-md px-4 py-2"
+              >
+                Blog
+              </a>
+              <a
+                href="https://elixirforum.com/u/andrewdryga/summary"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center font-mono border-2 border-terminal-cyan text-terminal-cyan hover:bg-terminal-cyan hover:text-background transition-all rounded-md px-4 py-2"
+              >
+                Elixir Forum
+              </a>
+              <a
+                href="https://leetcode.com/u/andrewdryga/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center font-mono border-2 border-terminal-yellow text-terminal-yellow hover:bg-terminal-yellow hover:text-background transition-all rounded-md px-4 py-2"
+              >
+                LeetCode
+              </a>
+            </div>
+            <p class="text-xs text-muted-foreground mt-3">
+              Prefer async? Start with a brief note or context. I’ll respond when I can add value.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/ld+json" is:inline>
+    {JSON.stringify(personLd)}
+  </script>
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

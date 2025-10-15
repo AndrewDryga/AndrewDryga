@@ -1,0 +1,51 @@
+---
+title: "Run stale tests on file change in Elixir"
+description: "Mix is an awesome tool but most Elixir beginners not aware of all its features. mix test --stale is the one them and can make your workflow much better."
+publishDate: 2017-11-12
+updatedDate: 2017-11-12
+tags:
+  - Engineering
+  - Elixir
+  - Testing
+  - Mix
+relatedProjects: []
+draft: false
+---
+
+Short and sweet: you don’t have to re-run the entire test suite after every change. Elixir’s `mix test --stale` runs only the tests affected by your recent edits, which speeds up the feedback loop significantly on mid-sized codebases.
+
+## Quick start
+
+```bash
+mix test --stale
+```
+
+This command re-runs:
+- Tests that failed in the previous run
+- Tests whose source files (or their dependencies) changed since the last successful run
+
+To see more detail while iterating:
+
+```bash
+mix test --stale --trace
+```
+
+You can also target a specific file or line (still benefits from staleness tracking):
+
+```bash
+mix test --stale test/my_app/some_test.exs:42
+```
+
+## Tips
+
+- Pair `--stale` with smaller, focused test files during development for very fast cycles.
+- If you run into odd dependency resolution (e.g., renames or large refactors), reset state with a full run:
+  ```bash
+  mix test
+  ```
+- For continuous re-runs on file change, consider using a file watcher (e.g., `fswatch`, `entr`) around `mix test --stale`:
+  ```bash
+  ls -1 **/*.{ex,exs} | entr -c mix test --stale
+  ```
+
+Faster iteration makes better tests—and better code. Keep the loop tight.

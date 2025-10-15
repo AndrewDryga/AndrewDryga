@@ -1,0 +1,255 @@
+---
+import BaseLayout from "../../components/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { blogPosts, categories } from "../../data/blogPosts";
+import type { CollectionEntry } from "astro:content";
+
+const PAGE_SIZE = 6;
+
+// Read query params for search, category, and pagination
+const url = Astro.url;
+const q = url.searchParams.get("q")?.toLowerCase() ?? "";
+const selectedCategory = url.searchParams.get("category") ?? "All";
+const currentPageRaw = Number.parseInt(url.searchParams.get("page") ?? "1");
+const currentPage =
+  Number.isFinite(currentPageRaw) && currentPageRaw > 0 ? currentPageRaw : 1;
+
+// Sort posts by date desc (dataset uses string dates)
+const postsSorted = blogPosts
+  .slice()
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+// Filter by search and category
+const postsFiltered = postsSorted.filter((post) => {
+  const matchesSearch =
+    q.length === 0 ||
+    post.title.toLowerCase().includes(q) ||
+    post.excerpt.toLowerCase().includes(q);
+  const matchesCategory =
+    selectedCategory === "All" || post.category === selectedCategory;
+  return matchesSearch && matchesCategory;
+});
+
+// Manual pagination using query params (?page=N)
+const totalPages = Math.max(1, Math.ceil(postsFiltered.length / PAGE_SIZE));
+const safePage = Math.min(Math.max(1, currentPage), totalPages);
+const start = (safePage - 1) * PAGE_SIZE;
+const pagePosts = postsFiltered.slice(start, start + PAGE_SIZE);
+
+// Helpers
+const title = "Blog — Andrew Dryga";
+const description =
+  "Thoughts on software engineering, distributed systems, and building products.";
+const canonical = url.href;
+
+const { getCollection } = await import("astro:content");
+const blogEntries = await getCollection(
+  "blog",
+  ({ data }: { data: { draft?: boolean } }) =>
+    import.meta.env.PROD ? !data.draft : true,
+);
+
+function estimateReadTime(body: string) {
+  const words = (body || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/<\/?[^>]+>/g, " ")
+    .replace(/[#>*_`~\[\]\(\)!-]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / 200));
+  return `${minutes} min read`;
+}
+
+const readTimeMap = Object.fromEntries(
+  blogEntries.map((e: { slug: string; body?: string }) => [
+    e.slug,
+    estimateReadTime(e.body ?? ""),
+  ]),
+);
+
+function formatDateStr(s: string) {
+  return new Date(s).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function pageHref(page: number) {
+  const params = new URLSearchParams(url.searchParams);
+  if (page <= 1) {
+    params.delete("page");
+  } else {
+    params.set("page", String(page));
+  }
+  return `/blog${params.size ? `/?${params.toString()}` : "/"}`;
+}
+
+function categoryHref(cat: string | null) {
+  if (!cat || cat === "All") {
+    return "/blog/";
+  }
+  const slug = cat.toLowerCase().replace(/\s+/g, "-");
+  return `/blog/category/${slug}/`;
+}
+
+function searchAction() {
+  return "/blog/";
+}
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+  <section class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <SectionHeader
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Blog" }]}
+        consoleLine="$ ls -la ./blog"
+        titleLeading="Blog &"
+        titleAccent="Insights"
+        accentColor="yellow"
+        description="Thoughts on software engineering, distributed systems, and building products."
+      >
+        <div class="flex flex-wrap gap-2 mt-8 md:mt-12">
+          {
+            ["All", ...categories.filter((c) => c !== "All")].map((cat) => {
+              const isActive =
+                cat === selectedCategory ||
+                (cat === "All" && selectedCategory === "All");
+              return (
+                <a
+                  href={categoryHref(cat)}
+                  aria-current={isActive ? "page" : "false"}
+                  class={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    isActive
+                      ? "text-background bg-terminal-yellow border-terminal-yellow"
+                      : "text-muted-foreground hover:text-terminal-yellow hover:border-terminal-yellow/60 border-border"
+                  }`}
+                >
+                  {cat}
+                </a>
+              );
+            })
+          }
+        </div>
+      </SectionHeader>
+
+      <!-- Blog Posts Grid -->
+      {
+        pagePosts.length > 0 ? (
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {pagePosts.map((post, index) => {
+              const href = post.link.endsWith("/")
+                ? post.link
+                : `${post.link}/`;
+              const slug = href.replace(/^\/blog\/|\/$/g, "");
+              return (
+                <article
+                  class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in relative"
+                  style={`animation-delay: ${index * 100}ms`}
+                >
+                  <a
+                    href={href}
+                    class="absolute inset-0 rounded-lg"
+                    aria-label={`Read more: ${post.title}`}
+                  />
+                  <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                      <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+                        {post.category}
+                      </span>
+                      <div class="font-mono text-xs text-muted-foreground flex items-center gap-3">
+                        <span>{formatDateStr(post.date)}</span>
+                        <span>{readTimeMap[slug] ?? ""}</span>
+                      </div>
+                    </div>
+                    <h3 class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow">
+                      {post.title}
+                    </h3>
+                    <p class="text-muted-foreground text-sm leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                    <span class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                      Read more →
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div class="text-center py-16 animate-fade-in">
+            <p class="text-muted-foreground text-lg font-mono">
+              No posts found matching your criteria.
+            </p>
+          </div>
+        )
+      }
+
+      <!-- Pagination -->
+      {
+        totalPages > 1 && (
+          <nav
+            class="mt-2 md:mt-4 flex items-center justify-between gap-4"
+            aria-label="Pagination"
+          >
+            <div>
+              {safePage > 1 ? (
+                <a
+                  href={pageHref(safePage - 1)}
+                  class="inline-flex items-center font-mono text-sm px-3 py-2 rounded-md border border-border text-muted-foreground hover:text-terminal-yellow hover:border-terminal-yellow/60 transition-colors"
+                  rel="prev"
+                >
+                  ← Prev
+                </a>
+              ) : (
+                <span class="inline-flex items-center font-mono text-sm px-3 py-2 rounded-md border border-border/40 text-muted-foreground/50 cursor-not-allowed select-none">
+                  ← Prev
+                </span>
+              )}
+            </div>
+
+            <ul class="flex items-center gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const pageNum = i + 1;
+                const isCurrent = pageNum === safePage;
+                return (
+                  <li>
+                    <a
+                      href={pageHref(pageNum)}
+                      aria-current={isCurrent ? "page" : "false"}
+                      class={`inline-flex items-center justify-center w-9 h-9 rounded-md border font-mono text-sm transition-colors ${
+                        isCurrent
+                          ? "border-terminal-yellow text-background bg-terminal-yellow"
+                          : "border-border text-muted-foreground hover:text-terminal-yellow hover:border-terminal-yellow/60"
+                      }`}
+                    >
+                      {pageNum}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div>
+              {safePage < totalPages ? (
+                <a
+                  href={pageHref(safePage + 1)}
+                  class="inline-flex items-center font-mono text-sm px-3 py-2 rounded-md border border-border text-muted-foreground hover:text-terminal-yellow hover:border-terminal-yellow/60 transition-colors"
+                  rel="next"
+                >
+                  Next →
+                </a>
+              ) : (
+                <span class="inline-flex items-center font-mono text-sm px-3 py-2 rounded-md border border-border/40 text-muted-foreground/50 cursor-not-allowed select-none">
+                  Next →
+                </span>
+              )}
+            </div>
+          </nav>
+        )
+      }
+    </div>
+  </section>
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

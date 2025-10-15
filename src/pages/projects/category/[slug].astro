@@ -1,0 +1,176 @@
+---
+import BaseLayout from "../../../components/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import SectionHeader from "../../../components/SectionHeader.astro";
+
+// Import data in a way that works whether `projectCategories` is exported or not
+import * as projectsData from "../../../data/projects";
+
+// Slug helpers
+function toSlug(s: string) {
+  return s.toLowerCase().replace(/\s+/g, "-");
+}
+function fromSlug(slug: string, pool: string[]) {
+  return pool.find((c) => toSlug(c) === slug) ?? null;
+}
+
+// Resolve project lists and categories at runtime
+const allProjects = (projectsData as any).allProjects as Array<any>;
+
+const computedUnique = Array.from(
+  new Set(
+    (allProjects || []).flatMap((p) => Array.isArray(p.categories) ? p.categories : [])
+  )
+).sort();
+
+const projectCategories: string[] = Array.isArray((projectsData as any).projectCategories)
+  ? (projectsData as any).projectCategories
+  : ["All", ...computedUnique];
+
+// Generate static paths for each category (except "All")
+export async function getStaticPaths() {
+  const slugs = projectCategories
+    .filter((c) => c !== "All")
+    .map(toSlug);
+
+  return slugs.map((slug) => ({
+    params: { slug },
+  }));
+}
+
+const { slug } = Astro.params;
+
+// Resolve category name from slug
+const currentCategory = fromSlug(slug!, projectCategories);
+
+if (!currentCategory) {
+  // Unknown category -> go back to projects index
+  return Astro.redirect("/projects/");
+}
+
+// If someone hits `/projects/category/all`, normalize to index
+if (currentCategory === "All") {
+  return Astro.redirect("/projects/");
+}
+
+const title = `Projects — ${currentCategory} — Andrew Dryga`;
+const description = `Projects filtered by ${currentCategory}.`;
+const canonical = Astro.url.href;
+
+// Filter projects by category
+const projectsFiltered = (allProjects || []).filter(
+  (p) => Array.isArray(p.categories) && p.categories.includes(currentCategory)
+);
+
+function categoryHref(cat: string | null) {
+  if (!cat || cat === "All") {
+    return "/projects/";
+  }
+  const cslug = toSlug(cat);
+  return `/projects/category/${cslug}/`;
+}
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+
+  <section class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto">
+      <SectionHeader
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Projects", href: "/projects" }]}
+        consoleLine="$ ls -la ~/projects/"
+        titleLeading="Projects:"
+        titleAccent={currentCategory}
+        accentColor="green"
+        description={`Projects filtered by ${currentCategory}.`}
+      >
+        <div class="flex flex-wrap gap-2 mt-8 md:mt-12">
+          {
+            projectCategories.map((cat) => {
+              const isActive = cat === currentCategory;
+              return (
+                <a
+                  href={categoryHref(cat)}
+                  aria-current={isActive ? "page" : "false"}
+                  class={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    isActive
+                      ? "text-background bg-terminal-green border-terminal-green"
+                      : "text-muted-foreground hover:text-terminal-green hover:border-terminal-green/60 border-border"
+                  }`}
+                >
+                  {cat}
+                </a>
+              );
+            })
+          }
+        </div>
+      </SectionHeader>
+
+      {
+        projectsFiltered.length > 0 ? (
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {projectsFiltered.map((project, idx) => (
+              <div
+                class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-green transition-all duration-300 shadow-card hover:shadow-glow relative h-full animate-fade-in"
+                style={`animation-delay: ${idx * 100}ms`}
+              >
+                <a
+                  href={`/projects/${project.id}/`}
+                  class="absolute inset-0 rounded-lg"
+                  aria-label={`View details for ${project.name}`}
+                ></a>
+
+                <div class="mb-3">
+                  <h3 class="text-xl font-bold mb-2 text-foreground transition-colors group-hover:text-terminal-green">
+                    {project.name}
+                  </h3>
+                  {project.period && (
+                    <p class="text-xs font-mono text-foreground/60 mb-2">{project.period}</p>
+                  )}
+                  <p class="text-foreground/80 mb-3">{project.description}</p>
+                </div>
+
+                {/* Impact bullets */}
+                {Array.isArray(project.impact) && project.impact.length > 0 && (
+                  <ul class="space-y-1 mb-4">
+                    {project.impact.map((item: string) => (
+                      <li class="text-sm text-foreground/90 font-mono flex items-start">
+                        <span class="text-terminal-green mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Tech badges */}
+                {Array.isArray(project.tech) && project.tech.length > 0 && (
+                  <div class="flex flex-wrap gap-2 mb-4">
+                    {project.tech.map((tech: string) => (
+                      <span
+                        class="inline-flex items-center rounded-md border border-border/50 bg-muted/80 text-foreground/70 px-2 py-1 text-xs"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3">
+                  Read more →
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-16 animate-fade-in">
+            <p class="text-muted-foreground text-lg font-mono">
+              No projects found for this category.
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

@@ -1,0 +1,55 @@
+/*
+  # Security headers
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), bluetooth=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), joystick=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), usb=(), web-share=(), xr-spatial-tracking=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+  # Content Security Policy
+  # Note: 'unsafe-inline' for scripts is included to support current inline Mixpanel init.
+  # Tighten with nonces/hashes when migrating to non-inline scripts.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https: blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.mixpanel.com https://*.mxpnl.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+
+  # HTML caching (short max-age at browser, cache at edge)
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/_astro/*
+  # Hashed build assets: long-lived, immutable
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  # Self-hosted fonts: long-lived, immutable
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+/images/*
+  # Static images (adjust path if using a different public images dir)
+  Cache-Control: public, max-age=31536000, immutable
+
+/og-default.jpg
+  # OG image (replace with your branded image when available)
+  Cache-Control: public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800
+
+/rss.xml
+  # Feeds: cache at edge for 10 minutes
+  Cache-Control: public, max-age=0, s-maxage=600, stale-while-revalidate=600
+  Content-Type: application/rss+xml; charset=utf-8
+
+/feed.json
+  # JSON Feed: cache at edge for 10 minutes
+  Cache-Control: public, max-age=0, s-maxage=600, stale-while-revalidate=600
+  Content-Type: application/feed+json; charset=utf-8
+
+/robots.txt
+  # Robots: cache at edge for a day
+  Cache-Control: public, max-age=3600, s-maxage=86400
+  Content-Type: text/plain; charset=utf-8
+
+/sitemap-index.xml
+  # Sitemap: cache at edge for a day
+  Cache-Control: public, max-age=3600, s-maxage=86400
+  Content-Type: application/xml; charset=utf-8

@@ -1,0 +1,241 @@
+---
+title: "Runtime configuration, migrations and deployment for Elixir applications"
+description: "Shortly after moving from PHP to Elixir I’ve faced a common issue: the way we deploy applications is totally different from what I used to work with."
+publishDate: 2017-08-20
+updatedDate: 2017-08-20
+tags:
+  - DevOps
+  - Elixir
+  - Deployment
+  - Releases
+  - Ecto
+draft: false
+---
+
+When you move from environments that interpolate config at build time to Elixir releases, you quickly realize two truths:
+
+1) Build once, run anywhere is the right default.
+2) That means most configuration must be resolved at runtime, not compile time.
+
+This post is a pragmatic guide for getting production-ready with:
+- Runtime configuration (env-driven, 12‑factor friendly)
+- Database migrations (safe, repeatable, automated)
+- Deployment flow (release build, migrate, boot)
+
+The theme is simple: make deployments reliable, boring, and reversible.
+
+## Why runtime config?
+
+If you bake secrets and environment specifics at compile time, you will rebuild per environment and lose the "promote the same artifact" property. That leads to:
+- Drift between environments
+- Slow rollbacks
+- Accidental secret leaks in images/artifacts
+
+Elixir offers first-class runtime configuration via `config/runtime.exs`, which executes when your application boots, not when it compiles.
+
+## Runtime configuration in Elixir
+
+Use `config/runtime.exs` to read environment variables and configure your OTP apps. This file runs for every boot (release and mix).
+
+```elixir
+# config/runtime.exs
+import Config
+
+# Example: Repo
+database_url =
+  System.get_env("DATABASE_URL") ||
+    raise "DATABASE_URL is missing. Example: ecto://USER:PASS@HOST:PORT/DB"
+
+pool_size =
+  System.get_env("POOL_SIZE", "10")
+  |> String.to_integer()
+
+config :my_app, MyApp.Repo,
+  url: database_url,
+  pool_size: pool_size,
+  ssl: System.get_env("DB_SSL", "false") == "true",
+  socket_options:
+    if(System.get_env("DB_IPV6", "false") == "true", do: [:inet6], else: [])
+
+# Example: Endpoint
+secret_key_base =
+  System.get_env("SECRET_KEY_BASE") ||
+    raise "SECRET_KEY_BASE is missing. Generate via: mix phx.gen.secret"
+
+host = System.get_env("PHX_HOST", "example.com")
+port = String.to_integer(System.get_env("PORT", "4000"))
+
+config :my_app, MyAppWeb.Endpoint,
+  url: [host: host, port: 443, scheme: "https"],
+  http: [ip: {0, 0, 0, 0}, port: port],
+  secret_key_base: secret_key_base,
+  server: true
+
+# Telemetry/Logging knobs are great to keep runtime-tunable
+config :logger, level: String.to_existing_atom(System.get_env("LOG_LEVEL", "info"))
+```
+
+Guidelines:
+- Fail fast when required env is missing.
+- Make non-critical settings defaultable.
+- Keep secrets in env or a secret manager (never in git).
+- Avoid compile-time config for anything that changes per environment.
+
+## Migrations strategy
+
+Your database is a shared, long-lived system of record. Keep migrations:
+- Safe (backwards compatible for online deploys)
+- Automated (no hand-run steps)
+- Idempotent (re-runnable without harm)
+
+There are three common patterns to run migrations with releases:
+
+1) One-shot job/command before starting the app (recommended)
+2) On-boot migrator that runs, then starts the supervision tree
+3) A separate “migrate” process (K8s Job, CF Worker, CI step) between deploy and scale-up
+
+I generally pick #1 or #3. They keep app boot paths clean and explicit.
+
+### Release task for migrations
+
+Add a small module to run migrations in a release:
+
+```elixir
+# lib/my_app/release.ex
+defmodule MyApp.Release do
+  @moduledoc false
+  @app :my_app
+
+  def migrate do
+    Application.load(@app)
+
+    repos = Application.fetch_env!(@app, :ecto_repos)
+
+    for repo <- repos do
+      # For Ecto 3.9+, use Ecto.Migrator.with_repo/2 for safety.
+      Ecto.Migrator.with_repo(repo, fn repo ->
+        Ecto.Migrator.run(repo, migrations_path(repo), :up, all: true)
+      end)
+    end
+  end
+
+  def rollback(version) do
+    Application.load(@app)
+
+    repos = Application.fetch_env!(@app, :ecto_repos)
+
+    for repo <- repos do
+      Ecto.Migrator.with_repo(repo, fn repo ->
+        Ecto.Migrator.run(repo, migrations_path(repo), :down, to: version)
+      end)
+    end
+  end
+
+  defp migrations_path(repo) do
+    app_dir = Application.app_dir(@app)
+    repo_otp =
+      repo
+      |> Module.split()
+      |> List.last()
+      |> Macro.underscore()
+
+    Path.join([app_dir, "priv", repo_otp, "migrations"])
+  end
+end
+```
+
+Then expose a shell entrypoint in the release to call it:
+
+```sh
+# rel/overlays/bin/migrate (mark executable)
+#!/bin/sh
+set -eu
+
+# Change "my_app" to your OTP release name (as in mix.exs :app)
+bin/my_app eval "MyApp.Release.migrate()"
+```
+
+Now your deploy pipeline can do:
+1) Build release
+2) Provision infra/secrets
+3) Run `bin/migrate`
+4) Start app `bin/my_app start` (or scale deployment)
+
+### Kubernetes
+
+- Use a `Job` to run `bin/my_app eval "MyApp.Release.migrate()"` against the same image and env as the deployment.
+- Gate the Deployment rollout on Job success (or at least alert on failure).
+- Avoid “migrate on every pod start” unless you constrain it via leader election; it can cause thundering herds.
+
+### Fly.io/Heroku/Cloud Run
+
+- Add a pre-start hook or a separate release-phase command to run migrations out-of-band before your app begins accepting traffic.
+
+## Build and deploy flow
+
+A solid baseline:
+
+1) Compile a release (once)
+   ```sh
+   MIX_ENV=prod mix deps.get --only prod
+   MIX_ENV=prod mix compile
+   MIX_ENV=prod mix assets.deploy # if applicable
+   MIX_ENV=prod mix release
+   ```
+
+2) Ship the artifact (Docker image or tarball) to your runtime target(s).
+
+3) Set environment (DATABASE_URL, SECRET_KEY_BASE, PHX_HOST, PORT, LOG_LEVEL, etc).
+
+4) Run migrations
+   ```sh
+   bin/my_app eval "MyApp.Release.migrate()"
+   ```
+
+5) Start or roll out the app
+   ```sh
+   bin/my_app start
+   # or, in orchestrators, let the deployment controller start pods
+   ```
+
+6) Rollback procedure
+   - Re-deploy the previous artifact (no rebuild needed).
+   - If necessary, run `rollback(version)` for the problematic migration (prefer forward fixes when possible).
+
+## Backwards-compatible migrations
+
+To support zero/low-downtime rollouts, use the “expand and contract” pattern:
+- Expand: additive changes (add new columns/tables with defaults, backfill separately, write dual‑write if needed)
+- Migrate code to use the new shape (read from new column, write both)
+- Contract: remove old columns/paths in a later release once fully migrated
+
+Avoid:
+- Blocking ALTERs that lock large tables
+- Destructive changes in the same deploy window as the code that still expects old schema
+
+When in doubt, split into small, safe steps.
+
+## Observability and alerts
+
+- Emit logs around migration start/finish and failures.
+- Add metrics for migration durations and outcomes.
+- Alert on migration failures; keep your DB state visible to operators.
+
+## Checklist
+
+- Runtime config
+  - [ ] All environment-specific settings moved to `config/runtime.exs`
+  - [ ] App fails fast when required env missing
+  - [ ] No secrets in source control or build artifacts
+
+- Migrations
+  - [ ] Dedicated migration task (`MyApp.Release.migrate/0`)
+  - [ ] Automated in deploy flow (Job/hook/command)
+  - [ ] Backwards-compatible schema changes
+
+- Deployment
+  - [ ] Single artifact promoted across environments
+  - [ ] Clear rollback path (previous artifact ready)
+  - [ ] Health checks, logs, metrics verified post-deploy
+
+Get these pieces right once, and every future deploy becomes easier, safer, and faster—exactly how it should be.

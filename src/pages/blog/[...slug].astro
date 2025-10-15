@@ -1,0 +1,288 @@
+---
+import BaseLayout from "../../components/BaseLayout.astro";
+import { getCollection, getEntry } from "astro:content";
+import Header from "../../components/Header.astro";
+import { allProjects } from "../../data/projects";
+
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }: { data: any }) =>
+    import.meta.env.PROD ? !data.draft : true
+  );
+  return posts.map((post: any) => ({
+    params: { slug: post.slug },
+    props: { postSlug: post.slug },
+  }));
+}
+
+const { postSlug } = Astro.props;
+const post = await getEntry("blog", postSlug);
+
+if (!post) {
+  return Astro.redirect("/404");
+}
+
+const { Content, headings } = await post.render();
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL(`/blog/${post.slug}/`, site).toString();
+const title = `${post.data.title} — Andrew Dryga`;
+const description = post.data.description;
+
+const publishISO = post.data.publishDate?.toISOString?.();
+const updatedISO = (post.data.updatedDate ?? post.data.publishDate)?.toISOString?.();
+const tags = post.data.tags ?? [];
+const image = post.data.heroImage;
+
+// Related Projects: explicit via frontmatter or heuristic fallback
+const explicitRelated = (post.data.relatedProjects ?? []) as string[];
+
+function norm(s: string | undefined | null): string {
+  return (s ?? "").toLowerCase();
+}
+
+const explicitSet = new Set(explicitRelated.map((x) => norm(x)));
+
+let relatedProjects = allProjects.filter(
+  (p) => explicitSet.has(norm(p.id)) || explicitSet.has(norm(p.name))
+);
+
+if (relatedProjects.length === 0) {
+  const haystack = [post.data.title, post.data.description, (post.data.tags ?? []).join(" ")].map(norm).join(" ");
+  relatedProjects = allProjects
+    .filter((p) => {
+      const id = norm(p.id);
+      const name = norm(p.name);
+      return haystack.includes(id) || haystack.includes(name);
+    })
+    .slice(0, 6);
+}
+
+function formatDate(d?: Date) {
+  if (!d) return "";
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+}
+
+// ToC: include h2/h3
+const toc = (headings ?? []).filter((h: { depth: number }) => h.depth >= 2 && h.depth <= 3);
+
+// JSON-LD: Article
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: post.data.title,
+  description,
+  datePublished: publishISO,
+  dateModified: updatedISO,
+  author: {
+    "@type": "Person",
+    name: "Andrew Dryga",
+    url: "https://dryga.com/about",
+  },
+  mainEntityOfPage: canonical,
+  url: canonical,
+  image: image ? new URL(image.src, site).toString() : undefined,
+  keywords: tags.join(", "),
+  articleSection: "Engineering",
+};
+
+// JSON-LD: BreadcrumbList
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: new URL("/", site).toString() },
+    { "@type": "ListItem", position: 2, name: "Blog", item: new URL("/blog/", site).toString() },
+    { "@type": "ListItem", position: 3, name: post.data.title, item: canonical },
+  ],
+};
+---
+
+<BaseLayout {title} {description} {canonical}>
+  <Header slot="header" variant="header" />
+  <section class="py-16 md:py-24 px-4">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)] gap-8">
+      <article class="min-w-0">
+        <header class="mb-10">
+          <nav class="font-mono text-sm text-muted-foreground mb-2" aria-label="breadcrumb">
+            <a href="/" class="transition-colors hover:text-foreground">Home</a>
+            <span class="mx-2 text-foreground/50">/</span>
+            <a href="/blog/" class="transition-colors hover:text-foreground">Blog</a>
+            <span class="mx-2 text-foreground/50">/</span>
+            <span class="text-foreground">{post.data.title}</span>
+          </nav>
+          <div class="font-mono text-terminal-yellow text-sm mb-2">$ cat ./blog/{post.slug}</div>
+          <h1 class="text-4xl md:text-5xl font-bold font-sans leading-relaxed">
+            <span class="text-foreground leading-snug">{post.data.title}</span><span class="text-terminal-yellow">.</span>
+          </h1>
+          <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            {post.data.publishDate && (
+              <time class="font-mono text-muted-foreground" datetime={publishISO}>
+                {formatDate(post.data.publishDate)}
+              </time>
+            )}
+            {tags.length > 0 && (
+              <ul class="flex flex-wrap gap-2">
+                {tags.map((t: string) => (
+                  <li>
+                    <a
+                      href={`/tags/${encodeURIComponent(t.toLowerCase())}`}
+                      class="inline-flex items-center font-mono text-xs px-2 py-1 rounded border border-terminal-yellow/30 text-terminal-yellow hover:border-terminal-yellow hover:bg-terminal-yellow/10 transition-colors"
+                      rel="tag"
+                    >
+                      #{t}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </header>
+
+        {image && (
+          <div class="mb-8 rounded-lg overflow-hidden border border-border bg-card/40 shadow-card">
+            <img src={image.src} width={image.width} height={image.height} alt={post.data.title} loading="eager" decoding="async" class="w-full h-auto" />
+          </div>
+        )}
+        {!image && (
+          <div class="mb-8 rounded-lg overflow-hidden border border-border bg-card/40 shadow-card">
+            <img src="/og-default.jpg" alt={post.data.title} loading="eager" decoding="async" class="w-full h-auto" />
+          </div>
+        )}
+
+        <div class="prose prose-invert max-w-none prose-pre:bg-[#0b0f14] prose-pre:text-foreground prose-pre:border prose-pre:border-border prose-pre:rounded-md prose-pre:overflow-x-auto">
+          <Content />
+        </div>
+
+        {relatedProjects.length > 0 && (
+          <section class="mt-12">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2">
+              Related <span class="text-terminal-green">Projects</span>
+
+            </h2>
+            <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+              {relatedProjects.map((project, idx) => (
+                <article
+                  class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-green transition-all duration-300 shadow-card hover:shadow-glow relative"
+                  style={`animation-delay: ${idx * 100}ms`}
+                >
+                  <a
+                    href={`/projects/${project.id}/`}
+                    class="absolute inset-0 rounded-lg"
+                    aria-label={`View project: ${project.name}`}
+                  ></a>
+                  <div class="mb-3">
+                    <h3 class="text-xl font-bold mb-2 text-foreground transition-colors group-hover:text-terminal-green">
+                      {project.name}
+                    </h3>
+                    {project.period && (
+                      <p class="text-xs font-mono text-foreground/60 mb-2">{project.period}</p>
+                    )}
+                    <p class="text-foreground/80 line-clamp-3">{project.description}</p>
+                  </div>
+                  <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3">
+                    View project →
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+      </article>
+
+      <aside class="min-w-0 lg:sticky lg:top-24 h-max self-start">
+        <div class="rounded-lg border border-border bg-card/40 p-4 lg:max-h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden">
+          <h2 class="font-mono text-sm uppercase tracking-wider text-muted-foreground mb-3">
+            Table of contents
+          </h2>
+          {toc.length === 0 ? (
+            <p class="text-sm text-muted-foreground">No headings</p>
+          ) : (
+            <ul class="space-y-2">
+              {toc.map((h: { depth: number; slug: string; text: string }) => (
+                <li style={`padding-left: ${(h.depth - 2) * 1}rem`}>
+                  <a
+                    href={`#${h.slug}`}
+                    class="toc-link block text-sm text-muted-foreground hover:text-terminal-green transition-colors break-words"
+                    aria-current="false"
+                  >
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </aside>
+    </div>
+  </section>
+    <Header slot="footer" variant="footer" />
+
+  <script is:inline>
+    // Scrollspy for Table of Contents
+    (function () {
+      const tocLinks = Array.from(document.querySelectorAll('.toc-link'));
+      const headings = Array.from(document.querySelectorAll('article h2[id], article h3[id]'));
+
+      function setActive(id) {
+        tocLinks.forEach((a) => {
+          const isActive = a.getAttribute('href') === `#${id}`;
+          a.classList.toggle('text-terminal-cyan', isActive);
+          a.classList.toggle('text-muted-foreground', !isActive);
+          a.setAttribute('aria-current', isActive ? 'true' : 'false');
+        });
+      }
+
+      if (!headings.length || !tocLinks.length) return;
+
+      // Observe headings entering viewport
+      const observer = new IntersectionObserver(
+        (entries) => {
+          // Prefer the entry closest to the top that's intersecting
+          let top = null;
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              if (!top || entry.boundingClientRect.top < top.boundingClientRect.top) {
+                top = entry;
+              }
+            }
+          }
+          if (top && top.target && top.target.id) {
+            setActive(top.target.id);
+          }
+        },
+        {
+          root: null,
+          // Trigger earlier so the highlight updates before the heading reaches the very top
+          rootMargin: '0px 0px -70% 0px',
+          threshold: [0, 1.0],
+        }
+      );
+
+      headings.forEach((h) => observer.observe(h));
+
+      // Fallback for fast scrolls and hash jumps
+      const onScroll = () => {
+        let currentId = headings[0].id;
+        const offset = 100;
+        for (const h of headings) {
+          const top = h.getBoundingClientRect().top;
+          if (top - offset <= 0) currentId = h.id;
+          else break;
+        }
+        setActive(currentId);
+      };
+
+      document.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('load', onScroll);
+      onScroll();
+    })();
+  </script>
+
+  <script type="application/ld+json" is:inline>
+    {JSON.stringify(articleLd)}
+  </script>
+  <script type="application/ld+json" is:inline>
+    {JSON.stringify(breadcrumbLd)}
+  </script>
+</BaseLayout>
