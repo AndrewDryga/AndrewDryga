@@ -1,0 +1,594 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Accordion from "@/components/ui/Accordion.astro";
+import AccordionItem from "@/components/ui/AccordionItem.astro";
+import BlogCard from "@/components/BlogCard.astro";
+import Badge from "@/components/ui/Badge.astro";
+import Button from "@/components/ui/Button.astro";
+import DropdownMenu from "@/components/ui/DropdownMenu.astro";
+import Tabs from "@/components/ui/Tabs.astro";
+import Tooltip from "@/components/ui/Tooltip.astro";
+import CodeExample from "@/components/CodeExample.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import { featuredProjects } from "@/data/projects";
+import { loadBlogSummaries, formatPublishDate } from "@/lib/blog";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/components/", site).toString();
+
+const sampleProjects = featuredProjects.slice(0, 2);
+const blogSamples = (await loadBlogSummaries()).slice(0, 3);
+
+const dropdownMenuItems = [
+  {
+    label: "Open docs",
+    shortcut: "Ctrl+Alt+D",
+    combo: { ctrl: true, alt: true, key: "d" },
+    href: "/component-library/data/",
+  },
+  {
+    label: "Copy command",
+    shortcut: "Ctrl+Alt+C",
+    combo: { ctrl: true, alt: true, key: "c" },
+    action: "copy-command",
+  },
+  {
+    label: "Toggle nav",
+    shortcut: "Ctrl+Alt+N",
+    combo: { ctrl: true, alt: true, key: "n" },
+    action: "toggle-nav",
+  },
+  {
+    label: "Disable animations",
+    shortcut: "Ctrl+Alt+M",
+    combo: { ctrl: true, alt: true, key: "m" },
+    disabled: true,
+  },
+];
+
+const accordionFaq = [
+  {
+    slug: "react-free",
+    question: "Do these components require React?",
+    answer:
+      "Nope. Every pattern is a plain Astro component with tiny inline scripts when needed.",
+  },
+  {
+    slug: "customise-tokens",
+    question: "How do I customise tokens?",
+    answer:
+      "All colors and spacing values map to CSS variables in tailwind.config.ts, so you can tune them globally.",
+  },
+];
+
+const tabItems = [
+  {
+    label: "Overview",
+    value: "overview",
+    content:
+      "Terminal-first UI primitives with semantic markup, accessible states, and zero client frameworks.",
+  },
+  {
+    label: "Install",
+    value: "install",
+    content: `$ npm install\n$ npm run dev -- --open`,
+  },
+  {
+    label: "CLI tips",
+    value: "cli",
+    content:
+      "Profile builds with `npm run build -- --verbose` and deploy via `$ fly deploy` or any static host.",
+  },
+];
+---
+
+<BaseLayout
+  title="Component Library — UI Components"
+  description="All of the reusable Astro-first UI patterns that replaced the React island."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="components" />
+
+      <SectionHeader
+        consoleLine="$ ls components/ui"
+        title="Component index"
+        description="Copy-paste ready Astro components covering buttons, cards, menus, and keyboard affordances—no React runtime required."
+        accentColor="cyan"
+        class="mb-4"
+      />
+
+      <div class="space-y-16">
+        <!-- Buttons -->
+        <section id="buttons" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Buttons</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Terminal-flavored button variants for primary actions, outlines,
+              ghosts, and icon buttons. Built with a single Astro component so
+              variants are props, not forks.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button>Primary Button</Button>
+                <Button variant="secondary">Secondary Button</Button>
+                <Button variant="accent">Accent Button</Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Standard button variants
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button variant="outline-primary">Outline Primary</Button>
+                <Button variant="outline-secondary">Outline Secondary</Button>
+                <Button variant="outline-accent">Outline Accent</Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Outline variants
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button variant="ghost" class="text-terminal-cyan">
+                  Ghost Primary
+                </Button>
+                <Button variant="ghost" class="text-secondary">
+                  Ghost Secondary
+                </Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Ghost variants (no border)
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button variant="glow">Glow Effect</Button>
+                <Button
+                  variant="outline-primary"
+                  class="hover:scale-105 transition-transform"
+                >
+                  Scale Hover
+                </Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Special effects
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button size="icon" variant="outline-primary"> → </Button>
+                <Button size="icon" variant="outline-secondary"> ✓ </Button>
+                <Button size="icon" variant="outline-accent"> ✗ </Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Icon buttons
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-4 mb-2">
+                <Button
+                  variant="shortcut"
+                  shortcut="cmd+k"
+                  class="min-w-[14rem]"
+                >
+                  Command palette
+                </Button>
+                <Button
+                  variant="shortcut"
+                  shortcut={["ctrl", "/"]}
+                  class="min-w-[14rem]"
+                >
+                  Toggle quick search
+                </Button>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Shortcut buttons with inline hotkeys
+              </p>
+            </div>
+          </div>
+
+          <CodeExample
+            label="Button usage"
+            code={`
+---
+import Button from "@/components/ui/Button.astro";
+---
+
+<Button variant="default">Primary Action</Button>
+<Button variant="outline">Secondary Action</Button>
+<Button class="gap-2">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 5l7 7-7 7" />
+  </svg>
+  Continue
+</Button>
+<Button variant="shortcut" shortcut="cmd+k">
+  Command palette
+</Button>`}
+          />
+
+          <div class="grid gap-3 md:grid-cols-2">
+            <div
+              class="rounded-md border border-terminal-green/40 bg-terminal-surface/80 p-4 font-mono text-xs text-terminal-green"
+            >
+              ✓ Promote one primary action per surface. Secondary intents stay
+              outline or ghost.
+            </div>
+            <div
+              class="rounded-md border border-destructive/40 bg-terminal-surface/80 p-4 font-mono text-xs text-destructive"
+            >
+              ✗ Avoid stacking multiple glow variants—the neon accent is for the
+              hero action only.
+            </div>
+          </div>
+        </section>
+
+        <!-- Cards -->
+        <section id="cards" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Cards</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              These examples reuse the production <code
+                class="px-1 py-0.5 bg-terminal-surface text-terminal-cyan rounded"
+                >ProjectCard</code
+              > component so the hover glow, call-to-action layout, and category
+              chip stay identical to the live site.
+            </p>
+          </header>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            {
+              sampleProjects.map((project, index) => (
+                <ProjectCard
+                  project={project}
+                  index={index}
+                  showImpact
+                  clampDescription
+                />
+              ))
+            }
+          </div>
+
+          <div class="rounded-lg border border-border bg-card p-6 space-y-3">
+            <h3 class="text-lg font-semibold text-foreground">Usage notes</h3>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+              <li>
+                Badge pills and CTA arrows are baked into <code
+                  class="px-1 bg-terminal-surface text-terminal-cyan rounded"
+                  >ProjectCard</code
+                >; no extra markup required.
+              </li>
+              <li>
+                Wrap cards in <code class="font-mono"
+                  >grid md:grid-cols-2 gap-6</code
+                > to mirror landing page spacing.
+              </li>
+              <li>
+                Use the <code class="font-mono">showImpact</code> prop to toggle
+                the bullet list of outcomes; categories render automatically.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Blog Cards -->
+        <section id="blog-cards" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Blog Cards</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Article previews share the same terminal surface treatment as the
+              live blog: category badge, publish date, and hover glide on the
+              arrow CTA.
+            </p>
+          </header>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {
+              blogSamples.map((post, index) => (
+                <BlogCard
+                  href={post.url}
+                  title={post.title}
+                  description={post.description}
+                  category={post.category}
+                  publishDate={formatPublishDate(post.publishDate)}
+                  animationDelay={index * 100}
+                />
+              ))
+            }
+          </div>
+
+          <CodeExample
+            label="Blog card usage"
+            code={`---
+import BlogCard from "@/components/BlogCard.astro";
+import { formatPublishDate } from "@/lib/blog";
+---
+
+<BlogCard
+  href={post.url}
+  title={post.title}
+  description={post.description}
+  category={post.category}
+  publishDate={formatPublishDate(post.publishDate)}
+/>`}
+          />
+        </section>
+
+        <!-- Badges -->
+        <section id="badges" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Badges &amp; Tags
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Status labels, outline chips, and interactive tags for metadata
+              and filters.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <div>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <Badge variant="outline" class="normal-case">React</Badge>
+                <Badge
+                  variant="outline"
+                  class="normal-case border-secondary text-secondary"
+                >
+                  TypeScript
+                </Badge>
+                <Badge
+                  variant="outline"
+                  class="normal-case border-accent text-accent"
+                >
+                  Tailwind
+                </Badge>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Outline badges
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <Badge variant="primary" class="normal-case">React</Badge>
+                <Badge variant="secondary" class="normal-case">TypeScript</Badge
+                >
+                <Badge variant="accent" class="normal-case">Tailwind</Badge>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Subtle variants
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-3 mb-2">
+                <Badge
+                  variant="accent"
+                  class="normal-case flex items-center gap-1 border-terminal-green/60 text-terminal-green"
+                >
+                  <span aria-hidden="true">✓</span>
+                  Success
+                </Badge>
+                <Badge
+                  variant="accent"
+                  class="normal-case flex items-center gap-1 border-terminal-yellow/60 text-terminal-yellow"
+                >
+                  <span aria-hidden="true">!</span>
+                  Warning
+                </Badge>
+                <Badge
+                  variant="accent"
+                  class="normal-case flex items-center gap-1 border-destructive/60 text-destructive"
+                >
+                  <span aria-hidden="true">✗</span>
+                  Error
+                </Badge>
+                <Badge
+                  variant="accent"
+                  class="normal-case flex items-center gap-1 border-terminal-cyan/60 text-terminal-cyan"
+                >
+                  <span aria-hidden="true">•</span>
+                  Info
+                </Badge>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Status indicators
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <Badge
+                  variant="outline"
+                  class="normal-case cursor-pointer border-primary text-primary transition-all duration-200 hover:border-primary/70 hover:bg-primary/20 active:scale-95"
+                >
+                  Hoverable
+                </Badge>
+                <Badge
+                  variant="outline"
+                  class="normal-case cursor-pointer border-secondary text-secondary transition-all duration-200 hover:border-secondary/70 hover:bg-secondary/20 active:scale-95"
+                >
+                  Clickable
+                </Badge>
+                <Badge
+                  variant="outline"
+                  class="normal-case cursor-pointer border-accent text-accent transition-all duration-200 hover:border-accent/70 hover:bg-accent/20 active:scale-95"
+                >
+                  Interactive
+                </Badge>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Hover and press states
+              </p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap items-center gap-2 mb-2">
+                <Badge
+                  variant="primary"
+                  class="normal-case px-2 py-0.5 text-xs"
+                >
+                  Small
+                </Badge>
+                <Badge variant="primary" class="normal-case px-3 py-1 text-sm">
+                  Medium
+                </Badge>
+                <Badge
+                  variant="primary"
+                  class="normal-case px-4 py-1.5 text-base"
+                >
+                  Large
+                </Badge>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Size variants
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Menus & Tooltips -->
+        <section id="menus-tooltips" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Menus &amp; tooltips
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Keyboard-friendly dropdowns and hover helpers tuned to the
+              terminal palette.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <DropdownMenu
+                items={dropdownMenuItems}
+                triggerLabel="Quick actions"
+                class="quick-actions"
+              />
+              <p class="text-xs font-mono text-muted-foreground">
+                Dropdown traps focus, supports arrow-key navigation, and emits
+                shortcut combos for power users.
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <div class="flex flex-wrap items-center gap-3">
+                <Tooltip content="Copy build command">
+                  <Button size="sm" variant="outline-primary">
+                    Hover tip
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Open docs in a new tab">
+                  <Button size="sm" variant="outline-secondary"> Docs </Button>
+                </Tooltip>
+                <Tooltip content="Deploy current branch">
+                  <Button size="sm" variant="outline-accent"> Deploy </Button>
+                </Tooltip>
+              </div>
+              <p class="text-xs font-mono text-muted-foreground">
+                Tooltips stay monospace, anchor beneath triggers, and respond to
+                focus-visible for keyboard accessibility.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Accordion & Tabs -->
+        <section id="accordion-tabs" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Accordion &amp; tabs
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Organise FAQs and documentation content with motion that respects
+              terminal cues.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Accordion class="space-y-2">
+                {
+                  accordionFaq.map((item, index) => (
+                    <AccordionItem value={item.slug} open={index === 0}>
+                      <span slot="trigger">{item.question}</span>
+                      <p class="text-sm text-muted-foreground">{item.answer}</p>
+                    </AccordionItem>
+                  ))
+                }
+              </Accordion>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Tabs items={tabItems} />
+              <p class="text-xs font-mono text-muted-foreground">
+                Tabs swap panels with a light script that respects reduced
+                motion preferences.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Keyboard Navigation -->
+        <section id="keyboard" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Keyboard navigation
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Demonstrate focus order, visible rings, and shortcut hints for
+              interactive surfaces.
+            </p>
+          </header>
+
+          <div class="rounded-lg border border-border bg-card p-6">
+            <div class="font-mono text-sm text-muted-foreground mb-4">
+              Tab sequence demo
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <Button>Button 1</Button>
+              <Button>Button 2</Button>
+              <Button>Button 3</Button>
+              <Button variant="outline">Ghost</Button>
+            </div>
+            <p class="text-sm text-muted-foreground mt-4 font-mono">
+              Press <kbd class="px-2 py-1 bg-muted border border-border rounded"
+                >Tab</kbd
+              > to move, <kbd
+                class="px-2 py-1 bg-muted border border-border rounded"
+                >Shift</kbd
+              > + <kbd class="px-2 py-1 bg-muted border border-border rounded"
+                >Tab</kbd
+              > to reverse, and <kbd
+                class="px-2 py-1 bg-muted border border-border rounded"
+                >Enter</kbd
+              > to activate.
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

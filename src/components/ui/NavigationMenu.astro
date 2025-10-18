@@ -1,0 +1,89 @@
+---
+interface NavItem {
+  label: string;
+  href?: string;
+  description?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+interface Props {
+  sections: NavSection[];
+  class?: string;
+}
+
+const { sections, class: className = "" } = Astro.props as Props;
+---
+
+<div class={['group relative inline-block font-mono text-sm', className].filter(Boolean).join(' ')} data-nav-menu>
+  <button
+    type="button"
+    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    data-nav-trigger
+  >
+    Menu
+    <svg class="h-3 w-3" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </button>
+
+  <div
+    data-nav-content
+    class="invisible pointer-events-none absolute left-0 right-auto top-full z-40 mt-4 w-[420px] rounded-lg border border-border bg-terminal-bg/95 p-4 text-xs shadow-[0_0_40px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+  >
+    <div class="grid gap-4">
+      {sections.map((section) => (
+        <div>
+          <p class="text-terminal-cyan uppercase tracking-wide text-[11px] mb-2">{section.title}</p>
+          <ul class="space-y-1">
+            {section.items.map((item) => (
+              <li>
+                <a
+                  href={item.href ?? '#'}
+                  class="block rounded px-3 py-2 text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
+                >
+                  <span class="font-semibold">{item.label}</span>
+                  {item.description && (
+                    <p class="text-[11px] text-muted-foreground/80 mt-1">{item.description}</p>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const wrapper = document.currentScript?.previousElementSibling;
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector('[data-nav-trigger]');
+    const content = wrapper.querySelector('[data-nav-content]');
+    if (!trigger || !content) return;
+
+    const open = () => {
+      content.classList.add('visible', 'pointer-events-auto', 'opacity-100');
+      content.classList.remove('invisible', 'pointer-events-none');
+    };
+    const close = () => {
+      content.classList.remove('visible', 'pointer-events-auto', 'opacity-100');
+      content.classList.add('invisible', 'pointer-events-none');
+    };
+
+    trigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (content.classList.contains('visible')) {
+        close();
+      } else {
+        open();
+      }
+    });
+    window.addEventListener('click', close);
+  })();
+</script>

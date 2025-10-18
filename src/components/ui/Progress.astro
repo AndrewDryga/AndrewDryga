@@ -1,0 +1,14 @@
+---
+interface Props {
+  value: number;
+  max?: number;
+  class?: string;
+}
+
+const { value, max = 100, class: className = "", ...rest } = Astro.props as Props & Record<string, unknown>;
+const percentage = Math.min(max, Math.max(0, value)) / max * 100;
+---
+
+<div class={['w-full rounded-full border border-border bg-terminal-surface/60 p-1', className].filter(Boolean).join(' ')} role="progressbar" aria-valuenow={value} aria-valuemax={max} {...rest}>
+  <div class="h-2 rounded-full bg-terminal-cyan shadow-[0_0_12px_rgba(34,211,238,0.45)] transition-all" style={`width:${percentage}%`}></div>
+</div>

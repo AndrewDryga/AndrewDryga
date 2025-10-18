@@ -1,0 +1,21 @@
+---
+const { title = "No data" } = Astro.props;
+---
+
+<div class="rounded-lg border border-border bg-background/60 p-6 text-center">
+  <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terminal-cyan/10 text-terminal-cyan">
+    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M18 6L6 18"></path>
+      <path d="M6 6l12 12"></path>
+    </svg>
+  </div>
+  <h3 class="mt-4 text-lg font-semibold text-foreground">{title}</h3>
+  <p class="mt-2 text-sm text-muted-foreground">
+    Connect a data source to populate this view. Once records arrive they will show up here automatically.
+  </p>
+  <div class="mt-4 flex justify-center">
+    <a href="#" class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan px-4 py-2 font-mono text-xs text-terminal-cyan transition-colors hover:bg-terminal-cyan hover:text-background">
+      Add connection
+    </a>
+  </div>
+</div>

@@ -1,0 +1,362 @@
+---
+import Button from "./Button.astro";
+
+interface Props {
+  id?: string;
+  title?: string;
+  description?: string;
+  side?: "left" | "right";
+  triggerLabel?: string;
+  class?: string;
+  width?: "sm" | "md" | "lg";
+}
+
+const {
+  id = `drawer-${crypto.randomUUID()}`,
+  title,
+  description,
+  side = "right",
+  triggerLabel = "Open drawer",
+  class: className = "",
+  width = "md",
+} = Astro.props as Props;
+
+const hasFooter = Astro.slots.has("footer");
+
+const widthMap: Record<NonNullable<Props["width"]>, string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+};
+
+const panelWidth = widthMap[width];
+const widthValueMap: Record<NonNullable<Props["width"]>, string> = {
+  sm: "20rem",
+  md: "24rem",
+  lg: "32rem",
+};
+const panelWidthValue = widthValueMap[width];
+const titleId = title ? `${id}-title` : undefined;
+const descriptionId = description ? `${id}-description` : undefined;
+---
+
+<Button
+  type="button"
+  variant="outline"
+  size="sm"
+  data-drawer-trigger={id}
+  class="border-terminal-cyan text-terminal-cyan hover:bg-terminal-cyan hover:text-background"
+>
+  <slot name="trigger">{triggerLabel}</slot>
+</Button>
+
+<div
+  data-drawer-root
+  data-drawer-id={id}
+  data-side={side}
+  class={["drawer-root", className].filter(Boolean).join(" ")}
+  hidden
+>
+  <div class="drawer-overlay" data-drawer-overlay>
+    <aside
+      class={["drawer-panel", panelWidth, "font-mono text-sm text-foreground"]
+        .filter(Boolean)
+        .join(" ")}
+      style={`--drawer-max-width:${panelWidthValue}`}
+      data-drawer-panel
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      tabindex="-1"
+    >
+      <header class="drawer-header">
+        <div class="flex w-full items-start justify-between gap-3">
+          {
+            title && (
+              <h3 id={titleId} class="text-sm font-semibold text-terminal-cyan">
+                {title}
+              </h3>
+            )
+          }
+          <button
+            type="button"
+            data-drawer-close
+            class="ml-auto text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-terminal-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan/40"
+            aria-label="Close drawer"
+          >
+            ESC
+          </button>
+        </div>
+        {
+          description && (
+            <p
+              id={descriptionId}
+              class="mt-2 font-sans text-sm leading-relaxed text-muted-foreground"
+            >
+              {description}
+            </p>
+          )
+        }
+      </header>
+      <div
+        class="drawer-body font-sans text-sm text-foreground/90 leading-relaxed"
+      >
+        <slot />
+      </div>
+      {
+        hasFooter && (
+          <footer class="drawer-footer">
+            <slot name="footer" />
+          </footer>
+        )
+      }
+    </aside>
+  </div>
+</div>
+
+<script is:inline data-drawer-id={id}>
+  (() => {
+    const script = document.currentScript;
+    const drawerId = script?.dataset.drawerId;
+    if (!drawerId) return;
+    const trigger = document.querySelector(
+      `[data-drawer-trigger='${drawerId}']`,
+    );
+    const root = document.querySelector(`[data-drawer-id='${drawerId}']`);
+    if (!(trigger instanceof HTMLElement) || !(root instanceof HTMLElement))
+      return;
+
+    const overlay = root.querySelector("[data-drawer-overlay]");
+    const panel = root.querySelector("[data-drawer-panel]");
+    const closeButtons = root.querySelectorAll("[data-drawer-close]");
+    if (!(overlay instanceof HTMLElement) || !(panel instanceof HTMLElement))
+      return;
+
+    const focusableSelector =
+      "a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex='-1'])";
+    let lastFocused = null;
+
+    trigger.setAttribute("aria-expanded", "false");
+
+    const getFocusable = () =>
+      Array.from(panel.querySelectorAll(focusableSelector)).filter(
+        (element) =>
+          element instanceof HTMLElement &&
+          !element.hasAttribute("disabled") &&
+          element.getAttribute("aria-hidden") !== "true" &&
+          element.tabIndex !== -1,
+      );
+
+    const trapFocus = (event) => {
+      if (event.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    const open = () => {
+      lastFocused =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      root.hidden = false;
+      requestAnimationFrame(() => {
+        document.documentElement.classList.add("drawer-open");
+        overlay.classList.add("drawer-overlay--visible");
+        panel.setAttribute("data-open", "true");
+        trigger.setAttribute("aria-expanded", "true");
+        const focusable = getFocusable();
+        const first = focusable[0];
+        if (first instanceof HTMLElement) {
+          first.focus({ preventScroll: true });
+        } else {
+          panel.focus({ preventScroll: true });
+        }
+      });
+      panel.addEventListener("keydown", trapFocus);
+    };
+
+    const close = () => {
+      panel.removeEventListener("keydown", trapFocus);
+      overlay.classList.remove("drawer-overlay--visible");
+      panel.removeAttribute("data-open");
+      trigger.setAttribute("aria-expanded", "false");
+      document.documentElement.classList.remove("drawer-open");
+      const afterTransition = () => {
+        root.hidden = true;
+        overlay.removeEventListener("transitionend", afterTransition);
+      };
+      const computed = window.getComputedStyle(overlay);
+      const durations = computed.transitionDuration
+        .split(",")
+        .map((value) => Number.parseFloat(value));
+      const hasTransition = durations.some((value) => value > 0);
+      if (hasTransition) {
+        overlay.addEventListener("transitionend", afterTransition, {
+          once: true,
+        });
+      } else {
+        root.hidden = true;
+      }
+      if (lastFocused instanceof HTMLElement) {
+        lastFocused.focus({ preventScroll: true });
+      } else {
+        trigger.focus({ preventScroll: true });
+      }
+    };
+
+    trigger.addEventListener("click", open);
+    closeButtons.forEach((btn) => btn.addEventListener("click", close));
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+    window.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        panel.getAttribute("data-open") === "true"
+      ) {
+        close();
+      }
+    });
+  })();
+</script>
+
+<style is:inline>
+  .drawer-root {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: block;
+  }
+
+  .drawer-root[hidden] {
+    display: none;
+  }
+
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-block: clamp(1rem, 3vw, 2rem);
+    padding-inline: clamp(1.25rem, 3vw, 2rem);
+    background: transparent;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    box-sizing: border-box;
+    width: 100vw;
+    min-height: 100dvh;
+  }
+
+  .drawer-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: hsl(var(--terminal-bg) / 0.7);
+    backdrop-filter: blur(12px);
+    z-index: 0;
+  }
+
+  .drawer-overlay > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .drawer-root[data-side="left"] .drawer-overlay {
+    justify-content: flex-start;
+  }
+
+  .drawer-root[data-side="right"] .drawer-overlay {
+    justify-content: flex-end;
+  }
+
+  .drawer-overlay--visible {
+    opacity: 1;
+  }
+
+  .drawer-panel {
+    position: relative;
+    width: min(100vw - clamp(2rem, 8vw, 6rem), var(--drawer-max-width, 24rem));
+    min-height: calc(100dvh - clamp(2.5rem, 8vw, 4rem));
+    background: hsl(var(--terminal-bg));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 0 20px hsl(var(--terminal-cyan) / 0.2);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transform: translateX(100%);
+    transition:
+      transform 220ms ease-out,
+      opacity 200ms ease-out;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .drawer-root[data-side="left"] .drawer-panel {
+    transform: translateX(-100%);
+    align-self: flex-start;
+  }
+
+  .drawer-root[data-side="right"] .drawer-panel {
+    align-self: flex-start;
+  }
+
+  .drawer-panel[data-open="true"] {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .drawer-header {
+    border-bottom: 1px solid hsl(var(--border) / 0.35);
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .drawer-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid hsl(var(--border) / 0.35);
+    padding-top: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .drawer-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 640px) {
+    .drawer-overlay {
+      padding: 2rem 1rem;
+    }
+
+    .drawer-panel {
+      width: calc(100vw - 2rem);
+      min-height: calc(100dvh - 3rem);
+    }
+  }
+</style>

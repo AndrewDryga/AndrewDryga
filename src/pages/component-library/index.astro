@@ -1,0 +1,70 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import { componentLibraryCards } from "@/data/componentLibrary";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/", site).toString();
+---
+
+<BaseLayout
+  title="Component Library — Overview"
+  description="Dev-only gallery of the terminal-themed component patterns."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-8">
+      <header class="space-y-3">
+        <p class="font-mono text-sm text-terminal-green">
+          $ ls -la ./component-library
+        </p>
+        <h1 class="text-4xl md:text-5xl font-bold text-foreground">
+          Component Library
+        </h1>
+        <p class="max-w-3xl text-sm text-muted-foreground">
+          These pages document the Astro-native component patterns that replaced
+          the old React/shadcn gallery. Everything here is safe to copy, remix,
+          and ship without loading React.
+        </p>
+        <p
+          class="font-mono text-xs text-terminal-yellow uppercase tracking-wide"
+        >
+          Dev only — this route redirects in production builds.
+        </p>
+      </header>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        {
+          componentLibraryCards.map((section) => (
+            <article class="group relative flex h-full flex-col gap-4 rounded-lg border border-border bg-card/40 p-6 shadow-card transition-colors hover:border-terminal-cyan/60">
+              <a
+                href={section.href}
+                class="absolute inset-0 rounded-lg"
+                aria-label={`Open ${section.title}`}
+              />
+              <p class="font-mono text-xs text-terminal-green">
+                {section.command}
+              </p>
+              <h2 class="text-2xl font-semibold text-foreground transition-colors group-hover:text-terminal-cyan">
+                {section.title}
+              </h2>
+              <p class="text-sm text-muted-foreground leading-relaxed">
+                {section.description}
+              </p>
+              <span class="mt-auto inline-flex items-center gap-2 font-mono text-sm text-terminal-cyan transition-all group-hover:gap-3">
+                View pattern →
+              </span>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>

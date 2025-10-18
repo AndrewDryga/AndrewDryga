@@ -1,0 +1,88 @@
+---
+interface ToggleOption {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  type?: "single" | "multiple";
+  value?: string | string[];
+  options: ToggleOption[];
+  class?: string;
+}
+
+const {
+  type = "single",
+  value,
+  options,
+  class: className = "",
+} = Astro.props as Props;
+
+const normalizeValue = () => {
+  if (type === "single") {
+    return typeof value === "string" ? value : null;
+  }
+  if (Array.isArray(value)) return value;
+  return [];
+};
+
+const activeValues = normalizeValue();
+---
+
+<div
+  class={['inline-flex flex-wrap gap-2', className].filter(Boolean).join(' ')}
+  data-toggle-group
+  data-mode={type}
+>
+  {options.map((option) => (
+    <button
+      type="button"
+      data-toggle-option={option.value}
+      class={[
+        'inline-flex items-center rounded border px-3 py-1.5 font-mono text-xs transition-colors',
+        type === 'single'
+          ? activeValues === option.value
+            ? 'border-terminal-cyan bg-terminal-cyan/10 text-terminal-cyan'
+            : 'border-border text-muted-foreground hover:border-terminal-cyan hover:text-terminal-cyan'
+          : Array.isArray(activeValues) && activeValues.includes(option.value)
+            ? 'border-terminal-cyan bg-terminal-cyan/10 text-terminal-cyan'
+            : 'border-border text-muted-foreground hover:border-terminal-cyan hover:text-terminal-cyan',
+      ].join(' ')}
+    >
+      {option.label}
+    </button>
+  ))}
+</div>
+
+<script is:inline>
+  (() => {
+    const group = document.currentScript?.previousElementSibling;
+    if (!group) return;
+    const mode = group.dataset.mode ?? 'single';
+    const buttons = group.querySelectorAll('[data-toggle-option]');
+
+    if (mode === 'single') {
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          buttons.forEach((other) => {
+            other.classList.remove('border-terminal-cyan', 'bg-terminal-cyan/10', 'text-terminal-cyan');
+            other.classList.add('border-border', 'text-muted-foreground');
+          });
+          button.classList.add('border-terminal-cyan', 'bg-terminal-cyan/10', 'text-terminal-cyan');
+          button.classList.remove('border-border', 'text-muted-foreground');
+          group.dispatchEvent(new CustomEvent('change', { detail: button.dataset.toggleOption }));
+        });
+      });
+    } else {
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const active = button.classList.toggle('active');
+          button.classList.toggle('border-terminal-cyan', active);
+          button.classList.toggle('bg-terminal-cyan/10', active);
+          button.classList.toggle('text-terminal-cyan', active);
+          group.dispatchEvent(new CustomEvent('change')); // consumer can read active states
+        });
+      });
+    }
+  })();
+</script>

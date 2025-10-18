@@ -1,0 +1,19 @@
+---
+import Index from "../index.astro";
+import { loadBlogSummaries } from "../../../lib/blog";
+
+// Pre-render path-based pagination pages: /blog/page/1/, /blog/page/2/, ...
+export async function getStaticPaths() {
+  const PAGE_SIZE = 6;
+  const posts = await loadBlogSummaries();
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+  }));
+}
+---
+
+<!-- Proxy render to the main blog index.
+     Index reads Astro.url (which includes /blog/page/N/) and handles pagination. -->
+<Index />

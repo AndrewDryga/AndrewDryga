@@ -1,0 +1,165 @@
+---
+export interface NavLink {
+  name: string;
+  href: string;
+  external?: boolean;
+}
+
+export interface Props {
+  links?: NavLink[];
+  class?: string;
+  overlay?: boolean;
+}
+
+const { links = [], class: className = "", overlay = true } = Astro.props;
+const panelId = `mobile-nav-panel-${crypto.randomUUID()}`;
+---
+
+<div class={["md:hidden", className].filter(Boolean).join(" ")} data-mobile-nav>
+  <button
+    type="button"
+    class="flex items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    aria-expanded="false"
+    aria-controls={panelId}
+    data-mobile-nav-toggle
+  >
+    <span class="sr-only">Toggle navigation</span>
+    <svg
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="3" x2="21" y1="6" y2="6"></line>
+      <line x1="3" x2="21" y1="12" y2="12"></line>
+      <line x1="3" x2="21" y1="18" y2="18"></line>
+    </svg>
+    Menu
+  </button>
+
+  {
+    overlay && (
+      <div
+        class="fixed inset-0 z-40 hidden bg-background/80 backdrop-blur-sm transition-opacity"
+        data-mobile-nav-overlay
+      />
+    )
+  }
+
+  <div
+    id={panelId}
+    class="fixed inset-x-4 top-16 z-50 hidden rounded-lg border border-border bg-card shadow-card"
+    data-mobile-nav-panel
+  >
+    <nav aria-label="Mobile" class="px-4 py-4">
+      <ul class="space-y-2">
+        {
+          links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class="block rounded-md px-3 py-2 font-mono text-sm text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
+                {...(link.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+              >
+                {link.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const navs = Array.from(document.querySelectorAll("[data-mobile-nav]"));
+    navs.forEach((nav) => {
+      const toggle = nav.querySelector("[data-mobile-nav-toggle]");
+      const panel = nav.querySelector("[data-mobile-nav-panel]");
+      const overlay = nav.querySelector("[data-mobile-nav-overlay]");
+      if (!toggle || !panel) return;
+
+      let lastFocused = null;
+      const focusableSelectors =
+        'a[href], button:not([disabled]), textarea, input[type="text"], input[type="email"], input[type="url"], input[type="tel"], input[type="number"], input[type="search"], select, [tabindex]:not([tabindex="-1"])';
+
+      const getFocusableElements = () =>
+        Array.from(panel.querySelectorAll(focusableSelectors)).filter(
+          (el) =>
+            el instanceof HTMLElement &&
+            !el.hasAttribute("disabled") &&
+            !el.getAttribute("aria-hidden"),
+        );
+
+      const trapFocus = (event) => {
+        if (event.key !== "Tab") return;
+        const focusable = getFocusableElements();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (event.shiftKey) {
+          if (document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      };
+
+      const open = () => {
+        lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        panel.classList.remove("hidden");
+        toggle.setAttribute("aria-expanded", "true");
+        overlay?.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+        panel.addEventListener("keydown", trapFocus);
+        const focusable = getFocusableElements();
+        const firstFocusable = focusable[0] ?? panel.querySelector("a, button");
+        if (firstFocusable instanceof HTMLElement) {
+          firstFocusable.focus();
+        }
+      };
+
+      const close = () => {
+        panel.classList.add("hidden");
+        toggle.setAttribute("aria-expanded", "false");
+        overlay?.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+        panel.removeEventListener("keydown", trapFocus);
+        if (lastFocused instanceof HTMLElement) {
+          lastFocused.focus();
+        } else {
+          toggle.focus();
+        }
+      };
+
+      toggle.addEventListener("click", () => {
+        const isHidden = panel.classList.contains("hidden");
+        if (isHidden) open();
+        else close();
+      });
+
+      overlay?.addEventListener("click", close);
+
+      panel
+        .querySelectorAll("a")
+        .forEach((anchor) => anchor.addEventListener("click", close));
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") close();
+      });
+    });
+  })();
+</script>

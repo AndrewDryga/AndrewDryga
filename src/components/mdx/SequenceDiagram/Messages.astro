@@ -1,0 +1,11 @@
+---
+const { class: className = "" } = Astro.props;
+---
+
+<div class={`relative min-h-[200px] ${className}`.trim()}>
+  <div class="absolute left-[15%] -top-4 bottom-0 w-px border-l-2 border-dashed border-primary/30"></div>
+  <div class="absolute left-[85%] -top-4 bottom-0 w-px border-l-2 border-dashed border-accent/30"></div>
+  <div class="space-y-2">
+    <slot />
+  </div>
+</div>

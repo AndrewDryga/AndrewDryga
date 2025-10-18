@@ -1,0 +1,31 @@
+---
+interface Props {
+  label: string;
+  description?: string;
+  error?: string;
+  htmlFor?: string;
+  class?: string;
+}
+
+const {
+  label,
+  description,
+  error,
+  htmlFor,
+  class: className = "",
+} = Astro.props as Props;
+---
+
+<div class={['space-y-2', className].filter(Boolean).join(' ')}>
+  <label
+    class="font-mono text-xs uppercase tracking-wide text-muted-foreground"
+    for={htmlFor}
+  >
+    {label}
+  </label>
+  <slot />
+  {description && (
+    <p class="text-xs text-muted-foreground">{description}</p>
+  )}
+  {error && <p class="text-xs text-destructive">{error}</p>}
+</div>

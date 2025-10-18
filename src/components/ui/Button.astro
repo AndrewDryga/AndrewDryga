@@ -1,0 +1,420 @@
+---
+import {
+  tokenizeShortcut,
+  toAriaShortcut,
+  splitModifiers,
+} from "@/utils/shortcuts";
+
+type ShortcutValue = string | string[] | undefined;
+
+interface Props {
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "accent"
+    | "ghost"
+    | "link"
+    | "glow"
+    | "outline-primary"
+    | "outline-secondary"
+    | "outline-accent"
+    | "shortcut";
+  size?: "default" | "sm" | "lg" | "icon";
+  href?: string;
+  shortcut?: ShortcutValue;
+}
+
+const {
+  class: className = "",
+  variant = "default",
+  size = "default",
+  href,
+  shortcut,
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+
+const attributes = { ...rest } as Record<string, unknown>;
+const buttonType = (attributes.type as string | undefined) ?? "button";
+delete attributes.type;
+
+const baseClass =
+  "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border-2 text-sm font-mono transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
+
+const variantClasses: Record<NonNullable<Props["variant"]>, string> = {
+  default:
+    "border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90",
+  destructive:
+    "border-2 border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  outline:
+    "border-2 border-border bg-background hover:bg-terminal-cyan/10 hover:text-terminal-cyan",
+  secondary:
+    "border-2 border-secondary bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  accent:
+    "border-2 border-accent bg-accent text-accent-foreground hover:bg-accent/80",
+  ghost:
+    "border-2 border-transparent hover:bg-terminal-cyan/10 hover:text-terminal-cyan",
+  link: "text-primary underline-offset-4 hover:underline",
+  glow: "border-2 border-primary bg-primary text-primary-foreground shadow-[0_0_20px_hsl(var(--terminal-cyan)/0.3)] hover:shadow-[0_0_30px_hsl(var(--terminal-cyan)/0.5)]",
+  "outline-primary": "border-2 border-primary text-primary hover:bg-primary/10",
+  "outline-secondary":
+    "border-2 border-secondary text-secondary hover:bg-secondary/10",
+  "outline-accent": "border-2 border-accent text-accent hover:bg-accent/10",
+  shortcut:
+    "!justify-between border-2 border-terminal-cyan/50 bg-terminal-surface text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 hover:text-terminal-cyan shadow-[0_0_0_1px_rgba(94,234,212,0.08)] transition-colors",
+};
+
+const sizeClasses: Record<NonNullable<Props["size"]>, string> = {
+  default: "h-10 px-6 py-2",
+  sm: "h-9 rounded-md px-3",
+  lg: "h-11 rounded-md px-8",
+  icon: "h-10 w-10",
+};
+
+const classes = [
+  baseClass,
+  variantClasses[variant],
+  sizeClasses[size],
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+
+const tokens = tokenizeShortcut(shortcut);
+const displayTokens = tokens.map((token) => token.label);
+const { modifiers: modifierKeys, primary: primaryKey } = splitModifiers(tokens);
+const ariaShortcut = toAriaShortcut(tokens);
+const hasShortcut = tokens.length > 0;
+
+const modifierOrder = ["meta", "control", "alt", "shift"] as const;
+const canonicalKey =
+  hasShortcut && primaryKey
+    ? [
+        ...modifierKeys
+          .slice()
+          .sort(
+            (a, b) =>
+              modifierOrder.indexOf(a as (typeof modifierOrder)[number]) -
+              modifierOrder.indexOf(b as (typeof modifierOrder)[number]),
+          ),
+        primaryKey,
+      ]
+        .filter(Boolean)
+        .join("+")
+    : null;
+
+const isShortcutVariant = variant === "shortcut";
+const hasShortcutSlot = Astro.slots.has("shortcut");
+
+const classifyShortcutToken = (label: string) => {
+  if (!label) return "button-shortcut-word";
+  if (label.length === 1) {
+    if (label === "/") {
+      return "button-shortcut-letter";
+    }
+    return /^[A-Za-z0-9/]$/.test(label)
+      ? "button-shortcut-letter"
+      : "button-shortcut-symbol";
+  }
+  return "button-shortcut-word";
+};
+
+if (import.meta.env.DEV) {
+  if (isShortcutVariant && !hasShortcut) {
+    console.warn('[Button] variant= "shortcut" requires a shortcut prop.');
+  }
+  if (hasShortcut && !primaryKey) {
+    console.warn("[Button] Shortcut definitions require a non-modifier key.");
+  }
+}
+
+if (hasShortcut && ariaShortcut && !("aria-keyshortcuts" in attributes)) {
+  attributes["aria-keyshortcuts"] = ariaShortcut;
+}
+
+if (hasShortcut) {
+  attributes["data-shortcut-display"] = displayTokens.join("|");
+  attributes["data-has-shortcut"] = "true";
+  if (canonicalKey) {
+    attributes["data-shortcut-canonical"] = canonicalKey;
+  }
+  if (primaryKey) {
+    attributes["data-shortcut-primary"] = primaryKey;
+  }
+  if (modifierKeys.length) {
+    attributes["data-shortcut-modifiers"] = modifierKeys.join("+");
+  }
+}
+---
+
+{
+  href ? (
+    <a class={classes} href={href} data-button-root {...attributes}>
+      <span
+        class="button-label inline-flex items-center gap-2"
+        data-slot="label"
+      >
+        <slot />
+      </span>
+      {hasShortcut && (
+        <span class="button-shortcut" aria-hidden="true" data-slot="shortcut">
+          {hasShortcutSlot ? (
+            <slot name="shortcut" />
+          ) : (
+            displayTokens.map((token, index) => (
+              <span class="inline-flex items-center gap-1" data-shortcut-token>
+                <span class="shortcut-key">
+                  <kbd class={`shortcut-glyph ${classifyShortcutToken(token)}`}>
+                    {token}
+                  </kbd>
+                </span>
+                {index < displayTokens.length - 1 ? (
+                  <span data-separator>+</span>
+                ) : null}
+              </span>
+            ))
+          )}
+        </span>
+      )}
+    </a>
+  ) : (
+    <button class={classes} type={buttonType} data-button-root {...attributes}>
+      <span
+        class="button-label inline-flex items-center gap-2"
+        data-slot="label"
+      >
+        <slot />
+      </span>
+      {hasShortcut && (
+        <span class="button-shortcut" aria-hidden="true" data-slot="shortcut">
+          {hasShortcutSlot ? (
+            <slot name="shortcut" />
+          ) : (
+            displayTokens.map((token, index) => (
+              <span class="inline-flex items-center gap-1" data-shortcut-token>
+                <span class="shortcut-key">
+                  <kbd class={`shortcut-glyph ${classifyShortcutToken(token)}`}>
+                    {token}
+                  </kbd>
+                </span>
+                {index < displayTokens.length - 1 ? (
+                  <span data-separator>+</span>
+                ) : null}
+              </span>
+            ))
+          )}
+        </span>
+      )}
+    </button>
+  )
+}
+
+<script is:inline>
+  (() => {
+    if (typeof window === "undefined") return;
+
+    const modifierOrder = { meta: 0, control: 1, alt: 2, shift: 3 };
+
+    const normalizeKey = (key) => {
+      if (!key) return null;
+      const lowered = key.length === 1 ? key.toLowerCase() : key.toLowerCase();
+      if (["meta", "control", "shift", "alt"].includes(lowered)) return null;
+      return lowered;
+    };
+
+    const canonicalFromEvent = (event) => {
+      const normalizedKey = normalizeKey(event.key);
+      if (!normalizedKey) return null;
+      const parts = [];
+      if (event.metaKey) parts.push("meta");
+      if (event.ctrlKey) parts.push("control");
+      if (event.altKey) parts.push("alt");
+      if (event.shiftKey) parts.push("shift");
+      parts.sort((a, b) => (modifierOrder[a] ?? 10) - (modifierOrder[b] ?? 10));
+      parts.push(normalizedKey);
+      return parts.join("+");
+    };
+
+    const shouldIgnore = (target) => {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.closest("[data-shortcut-button-ignore]")) return true;
+      const focusable = ["INPUT", "TEXTAREA", "SELECT"];
+      if (focusable.includes(target.tagName)) return true;
+      if (target.isContentEditable) return true;
+      return false;
+    };
+
+    const getShortcutElements = () =>
+      Array.from(document.querySelectorAll("[data-shortcut-canonical]"));
+
+    const refreshLegend = () => {
+      const active = document.documentElement.hasAttribute(
+        "data-button-shortcuts",
+      );
+      getShortcutElements().forEach((btn) => {
+        if (!btn.isConnected) return;
+        if (active) {
+          btn.setAttribute("data-show-shortcut", "true");
+        } else {
+          btn.removeAttribute("data-show-shortcut");
+        }
+      });
+    };
+
+    const toggleLegend = (state) => {
+      if (state) {
+        document.documentElement.setAttribute("data-button-shortcuts", "true");
+      } else {
+        document.documentElement.removeAttribute("data-button-shortcuts");
+      }
+      refreshLegend();
+      console.debug("[Button] legend", state ? "shown" : "hidden", {
+        count: getShortcutElements().length,
+      });
+    };
+
+    const handleKeydown = (event) => {
+      const metaLegend =
+        event.metaKey &&
+        ((event.code === "Slash" && (event.shiftKey || !event.shiftKey)) ||
+          event.key === "?");
+      const ctrlLegend =
+        event.ctrlKey &&
+        ((event.shiftKey && (event.code === "Slash" || event.key === "?")) ||
+          event.code === "Slash");
+      if (metaLegend || ctrlLegend) {
+        if (shouldIgnore(event.target)) {
+          console.debug(
+            "[Button] legend combo ignored (focused element)",
+            event.target,
+          );
+          return;
+        }
+        event.preventDefault();
+        console.debug("[Button] legend combo detected", {
+          meta: event.metaKey,
+          ctrl: event.ctrlKey,
+          shift: event.shiftKey,
+          key: event.key,
+          code: event.code,
+        });
+        toggleLegend(true);
+        return;
+      }
+
+      const canonical = canonicalFromEvent(event);
+      if (!canonical) return;
+      const targets = getShortcutElements().filter(
+        (el) => el.dataset.shortcutCanonical === canonical,
+      );
+      if (!targets.length) return;
+      if (shouldIgnore(event.target)) {
+        console.debug(
+          "[Button] shortcut combo ignored (focused element)",
+          event.target,
+        );
+        return;
+      }
+      event.preventDefault();
+      const target = targets[0];
+      console.debug("[Button] triggering shortcut", canonical, target);
+      window.requestAnimationFrame(() => target.click());
+    };
+
+    const handleKeyup = (event) => {
+      if (!event.metaKey) {
+        toggleLegend(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown, true);
+    window.addEventListener("keyup", handleKeyup, true);
+    window.addEventListener("blur", () => toggleLegend(false));
+    document.addEventListener("astro:page-load", () => refreshLegend());
+    document.addEventListener("astro:after-swap", () => refreshLegend());
+    refreshLegend();
+  })();
+</script>
+
+<style is:inline>
+  [data-button-root] {
+    position: relative;
+  }
+
+  [data-button-root] .button-label,
+  [data-button-root] .button-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease;
+  }
+
+  [data-button-root] .button-shortcut {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+  }
+
+  [data-button-root] .button-shortcut .shortcut-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6rem;
+    min-height: 1.6rem;
+    padding: 0 0.55rem;
+    border-radius: 0.35rem;
+    border: 0;
+    background: hsla(var(--terminal-cyan) / 0.18);
+  }
+
+  [data-button-root] .button-shortcut .shortcut-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: hsl(var(--terminal-cyan));
+    line-height: 1;
+    letter-spacing: 0.12em;
+    min-width: 1.2rem;
+  }
+
+  [data-button-root] .button-shortcut .button-shortcut-letter {
+    font-size: 0.9rem;
+    transform: translateX(0.03rem);
+  }
+
+  [data-button-root] .button-shortcut .button-shortcut-symbol {
+    font-size: 1.2rem;
+    letter-spacing: 0;
+    transform: translateY(0.03rem);
+  }
+
+  [data-button-root] .button-shortcut .button-shortcut-word {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+  }
+
+  [data-button-root] .button-shortcut span[data-separator] {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: hsla(var(--terminal-cyan) / 0.6);
+  }
+
+  [data-button-root][data-show-shortcut] .button-label {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  [data-button-root][data-show-shortcut] .button-shortcut {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>

@@ -32,7 +32,6 @@ export const GET: APIRoute = async ({ site }) => {
 
   const homeUrl = new URL("/", siteUrl).toString();
   const feedUrl = new URL("/feed.json", siteUrl).toString();
-  const blogUrl = new URL("/blog/", siteUrl).toString();
 
   const items = sorted.map((post: CollectionEntry<"blog">) => {
     const url = new URL(`/blog/${post.slug}/`, siteUrl).toString();

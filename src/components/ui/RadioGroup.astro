@@ -1,0 +1,36 @@
+---
+interface Option {
+  label: string;
+  value: string;
+  description?: string;
+}
+
+interface Props {
+  name: string;
+  options: Option[];
+  defaultValue?: string;
+  class?: string;
+}
+
+const { name, options, defaultValue, class: className = "", ...rest } = Astro.props as Props & Record<string, unknown>;
+---
+
+<div class={['space-y-2', className].filter(Boolean).join(' ')} role="radiogroup" {...rest}>
+  {options.map((option) => (
+    <label class="flex cursor-pointer items-start gap-3 rounded-md border border-border/60 bg-terminal-surface/80 px-3 py-2 transition-colors hover:border-terminal-cyan/60">
+      <input
+        type="radio"
+        class="mt-1 h-4 w-4 shrink-0 rounded-full border border-border text-terminal-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan"
+        name={name}
+        value={option.value}
+        checked={defaultValue === option.value}
+      />
+      <span>
+        <span class="font-mono text-xs uppercase tracking-wide text-terminal-cyan">{option.label}</span>
+        {option.description && (
+          <p class="text-xs text-muted-foreground">{option.description}</p>
+        )}
+      </span>
+    </label>
+  ))}
+</div>

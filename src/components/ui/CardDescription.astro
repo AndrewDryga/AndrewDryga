@@ -1,0 +1,15 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "", ...rest } = Astro.props as Props & Record<string, unknown>;
+
+const classes = ["text-sm text-muted-foreground", className]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<p class={classes} {...rest}>
+  <slot />
+</p>

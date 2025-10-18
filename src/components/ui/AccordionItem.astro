@@ -1,0 +1,113 @@
+---
+interface Props {
+  value: string;
+  class?: string;
+  open?: boolean;
+}
+
+const { value, class: className = "", open = false } = Astro.props as Props;
+---
+
+<div
+  class={[
+    "border border-border/60 rounded-lg bg-terminal-surface/80",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ")}
+  data-accordion-item={value}
+  data-open={open ? "true" : "false"}
+>
+  <button
+    type="button"
+    class="flex w-full items-center justify-between gap-3 px-4 py-3 font-mono text-sm text-foreground transition-colors hover:text-terminal-cyan"
+    data-accordion-trigger
+    aria-expanded={open}
+  >
+    <span><slot name="trigger" /></span>
+    <svg
+      class="h-4 w-4 transition-transform duration-200 data-[open=true]:rotate-180"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      data-accordion-icon
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
+  <div
+    class="max-h-0 overflow-hidden transition-[max-height] duration-300 ease-out"
+    data-accordion-content
+  >
+    <div class="px-4 pb-4 text-sm text-muted-foreground">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const item = document.currentScript?.previousElementSibling;
+    if (!item) return;
+    const trigger = item.querySelector("[data-accordion-trigger]");
+    const icon = item.querySelector("[data-accordion-icon]");
+    const content = item.querySelector("[data-accordion-content]");
+    if (!trigger || !content || !icon) return;
+    const accordion = item.closest("[data-accordion]");
+    const multiple = accordion?.dataset.multiple === "true";
+
+    const setState = (open) => {
+      item.dataset.open = open ? "true" : "false";
+      trigger.setAttribute("aria-expanded", String(open));
+      content.dataset.open = open ? "true" : "false";
+      icon.dataset.open = open ? "true" : "false";
+      if (open) {
+        const inner = content.firstElementChild;
+        const height = inner instanceof HTMLElement ? inner.scrollHeight : 0;
+        content.style.maxHeight = `${height}px`;
+      } else {
+        content.style.maxHeight = "0px";
+      }
+    };
+
+    setState(item.dataset.open === "true");
+
+    const closeItem = (target) => {
+      target.dataset.open = "false";
+      const targetContent = target.querySelector("[data-accordion-content]");
+      targetContent?.setAttribute("data-open", "false");
+      if (targetContent instanceof HTMLElement) {
+        targetContent.style.maxHeight = "0px";
+      }
+      target
+        .querySelector("[data-accordion-icon]")
+        ?.setAttribute("data-open", "false");
+      target
+        .querySelector("[data-accordion-trigger]")
+        ?.setAttribute("aria-expanded", "false");
+    };
+
+    trigger.addEventListener("click", () => {
+      const isOpen = item.dataset.open === "true";
+      if (!multiple && accordion) {
+        accordion.querySelectorAll("[data-accordion-item]").forEach((other) => {
+          if (other !== item) {
+            closeItem(other);
+          }
+        });
+      }
+      setState(!isOpen);
+    });
+
+    window.addEventListener("resize", () => {
+      if (item.dataset.open === "true") {
+        const inner = content.firstElementChild;
+        const height = inner instanceof HTMLElement ? inner.scrollHeight : 0;
+        content.style.maxHeight = `${height}px`;
+      }
+    });
+  })();
+</script>

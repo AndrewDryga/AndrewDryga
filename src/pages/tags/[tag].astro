@@ -1,12 +1,14 @@
 ---
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
-import { getCollection } from "astro:content";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { formatPublishDate } from "../../lib/blog";
 
 export async function getStaticPaths() {
   // Collect all unique tags from blog posts (exclude drafts in production)
-  const posts = await getCollection("blog", ({ data }) =>
-    import.meta.env.PROD ? !data.draft : true
+  const posts = await getCollection("blog", (entry: CollectionEntry<"blog">) =>
+    import.meta.env.PROD ? !entry.data.draft : true,
   );
 
   const tagMap = new Map<string, string>();
@@ -28,30 +30,55 @@ const { displayTag } = Astro.props as { displayTag: string };
 const lowerTag = (Astro.params.tag ?? "").toLowerCase();
 
 // Load and filter posts by tag (case-insensitive), newest first
-const allPosts = await getCollection("blog", ({ data }) =>
-  import.meta.env.PROD ? !data.draft : true
+const allPosts = await getCollection(
+  "blog",
+  (entry: CollectionEntry<"blog">) =>
+    import.meta.env.PROD ? !entry.data.draft : true,
 );
 const posts = allPosts
-  .filter((p) => (p.data.tags ?? []).some((t) => t.toLowerCase() === lowerTag))
-  .sort((a, b) => {
+  .filter((p: CollectionEntry<"blog">) =>
+    (p.data.tags ?? []).some((t: string) => t.toLowerCase() === lowerTag),
+  )
+  .sort((a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) => {
     const at = a.data.publishDate?.getTime?.() ?? 0;
     const bt = b.data.publishDate?.getTime?.() ?? 0;
     return bt - at;
   });
 
-function formatDate(d?: Date) {
-  if (!d) return "";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
-}
-
-function blogTagHref(tag: string) {
-  return `/blog/?tag=${encodeURIComponent(tag)}`;
-}
+type BlogEntry = CollectionEntry<"blog">;
+const postPairs: Array<{ post: BlogEntry; index: number }> = (
+  posts as BlogEntry[]
+).map((p, i) => ({ post: p, index: i }));
 
 const site = Astro.site ?? new URL("https://dryga.com/");
-const canonical = new URL(`/tags/${encodeURIComponent(lowerTag)}/`, site).toString();
+const canonical = new URL(
+  `/tags/${encodeURIComponent(lowerTag)}/`,
+  site,
+).toString();
+
+const TAG_INTROS: Record<string, string> = {
+  architecture:
+    "Practical architecture notes from systems that shipped. Trade-offs, diagrams, and patterns that stayed simple under real load.",
+  engineering:
+    "Hands-on product engineering from idea to production. Thin slices, fast feedback, and code that’s easy to change.",
+  security:
+    "Pragmatic security in production: access, auth, and data safeguards that reduce risk without slowing delivery.",
+  database:
+    "Schema design, migrations, and performance work that keep data correct and fast. Real incidents, fixes, and lessons.",
+  devops:
+    "Delivery pipelines, observability, and ops hygiene that keep teams shipping. Fewer surprises, calmer on-call.",
+  elixir:
+    "Real-world Elixir work: OTP patterns, deployment tactics, and simple designs that scale with the team.",
+  reliability:
+    "SLOs, incident reviews, and the boring habits that keep uptime predictable. What actually helped and what didn’t.",
+  testing:
+    "Testing that supports change instead of blocking it. From flaky specs to contracts and fast feedback loops.",
+};
+
 const title = `#${displayTag} — Andrew Dryga`;
-const description = `Posts tagged #${displayTag}.`;
+const description =
+  TAG_INTROS[displayTag.toLowerCase()] ??
+  `Notes on ${displayTag.toLowerCase()} from shipping real systems.`;
 ---
 
 <BaseLayout {title} {description} {canonical}>
@@ -61,61 +88,104 @@ const description = `Posts tagged #${displayTag}.`;
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <header class="mb-8 md:mb-10">
-        <div class="font-mono text-sm text-terminal-green mb-2 flex items-center gap-2">
-          <span class="text-terminal-cyan">~/tags/{lowerTag}</span>
-          <span class="animate-pulse">▊</span>
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Blog", href: "/blog/" },
+            { label: `#${displayTag}` },
+          ]}
+          class="mb-2"
+        />
+        <div
+          class="font-mono text-sm text-terminal-green mb-2 flex items-center gap-2"
+        >
+          <span class="text-terminal-yellow"
+            >grep -Ril "tag:{lowerTag}" ./blogs</span
+          >
         </div>
         <h1 class="text-4xl md:text-5xl font-bold font-sans">
           <span class="text-foreground">Tag:</span>
-          <span class="text-terminal-cyan"> #{displayTag}</span>
+          <span> #{displayTag}</span>
         </h1>
         <p class="text-muted-foreground max-w-2xl mt-3">
-          {posts.length} {posts.length === 1 ? "post" : "posts"} tagged with <span class="text-terminal-cyan">#{displayTag}</span>.
-          <a href="/blog/" class="ml-2 underline decoration-terminal-cyan/60 hover:text-terminal-green transition-colors">View all posts →</a>
+          {posts.length}
+          {posts.length === 1 ? "post" : "posts"} tagged with <span
+            class="text-terminal-yellow">#{displayTag}</span
+          >.
+          <a
+            href="/blog/"
+            class="ml-2 underline decoration-terminal-yellow/60 hover:text-terminal-yellow transition-colors"
+            >View all posts →</a
+          >
         </p>
       </header>
 
+      <p class="text-sm text-muted-foreground max-w-3xl mb-10">
+        {description}
+      </p>
+
       <!-- Posts list -->
-      <div class="space-y-6 md:space-y-8">
-        {posts.length === 0 ? (
-          <div class="rounded-lg border border-border bg-card/40 p-6 text-muted-foreground">
-            No posts found for <span class="text-terminal-cyan font-mono">#{displayTag}</span>.{" "}
-            <a href="/blog/" class="underline decoration-terminal-cyan/60 hover:text-terminal-green transition-colors">Back to blog</a>.
-          </div>
-        ) : (
-          posts.map((post) => {
-            const { title: postTitle, description: desc, publishDate, tags } = post.data;
-            return (
-              <article class="rounded-lg border border-border bg-card/40 shadow-card hover:shadow-glow transition-shadow">
-                <a href={`/blog/${post.slug}/`} class="block p-5 md:p-6">
-                  <header class="mb-2">
-                    <h2 class="text-2xl md:text-3xl font-semibold tracking-tight">
-                      <span class="hover:text-terminal-cyan transition-colors">{postTitle}</span>
-                    </h2>
-                    <div class="mt-1 font-mono text-xs text-muted-foreground">
-                      {publishDate ? formatDate(publishDate) : ""}
+      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {
+          posts.length === 0 ? (
+            <div class="rounded-lg border border-border bg-card/40 p-6 text-muted-foreground">
+              No posts found for{" "}
+              <span class="text-terminal-cyan font-mono">#{displayTag}</span>.{" "}
+              <a
+                href="/blog/"
+                class="underline decoration-terminal-cyan/60 hover:text-terminal-green transition-colors"
+              >
+                Back to blog
+              </a>
+              .
+            </div>
+          ) : (
+            postPairs.map((pair) => {
+              const { post, index } = pair;
+              const {
+                title: postTitle,
+                description: desc,
+                publishDate,
+              } = post.data;
+              const postHref = `/blog/${post.slug}/`;
+              const topLabel = post.data.category ?? displayTag;
+              const excerpt = desc ?? "";
+              return (
+                <article
+                  class="group relative h-full rounded-lg border border-border bg-card/40 shadow-card transition-all hover:border-terminal-yellow hover:shadow-glow"
+                  style={`animation-delay: ${index * 80}ms`}
+                >
+                  <a
+                    href={postHref}
+                    class="absolute inset-0 rounded-lg"
+                    aria-label={`Read more: ${postTitle}`}
+                  />
+                  <div class="relative flex h-full flex-col gap-4 p-5 md:p-6">
+                    <div class="flex items-center justify-between">
+                      <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+                        {topLabel}
+                      </span>
+                      <span class="font-mono text-xs text-muted-foreground">
+                        {publishDate ? formatPublishDate(publishDate) : ""}
+                      </span>
                     </div>
-                  </header>
-                  {desc && <p class="text-muted-foreground">{desc}</p>}
-                  {tags && tags.length > 0 && (
-                    <ul class="mt-4 flex flex-wrap gap-2">
-                      {tags.map((t) => (
-                        <li>
-                          <a
-                            href={blogTagHref(t)}
-                            class="inline-flex items-center font-mono text-xs px-2 py-1 rounded border border-terminal-cyan/30 text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 transition-colors"
-                          >
-                            #{t}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </a>
-              </article>
-            );
-          })
-        )}
+                    <h2 class="text-2xl font-semibold tracking-tight transition-colors group-hover:text-terminal-cyan md:text-3xl">
+                      {postTitle}
+                    </h2>
+                    {excerpt && (
+                      <p class="text-sm text-muted-foreground leading-relaxed">
+                        {excerpt}
+                      </p>
+                    )}
+                    <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                      Read post →
+                    </span>
+                  </div>
+                </article>
+              );
+            })
+          )
+        }
       </div>
     </div>
   </section>

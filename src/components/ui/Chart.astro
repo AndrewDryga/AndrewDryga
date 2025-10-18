@@ -1,0 +1,48 @@
+---
+interface Props {
+  points: number[];
+  height?: number;
+  class?: string;
+}
+
+const {
+  points,
+  height = 120,
+  class: className = "",
+} = Astro.props as Props;
+
+const max = Math.max(...points);
+const min = Math.min(...points);
+const normalize = (value: number) => {
+  if (max === min) return 0.5;
+  return (value - min) / (max - min);
+};
+const path = points
+  .map((point, index) => {
+    const x = (index / (points.length - 1)) * 100;
+    const y = (1 - normalize(point)) * 100;
+    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+  })
+  .join(' ');
+---
+
+<svg
+  viewBox="0 0 100 100"
+  class={['w-full', className].filter(Boolean).join(' ')}
+  style={`height:${height}px`}
+  role="presentation"
+>
+  <polyline
+    fill="none"
+    stroke="rgba(34,211,238,0.8)"
+    stroke-width="2"
+    points={points
+      .map((point, index) => {
+        const x = (index / (points.length - 1)) * 100;
+        const y = (1 - normalize(point)) * 100;
+        return `${x},${y}`;
+      })
+      .join(' ')}
+  />
+  <path d={`${path} L 100 100 L 0 100 Z`} fill="rgba(34,211,238,0.15)" />
+</svg>

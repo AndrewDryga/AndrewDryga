@@ -1,0 +1,29 @@
+---
+interface Props {
+  label: string;
+  description: string;
+  tone?: "cyan" | "green" | "yellow";
+  class?: string;
+}
+
+const { label, description, tone = "cyan", class: className = "" } =
+  Astro.props as Props;
+
+const toneClasses: Record<typeof tone, string> = {
+  cyan: "text-terminal-cyan",
+  green: "text-terminal-green",
+  yellow: "text-terminal-yellow",
+};
+
+const classes = [
+  "border border-border rounded-lg p-6 bg-card",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={classes}>
+  <div class={`font-mono text-sm mb-2 ${toneClasses[tone]}`}>{label}</div>
+  <p class="text-xs text-muted-foreground">{description}</p>
+</div>

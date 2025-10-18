@@ -1,0 +1,179 @@
+---
+interface MenuItem {
+  label: string;
+  shortcut?: string;
+  href?: string;
+  disabled?: boolean;
+}
+
+interface Props {
+  items: MenuItem[];
+  class?: string;
+  menuClass?: string;
+}
+
+const { items, class: className = "", menuClass = "" } = Astro.props as Props;
+---
+
+<div
+  class={["relative", className].filter(Boolean).join(" ")}
+  data-context-container
+>
+  <slot />
+
+  <div
+    class={[
+      "invisible pointer-events-none fixed z-50 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 shadow-[0_0_40px_rgba(34,211,238,0.25)] backdrop-blur",
+      "transition-opacity data-[open=true]:visible data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 opacity-0",
+      menuClass,
+    ]
+      .filter(Boolean)
+      .join(" ")}
+    role="menu"
+    tabindex="-1"
+    data-context-menu
+  >
+    {
+      items.map((item) => (
+        <a
+          href={item.href ?? "#"}
+          data-menu-item
+          class={[
+            "flex items-center justify-between gap-4 rounded px-2 py-1.5 text-xs font-mono",
+            item.disabled
+              ? "cursor-not-allowed text-muted-foreground"
+              : "text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan",
+          ].join(" ")}
+          aria-disabled={item.disabled ? "true" : undefined}
+          role="menuitem"
+          tabindex={-1}
+        >
+          <span>{item.label}</span>
+          {item.shortcut && (
+            <span class="ml-auto inline-flex items-center gap-1 text-[12px] font-mono text-muted-foreground">
+              {item.shortcut.split("+").map((part) => (
+                <kbd class="min-w-[1.75rem] px-2 py-1 border border-border/60 rounded bg-terminal-bg/80 text-center uppercase">
+                  {part.trim()}
+                </kbd>
+              ))}
+            </span>
+          )}
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const container = document.currentScript?.previousElementSibling;
+    if (!(container instanceof HTMLElement)) return;
+    const menu = container.querySelector("[data-context-menu]");
+    if (!(menu instanceof HTMLElement)) return;
+    const items = Array.from(
+      menu.querySelectorAll("[data-menu-item]:not([aria-disabled='true'])"),
+    ).filter((node) => node instanceof HTMLElement);
+    let activeIndex = -1;
+
+    const clearActive = () => {
+      items.forEach((item) => {
+        item.classList.remove("bg-terminal-cyan/20", "text-terminal-cyan");
+        item.removeAttribute("data-active");
+      });
+      activeIndex = -1;
+    };
+
+    const focusItem = (index) => {
+      if (!items.length) return;
+      const clamped = (index + items.length) % items.length;
+      clearActive();
+      const target = items[clamped];
+      activeIndex = clamped;
+      target.classList.add("bg-terminal-cyan/20", "text-terminal-cyan");
+      target.setAttribute("data-active", "true");
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "nearest" });
+    };
+
+    const openMenu = (event) => {
+      event.preventDefault();
+      const { clientX: x, clientY: y } = event;
+      const { innerWidth, innerHeight } = window;
+      const { offsetWidth: width, offsetHeight: height } = menu;
+
+      const left = Math.min(x, innerWidth - width - 8);
+      const top = Math.min(y, innerHeight - height - 8);
+
+      menu.style.left = `${left}px`;
+      menu.style.top = `${top}px`;
+      menu.dataset.open = "true";
+      requestAnimationFrame(() => {
+        menu.focus({ preventScroll: true });
+        if (items.length) {
+          focusItem(activeIndex >= 0 ? activeIndex : 0);
+        }
+      });
+    };
+
+    const closeMenu = () => {
+      delete menu.dataset.open;
+      clearActive();
+    };
+
+    container.addEventListener("contextmenu", openMenu);
+    window.addEventListener("click", (event) => {
+      if (event.target instanceof Node && !menu.contains(event.target)) {
+        closeMenu();
+      }
+    });
+    window.addEventListener("keydown", (event) => {
+      if (!menu.dataset.open) return;
+      if (!items.length) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusItem((activeIndex + 1) % items.length);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusItem((activeIndex - 1 + items.length) % items.length);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        focusItem(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        focusItem(items.length - 1);
+      } else if (event.key === "Enter" || event.key === " ") {
+        const current = items[activeIndex];
+        if (current) {
+          event.preventDefault();
+          current.click();
+        }
+      }
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener("mouseenter", () => {
+        activeIndex = index;
+        items.forEach((other, i) => {
+          if (i === index) {
+            other.classList.add("bg-terminal-cyan/20", "text-terminal-cyan");
+            other.setAttribute("data-active", "true");
+          } else {
+            other.classList.remove("bg-terminal-cyan/20", "text-terminal-cyan");
+            other.removeAttribute("data-active");
+          }
+        });
+      });
+
+      item.addEventListener("click", (event) => {
+        if (item.getAttribute("aria-disabled") === "true") {
+          event.preventDefault();
+          return;
+        }
+        closeMenu();
+      });
+    });
+  })();
+</script>

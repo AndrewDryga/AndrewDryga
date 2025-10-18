@@ -1,0 +1,76 @@
+---
+import type { Project } from "@/data/projects";
+
+export interface Props {
+  project: Project;
+  index?: number;
+  showImpact?: boolean;
+  clampDescription?: boolean;
+  ctaLabel?: string;
+  class?: string;
+}
+
+const {
+  project,
+  index = 0,
+  showImpact = true,
+  clampDescription = false,
+  ctaLabel = "View project →",
+  class: wrapperClass = "",
+} = Astro.props;
+const href = `/projects/${project.id}/`;
+const animationDelay = `${index * 100}ms`;
+const rootClasses = [
+  "group relative flex h-full flex-col rounded-lg border border-border bg-card p-6 shadow-card transition-all duration-300 hover:border-terminal-green hover:shadow-glow animate-fade-in",
+  wrapperClass,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<article class={rootClasses} style={`animation-delay: ${animationDelay}`}>
+  <a
+    href={href}
+    class="absolute inset-0 rounded-lg"
+    aria-label={`View details for ${project.name}`}></a>
+
+  <div class="flex h-full flex-col">
+    <div class="flex-1 space-y-4">
+      <header class="space-y-2">
+        <h3
+          class="text-xl font-bold text-foreground transition-colors group-hover:text-terminal-green"
+        >
+          {project.name}
+        </h3>
+        <p
+          class={`text-sm text-foreground/80 leading-relaxed ${
+            clampDescription ? "line-clamp-3" : ""
+          }`}
+        >
+          {project.description}
+        </p>
+      </header>
+
+      {
+        showImpact && project.impact.length > 0 && (
+          <ul class="space-y-2">
+            {project.impact.map((item) => (
+              <li class="flex items-start gap-2 text-sm leading-relaxed text-foreground/90">
+                <span class="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-terminal-green" />
+                <span class="font-sans">{item}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+
+    <div class="mt-auto pt-4">
+      <span
+        class="inline-flex items-center gap-2 font-mono text-sm text-terminal-green transition-all group-hover:gap-3"
+      >
+        {ctaLabel}
+      </span>
+    </div>
+  </div>
+</article>

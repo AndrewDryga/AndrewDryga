@@ -1,0 +1,37 @@
+---
+interface Props {
+  label: string;
+  position?: "left" | "right";
+  class?: string;
+}
+
+const {
+  label,
+  position = "left",
+  class: className = "",
+} = Astro.props as Props;
+
+const railPosition =
+  position === "left" ? "left-[15%]" : "left-[85%] -translate-x-full";
+const boxShape =
+  position === "left"
+    ? "rounded-l-none border-l-0"
+    : "rounded-r-none border-r-0";
+const labelPosition =
+  position === "left"
+    ? "left-[15%] ml-20"
+    : "left-[85%] -translate-x-full mr-20";
+---
+
+<div class={`relative h-20 flex items-center ${className}`.trim()}>
+  <div class={`absolute w-16 ${railPosition}`.trim()}>
+    <div class={`border-2 border-accent rounded-lg h-12 ${boxShape}`.trim()}></div>
+  </div>
+  <div
+    class={`absolute top-1/2 -translate-y-1/2 ${labelPosition}`.trim()}
+  >
+    <div class="inline-block bg-terminal-surface px-2 py-1 text-accent text-[10px] border border-accent rounded whitespace-nowrap">
+      {label}
+    </div>
+  </div>
+</div>

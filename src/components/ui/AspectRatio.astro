@@ -1,0 +1,20 @@
+---
+interface Props {
+  ratio?: number;
+  class?: string;
+}
+
+const { ratio = 16 / 9, class: className = "", ...rest } = Astro.props as Props &
+  Record<string, unknown>;
+---
+
+<div
+  class={["relative w-full overflow-hidden", className].filter(Boolean).join(" ")}
+  style={`--aspect-ratio:${ratio}; padding-top: ${
+    (1 / ratio) * 100
+  }%;`}
+>
+  <div class="absolute inset-0">
+    <slot />
+  </div>
+</div>

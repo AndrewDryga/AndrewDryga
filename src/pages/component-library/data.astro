@@ -1,0 +1,670 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Table from "@/components/ui/Table.astro";
+import Button from "@/components/ui/Button.astro";
+import CodeExample from "@/components/CodeExample.astro";
+import Pagination from "@/components/ui/Pagination.astro";
+import Pagination from "@/components/ui/Pagination.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/data/", site).toString();
+
+const summaryRows = [
+  { tech: "React", experience: "5 years", projects: "20+", rating: "9.5/10" },
+  {
+    tech: "TypeScript",
+    experience: "4 years",
+    projects: "15+",
+    rating: "9.0/10",
+  },
+  {
+    tech: "Tailwind CSS",
+    experience: "3 years",
+    projects: "18+",
+    rating: "8.5/10",
+  },
+];
+
+const summaryColumns = [
+  { header: "Technology", accessor: "tech" },
+  { header: "Experience", accessor: "experience" },
+  {
+    header: "Projects",
+    accessor: "projects",
+    class: "hidden md:table-cell",
+  },
+  { header: "Rating", accessor: "rating", class: "text-right" },
+];
+
+const deploymentRows = [
+  {
+    id: "us-east-1",
+    cluster: "us-east-1",
+    version: "v2.4.1",
+    status: "healthy",
+    statusLabel: "✓ Healthy",
+    errors: 0,
+    uptime: 99.98,
+  },
+  {
+    id: "eu-west-1",
+    cluster: "eu-west-1",
+    version: "v2.4.0",
+    status: "deploying",
+    statusLabel: "↻ Deploying",
+    errors: 3,
+    uptime: 99.7,
+  },
+  {
+    id: "ap-south-1",
+    cluster: "ap-south-1",
+    version: "v2.3.8",
+    status: "attention",
+    statusLabel: "⚠ Needs attention",
+    errors: 12,
+    uptime: 98.91,
+  },
+  {
+    id: "staging",
+    cluster: "staging",
+    version: "v2.5.0-rc1",
+    status: "healthy",
+    statusLabel: "✓ Healthy",
+    errors: 1,
+    uptime: 99.5,
+  },
+  {
+    id: "dev-east",
+    cluster: "dev-east",
+    version: "v2.5.0-rc2",
+    status: "deploying",
+    statusLabel: "↻ Deploying",
+    errors: 2,
+    uptime: 99.1,
+  },
+  {
+    id: "sandbox",
+    cluster: "sandbox",
+    version: "v2.2.5",
+    status: "attention",
+    statusLabel: "⚠ Needs attention",
+    errors: 7,
+    uptime: 97.45,
+  },
+];
+
+const opsTableRows = deploymentRows.map((row) => ({
+  ...row,
+  statusClass:
+    row.status === "healthy"
+      ? "text-terminal-green"
+      : row.status === "deploying"
+        ? "text-terminal-yellow"
+        : "text-destructive",
+  uptimeDisplay: `${row.uptime.toFixed(2)}%`,
+}));
+
+const opsColumns = [
+  {
+    header: "Cluster",
+    accessor: "cluster",
+    class: "px-4 py-3 text-muted-foreground",
+  },
+  {
+    header: "Version",
+    accessor: "version",
+    class: "px-4 py-3 text-terminal-cyan",
+  },
+  {
+    header: "Status",
+    accessor: "statusLabel",
+    class: "px-4 py-3",
+    render: (row) => ({
+      content: row.statusLabel,
+      className: ["block", row.statusClass].filter(Boolean).join(" "),
+    }),
+  },
+  {
+    header: "Errors (24h)",
+    accessor: "errors",
+    class: "px-4 py-3 text-right tabular-nums",
+  },
+  {
+    header: "Uptime",
+    accessor: "uptimeDisplay",
+    class: "px-4 py-3 text-right tabular-nums",
+  },
+];
+---
+
+<BaseLayout
+  title="Component Library — Data & Docs"
+  description="Metrics cards, tables, code blocks, blog patterns, and sequence diagrams."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="data" />
+
+      <SectionHeader
+        consoleLine="$ viz data"
+        title="Data & documentation"
+        description="Project metrics, summary tables, and terminal-flavored documentation patterns."
+        accentColor="cyan"
+      />
+
+      <div class="space-y-16">
+        <section id="project-metrics" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Project metrics</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Number cards and ASCII progress bars for status dashboards.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <div class="font-mono text-sm">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-primary tabular-nums">
+                    10.2K
+                  </div>
+                  <div class="text-muted-foreground text-xs mt-1">
+                    Total users
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    class="text-3xl font-bold text-terminal-green tabular-nums"
+                  >
+                    99.9%
+                  </div>
+                  <div class="text-muted-foreground text-xs mt-1">Uptime</div>
+                </div>
+                <div class="text-center">
+                  <div
+                    class="text-3xl font-bold text-terminal-yellow tabular-nums"
+                  >
+                    45ms
+                  </div>
+                  <div class="text-muted-foreground text-xs mt-1">
+                    Response time
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-accent tabular-nums">
+                    98.5%
+                  </div>
+                  <div class="text-muted-foreground text-xs mt-1">
+                    Success rate
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="border-t border-border pt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground"
+              >
+                <div class="flex-1 min-w-[140px]">
+                  <span>Metric:</span>
+                  <span class="text-foreground">Value</span>
+                </div>
+                <div class="flex-1 min-w-[140px] text-center">
+                  <span>Status:</span>
+                  <span class="text-terminal-green"> ✓ Healthy</span>
+                </div>
+                <div class="flex-1 min-w-[140px] text-right">
+                  <span>Updated:</span>
+                  <span class="text-foreground"> 2 min ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary-table" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Summary table</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Terminal-styled table with tabular numbers and pinned totals.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg overflow-hidden">
+            <Table
+              columns={summaryColumns}
+              data={summaryRows}
+              class="font-mono text-sm"
+              caption="Capability snapshot"
+            />
+            <div
+              class="flex items-center justify-between border-t border-border bg-terminal-surface/60 px-4 py-3 font-mono text-xs text-muted-foreground"
+            >
+              <span>TOTAL SCORE</span>
+              <span class="text-terminal-cyan tabular-nums">27.0/30</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="data-grid" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Operations table</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Terminal-styled data grid with status badges, per-column sorting,
+              search, and pagination.
+            </p>
+          </header>
+
+          <div class="space-y-4">
+            <div
+              class="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground"
+            >
+              <label class="flex items-center gap-2">
+                <span class="uppercase tracking-wide text-terminal-cyan"
+                  >Search</span
+                >
+                <input
+                  type="search"
+                  placeholder="cluster, version, status..."
+                  class="rounded border border-border bg-terminal-bg/90 px-3 py-2 text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                  data-ops-search
+                />
+              </label>
+              <label class="flex items-center gap-2">
+                <span class="uppercase tracking-wide text-terminal-cyan"
+                  >Status</span
+                >
+                <select
+                  class="rounded border border-border bg-terminal-bg/90 px-3 py-2 text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                  data-ops-status
+                >
+                  <option value="all">All</option>
+                  <option value="healthy">Healthy</option>
+                  <option value="deploying">Deploying</option>
+                  <option value="attention">Needs attention</option>
+                </select>
+              </label>
+              <div class="ml-auto flex items-center gap-2">
+                <span
+                  class="hidden sm:inline uppercase tracking-wide text-terminal-cyan"
+                  >Sort</span
+                >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="px-3 py-2 text-xs uppercase tracking-wide hover:bg-terminal-cyan/10"
+                  data-ops-sort="uptime"
+                >
+                  Uptime
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="px-3 py-2 text-xs uppercase tracking-wide hover:bg-terminal-cyan/10"
+                  data-ops-sort="errors"
+                >
+                  Errors
+                </Button>
+              </div>
+            </div>
+
+            <div
+              class="bg-terminal-surface/80 border border-border rounded-lg overflow-hidden"
+              data-ops-root
+              data-ops-page-size="3"
+              data-ops-rows={JSON.stringify(opsTableRows)}
+            >
+              <Table
+                columns={opsColumns}
+                data={opsTableRows.slice(0, 3)}
+                class="font-mono text-sm"
+                data-ops-table
+              />
+              <div
+                class="flex flex-col gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span data-ops-meta>Showing 0 of 0 environments</span>
+                <div class="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="px-3 py-1.5 disabled:cursor-not-allowed"
+                    data-ops-prev
+                  >
+                    Prev
+                  </Button>
+                  <span data-ops-page class="font-mono text-terminal-cyan"
+                    >Page 1 / 1</span
+                  >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="px-3 py-1.5 disabled:cursor-not-allowed"
+                    data-ops-next
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <script is:inline>
+          (() => {
+            const root = document.querySelector("[data-ops-root]");
+            if (!root) return;
+            const table = root.querySelector("table[data-ops-table]");
+            const body = table?.querySelector("tbody");
+            if (!(body instanceof HTMLElement)) return;
+
+            const meta = root.querySelector("[data-ops-meta]");
+            const pageLabel = root.querySelector("[data-ops-page]");
+            const prev = root.querySelector("[data-ops-prev]");
+            const next = root.querySelector("[data-ops-next]");
+            const search = document.querySelector("[data-ops-search]");
+            const status = document.querySelector("[data-ops-status]");
+            const sortButtons = document.querySelectorAll("[data-ops-sort]");
+
+            const rowsAttr = root.getAttribute("data-ops-rows") ?? "[]";
+            const pageSizeAttr = root.getAttribute("data-ops-page-size") ?? "3";
+            let rows;
+            try {
+              rows = JSON.parse(rowsAttr);
+            } catch {
+              rows = [];
+            }
+            if (!Array.isArray(rows)) rows = [];
+            const pageSize = Number.parseInt(pageSizeAttr, 10) || 3;
+
+            const state = {
+              search: "",
+              status: "all",
+              sortKey: "uptime",
+              sortDir: "desc",
+              page: 1,
+            };
+
+            const renderRow = (row) => {
+              const statusClass =
+                row.statusClass ??
+                (row.status === "healthy"
+                  ? "text-terminal-green"
+                  : row.status === "deploying"
+                    ? "text-terminal-yellow"
+                    : "text-destructive");
+              const uptime =
+                row.uptimeDisplay ?? `${Number(row.uptime).toFixed(2)}%`;
+              return `<tr>
+                <td class="px-4 py-3 text-muted-foreground">${row.cluster}</td>
+                <td class="px-4 py-3 text-terminal-cyan">${row.version}</td>
+                <td class="px-4 py-3 ${statusClass}">${row.statusLabel}</td>
+                <td class="px-4 py-3 text-right tabular-nums">${row.errors}</td>
+                <td class="px-4 py-3 text-right tabular-nums">${uptime}</td>
+              </tr>`;
+            };
+
+            const apply = () => {
+              let filtered = [...rows];
+              const query = state.search.trim().toLowerCase();
+              if (query) {
+                filtered = filtered.filter(
+                  (row) =>
+                    String(row.cluster).toLowerCase().includes(query) ||
+                    String(row.version).toLowerCase().includes(query) ||
+                    String(row.statusLabel).toLowerCase().includes(query),
+                );
+              }
+              if (state.status !== "all") {
+                filtered = filtered.filter(
+                  (row) => row.status === state.status,
+                );
+              }
+              filtered.sort((a, b) => {
+                const aVal = state.sortKey === "errors" ? a.errors : a.uptime;
+                const bVal = state.sortKey === "errors" ? b.errors : b.uptime;
+                return state.sortDir === "asc" ? aVal - bVal : bVal - aVal;
+              });
+
+              const total = filtered.length;
+              const totalPages = Math.max(1, Math.ceil(total / pageSize));
+              state.page = Math.min(Math.max(1, state.page), totalPages);
+              const start = (state.page - 1) * pageSize;
+              const pageRows = filtered.slice(start, start + pageSize);
+
+              body.innerHTML = pageRows.map(renderRow).join("");
+
+              if (meta instanceof HTMLElement) {
+                meta.textContent = `Showing ${pageRows.length} of ${total} environments`;
+              }
+              if (pageLabel instanceof HTMLElement) {
+                pageLabel.textContent = `Page ${state.page} / ${totalPages}`;
+              }
+              if (prev instanceof HTMLButtonElement) {
+                prev.disabled = state.page <= 1;
+              }
+              if (next instanceof HTMLButtonElement) {
+                next.disabled = state.page >= totalPages;
+              }
+            };
+
+            if (prev instanceof HTMLButtonElement) {
+              prev.addEventListener("click", () => {
+                state.page -= 1;
+                apply();
+              });
+            }
+            if (next instanceof HTMLButtonElement) {
+              next.addEventListener("click", () => {
+                state.page += 1;
+                apply();
+              });
+            }
+
+            sortButtons.forEach((button) => {
+              button.addEventListener("click", () => {
+                const key = button.getAttribute("data-ops-sort");
+                if (key !== "uptime" && key !== "errors") return;
+                if (state.sortKey === key) {
+                  state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+                } else {
+                  state.sortKey = key;
+                  state.sortDir = key === "uptime" ? "desc" : "asc";
+                }
+                state.page = 1;
+                sortButtons.forEach((btn) =>
+                  btn.classList.remove(
+                    "border-terminal-cyan",
+                    "text-terminal-cyan",
+                  ),
+                );
+                button.classList.add(
+                  "border-terminal-cyan",
+                  "text-terminal-cyan",
+                );
+                apply();
+              });
+            });
+
+            if (search instanceof HTMLInputElement) {
+              search.addEventListener("input", () => {
+                state.search = search.value;
+                state.page = 1;
+                apply();
+              });
+            }
+
+            if (status instanceof HTMLSelectElement) {
+              status.addEventListener("change", () => {
+                state.status = status.value;
+                state.page = 1;
+                apply();
+              });
+            }
+
+            apply();
+          })();
+        </script>
+
+        <section id="code-blocks" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Code blocks</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Copy-enabled code blocks, inline code, terminal commands, and diff
+              snippets.
+            </p>
+          </header>
+
+          <CodeExample
+            label="TypeScript"
+            code={`const greeting = "Hello, World!";
+console.log(greeting);`}
+          />
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-foreground mb-2">
+              Use the <code
+                class="px-2 py-1 bg-terminal-surface text-primary font-mono text-sm rounded"
+                >useState</code
+              > hook to manage state.
+            </p>
+            <p class="text-sm text-muted-foreground">Inline code styling</p>
+          </div>
+
+          <div
+            class="bg-terminal-surface border border-primary rounded-lg p-4 font-mono text-sm"
+          >
+            <div class="text-primary">$ npm install astro</div>
+            <div class="text-terminal-green mt-2">
+              ✓ Package installed successfully
+            </div>
+          </div>
+
+          <div
+            class="bg-card border border-border rounded-lg p-4 font-mono text-sm"
+          >
+            <div class="text-destructive">- const oldValue = 100;</div>
+            <div class="text-terminal-green">+ const newValue = 200;</div>
+          </div>
+        </section>
+
+        <section id="blog-patterns" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Blog patterns</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Article layouts, callouts, pull quotes, keyboard shortcuts, and
+              ordered steps.
+            </p>
+          </header>
+
+          <div class="space-y-6">
+            <article class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-2xl font-bold text-foreground mb-4">
+                Getting started with Terminal UI
+              </h3>
+              <p class="text-foreground mb-4 leading-relaxed">
+                Terminal interfaces combine minimalism with clarity. Use
+                monospace fonts, semantic color tokens, and purposeful animation
+                to keep the experience focused.
+              </p>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2">
+                  <span class="text-terminal-cyan font-mono">▸</span>
+                  <span class="text-foreground"
+                    >Use monospace fonts consistently</span
+                  >
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-terminal-cyan font-mono">▸</span>
+                  <span class="text-foreground"
+                    >Rely on semantic color tokens for theming</span
+                  >
+                </li>
+              </ul>
+            </article>
+
+            <div class="border-l-4 border-primary pl-6 py-4 bg-card">
+              <blockquote
+                class="text-2xl font-bold text-foreground italic mb-2"
+              >
+                "Terminal aesthetics bring clarity and focus to modern
+                interfaces."
+              </blockquote>
+              <cite class="text-sm text-muted-foreground font-mono"
+                >— Design principles</cite
+              >
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border border-primary rounded-lg p-4 bg-primary/5">
+                <div class="flex items-start gap-3">
+                  <span class="text-primary font-mono font-bold">i</span>
+                  <div>
+                    <div class="font-mono text-sm font-bold text-primary mb-1">
+                      Info
+                    </div>
+                    <p class="text-sm text-foreground">
+                      Informational callout box.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="border border-destructive rounded-lg p-4 bg-destructive/5"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="text-destructive font-mono font-bold">✗</span>
+                  <div>
+                    <div
+                      class="font-mono text-sm font-bold text-destructive mb-1"
+                    >
+                      Error
+                    </div>
+                    <p class="text-sm text-foreground">Critical callout box.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pagination" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Pagination</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Data browsing controls with monospace numerals and accessible
+              previous/next affordances.
+            </p>
+          </header>
+
+          <div class="border border-border rounded-lg p-6 bg-card">
+            <div class="flex justify-center">
+              <Pagination
+                current={2}
+                total={10}
+                class="justify-center"
+                hrefBuilder={(page) => `?page=${page}`}
+              />
+            </div>
+            <p class="text-xs text-muted-foreground font-mono mt-3 text-center">
+              Keeps numerals monospace so tables remain steady as pages advance.
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,39 @@
+---
+interface MenuGroup {
+  label: string;
+  items: { label: string; href?: string; shortcut?: string }[];
+}
+
+interface Props {
+  groups: MenuGroup[];
+  class?: string;
+}
+
+const { groups, class: className = "" } = Astro.props as Props;
+---
+
+<div
+  class={[
+    "inline-flex items-center gap-2 rounded-md border border-border bg-terminal-surface/80 p-1 font-mono text-xs",
+    className,
+  ].filter(Boolean).join(" ")}
+>
+  {groups.map((group) => (
+    <div class="flex items-center gap-2">
+      <span class="px-2 py-1 text-muted-foreground uppercase tracking-wide">
+        {group.label}
+      </span>
+      {group.items.map((item) => (
+        <a
+          href={item.href ?? "#"}
+          class="rounded px-2 py-1 text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
+        >
+          {item.label}
+          {item.shortcut && (
+            <span class="ml-2 text-[10px] text-muted-foreground">{item.shortcut}</span>
+          )}
+        </a>
+      ))}
+    </div>
+  ))}
+</div>

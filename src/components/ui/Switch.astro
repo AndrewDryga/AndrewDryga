@@ -1,0 +1,34 @@
+---
+interface Props {
+  name?: string;
+  checked?: boolean;
+  defaultChecked?: boolean;
+  class?: string;
+  label?: string;
+}
+
+const {
+  name,
+  checked,
+  defaultChecked,
+  class: className = "",
+  label,
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<label class={['inline-flex items-center gap-3 font-mono text-xs text-muted-foreground', className].filter(Boolean).join(' ')}>
+  <input
+    type="checkbox"
+    class="peer sr-only"
+    name={name}
+    checked={checked}
+    {...(defaultChecked !== undefined ? { checked: undefined, defaultChecked } : {})}
+    {...rest}
+  />
+  <span class="flex h-5 w-9 items-center rounded-full border border-border bg-terminal-surface transition-colors peer-checked:border-terminal-cyan peer-checked:bg-terminal-cyan/30 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-terminal-cyan">
+    <span class="ml-1 h-3.5 w-3.5 rounded-full bg-muted-foreground transition-transform peer-checked:translate-x-4 peer-checked:bg-terminal-cyan"></span>
+  </span>
+  {label && <span>{label}</span>}
+  {!label && <slot />}
+</label>

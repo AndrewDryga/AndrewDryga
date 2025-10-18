@@ -1,5 +1,6 @@
 ---
-import MobileNav from "./islands/MobileNav.tsx";
+import MobileNav from "./MobileNav.astro";
+import headerNavScript from "../scripts/header-nav.ts?url";
 
 export interface Props {
   /**
@@ -37,7 +38,7 @@ const navLinks = [
 ---
 
 {(variant === "header" || variant === "both") && (
-  <header class="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
+  <header data-nav-behavior="primary" class="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         {/* Logo */}
@@ -66,125 +67,12 @@ const navLinks = [
           ))}
         </nav>
 
-        {/* Mobile Navigation (React island) */}
-        <div class="md:hidden">
-          <MobileNav client:media="(max-width: 767px)" links={navLinks} />
-        </div>
+        {/* Mobile Navigation */}
+        <MobileNav class="md:hidden" links={navLinks} />
       </div>
     </div>
   </header>
-  <script is:inline>
-    (function() {
-      const init = () => {
-      const header = document.querySelector('header.sticky');
-      if (!header) return;
-      const nav = header.querySelector('nav[aria-label="Primary"]');
-      if (!nav) return;
-      const links = Array.from(nav.querySelectorAll('a'));
-
-      const setActive = (href) => {
-        links.forEach((a) => {
-          const match = a.getAttribute('href') === href;
-          if (match) {
-            a.classList.add('text-terminal-cyan');
-            a.classList.remove('text-muted-foreground');
-            a.setAttribute('aria-current', 'page');
-          } else {
-            a.classList.remove('text-terminal-cyan');
-            a.classList.add('text-muted-foreground');
-            a.removeAttribute('aria-current');
-          }
-        });
-      };
-
-      // Smooth-scroll for in-page hash links on desktop nav
-      links.forEach((a) => {
-        const href = a.getAttribute('href') || '';
-        if (href.startsWith('/#')) {
-          a.addEventListener('click', (e) => {
-            const id = href.split('#')[1];
-            if (!id) return;
-            if (window.location.pathname !== '/') {
-              // allow normal navigation to home for non-home pages
-              return;
-            }
-            e.preventDefault();
-            const el = document.getElementById(id);
-            if (!el) return;
-            const offset = (header.offsetHeight || 64) + 8;
-            const y = el.getBoundingClientRect().top + window.scrollY - offset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          });
-        }
-      });
-
-      // Scrollspy only on the home page
-      if (window.location.pathname !== '/') return;
-
-      const candidates = [];
-      const byHref = (href) => links.find((a) => a.getAttribute('href') === href);
-
-      const home = document.querySelector('main section');
-      if (home && byHref('/')) candidates.push({ el: home, link: byHref('/') });
-
-      const about = document.getElementById('about');
-      if (about && byHref('/#about')) candidates.push({ el: about, link: byHref('/#about') });
-
-      const projects = document.getElementById('projects');
-      if (projects && (byHref('/projects') || byHref('/#projects'))) {
-        candidates.push({ el: projects, link: byHref('/projects') || byHref('/#projects') });
-      }
-
-      const blog = document.getElementById('blog');
-      if (blog && byHref('/blog')) candidates.push({ el: blog, link: byHref('/blog') });
-
-      const contact = document.getElementById('contact');
-      if (contact && byHref('/#contact')) candidates.push({ el: contact, link: byHref('/#contact') });
-
-      if (candidates.length === 0) return;
-
-      const visible = new Map();
-
-      const update = () => {
-        let best = null;
-        let max = 0;
-        candidates.forEach((c) => {
-          const ratio = visible.get(c.el) || 0;
-          if (ratio > max) {
-            max = ratio;
-            best = c;
-          }
-        });
-        if (!best && window.scrollY < 100) {
-          best = candidates.find((c) => c.link.getAttribute('href') === '/');
-        }
-        if (best) {
-          setActive(best.link.getAttribute('href'));
-        }
-      };
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            visible.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
-          });
-          update();
-        },
-        { threshold: [0.25, 0.5, 0.75], rootMargin: `-${(header.offsetHeight || 64) + 8}px 0px -40% 0px` }
-      );
-
-      candidates.forEach((c) => observer.observe(c.el));
-
-      // initial highlight
-      update();
-      };
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init, { once: true });
-      } else {
-        init();
-      }
-    })();
-  </script>
+  <script type="module" src={headerNavScript}></script>
 )}
 
 {(variant === "footer" || variant === "both") && (

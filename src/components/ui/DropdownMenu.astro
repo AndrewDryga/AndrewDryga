@@ -1,0 +1,338 @@
+---
+interface MenuItem {
+  label: string;
+  href?: string;
+  shortcut?: string;
+  disabled?: boolean;
+  combo?: {
+    key: string;
+    ctrl?: boolean;
+    alt?: boolean;
+    shift?: boolean;
+    meta?: boolean;
+  };
+  action?: "copy-command" | "toggle-nav";
+}
+
+interface Props {
+  triggerLabel?: string;
+  items: MenuItem[];
+  class?: string;
+}
+
+const {
+  triggerLabel = "Menu",
+  items,
+  class: className = "",
+} = Astro.props as Props;
+---
+
+<div
+  class={["relative inline-flex flex-col font-mono text-sm", className]
+    .filter(Boolean)
+    .join(" ")}
+  data-dropdown
+>
+  <button
+    type="button"
+    data-dropdown-trigger
+    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    aria-haspopup="menu"
+    aria-expanded="false"
+  >
+    {triggerLabel}
+    <svg
+      class="h-3 w-3"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
+
+  <div
+    data-dropdown-menu
+    role="menu"
+    tabindex="-1"
+    class="invisible pointer-events-none absolute left-0 top-full z-10 mt-0 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_0_30px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+  >
+    {
+      items.map((item) => (
+        <a
+          href={item.href ?? "#"}
+          class={[
+            "flex items-center justify-between gap-4 rounded px-2 py-1.5",
+            item.disabled
+              ? "cursor-not-allowed text-muted-foreground"
+              : "text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan",
+          ].join(" ")}
+          data-dropdown-item
+          data-action={item.action ?? undefined}
+          data-combo={item.combo ? JSON.stringify(item.combo) : undefined}
+          role="menuitem"
+          aria-disabled={item.disabled ? "true" : undefined}
+          tabindex={-1}
+        >
+          <span>{item.label}</span>
+          {item.shortcut && (
+            <span class="ml-auto inline-flex items-center gap-1 text-[12px] font-mono text-muted-foreground">
+              {item.shortcut.split("+").map((part) => (
+                <kbd class="min-w-[1.75rem] px-2 py-1 border border-border/60 rounded bg-terminal-bg/80 text-center uppercase">
+                  {part.trim()}
+                </kbd>
+              ))}
+            </span>
+          )}
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const root = document.currentScript?.previousElementSibling;
+    if (!(root instanceof HTMLElement)) return;
+    const trigger = root.querySelector("[data-dropdown-trigger]");
+    const menu = root.querySelector("[data-dropdown-menu]");
+    if (!(trigger instanceof HTMLElement) || !(menu instanceof HTMLElement)) {
+      return;
+    }
+
+    const items = Array.from(
+      menu.querySelectorAll("[data-dropdown-item]:not([aria-disabled='true'])"),
+    ).filter((node) => node instanceof HTMLElement);
+    let activeIndex = -1;
+
+    const comboBindings = items
+      .map((item) => {
+        const value = item.getAttribute("data-combo");
+        if (!value) return null;
+        try {
+          const combo = JSON.parse(value);
+          return combo && combo.key ? { combo, item } : null;
+        } catch (error) {
+          console.warn("Failed to parse dropdown combo", error);
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    const clearActive = () => {
+      items.forEach((item) => {
+        item.classList.remove("bg-terminal-cyan/20", "text-terminal-cyan");
+        item.removeAttribute("data-active");
+      });
+      activeIndex = -1;
+    };
+
+    const focusItem = (index) => {
+      if (!items.length) return;
+      const clamped = (index + items.length) % items.length;
+      clearActive();
+      const target = items[clamped];
+      activeIndex = clamped;
+      target.classList.add("bg-terminal-cyan/20", "text-terminal-cyan");
+      target.setAttribute("data-active", "true");
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "nearest" });
+    };
+
+    let isOpen = false;
+    const padding = 8;
+
+    const alignMenu = () => {
+      if (!isOpen) return;
+      menu.style.transform = "translateX(0)";
+      const rect = menu.getBoundingClientRect();
+      let shift = 0;
+      if (rect.left < padding) {
+        shift = padding - rect.left;
+      } else if (rect.right > window.innerWidth - padding) {
+        shift = window.innerWidth - padding - rect.right;
+      }
+      menu.style.transform = `translateX(${shift}px)`;
+    };
+
+    const open = () => {
+      menu.classList.remove("invisible", "pointer-events-none", "opacity-0");
+      menu.classList.add("visible", "pointer-events-auto", "opacity-100");
+      trigger.setAttribute("aria-expanded", "true");
+      isOpen = true;
+      alignMenu();
+      window.addEventListener("resize", alignMenu);
+      requestAnimationFrame(() => {
+        alignMenu();
+        if (items.length) {
+          focusItem(activeIndex >= 0 ? activeIndex : 0);
+        }
+      });
+    };
+
+    const close = () => {
+      menu.classList.remove("visible", "pointer-events-auto", "opacity-100");
+      menu.classList.add("opacity-0", "invisible", "pointer-events-none");
+      trigger.setAttribute("aria-expanded", "false");
+      isOpen = false;
+      menu.style.transform = "translateX(0)";
+      window.removeEventListener("resize", alignMenu);
+      clearActive();
+    };
+
+    const perform = (item) => {
+      if (item.getAttribute("aria-disabled") === "true") return;
+      const action = item.getAttribute("data-action");
+      const href = item.getAttribute("href");
+      if (action === "copy-command") {
+        const command = "npm run deploy";
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(command).catch(() => undefined);
+        }
+        window.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: {
+              title: "Command copied",
+              description: command,
+              variant: "success",
+            },
+          }),
+        );
+      } else if (action === "toggle-nav") {
+        document.documentElement.classList.toggle("debug-nav-outline");
+        window.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: {
+              title: "Navigation preview toggled",
+              description: document.documentElement.classList.contains(
+                "debug-nav-outline",
+              )
+                ? "Debug outlines enabled"
+                : "Debug outlines disabled",
+              variant: "default",
+            },
+          }),
+        );
+      } else if (href && href !== "#") {
+        window.location.href = href;
+      }
+      close();
+      trigger.focus();
+    };
+
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (menu.classList.contains("visible")) {
+        close();
+      } else {
+        open();
+      }
+    });
+
+    trigger.addEventListener("keydown", (event) => {
+      if (!items.length) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        if (!menu.classList.contains("visible")) {
+          open();
+        }
+        focusItem(event.key === "ArrowDown" ? 0 : items.length - 1);
+      }
+    });
+
+    menu.addEventListener("keydown", (event) => {
+      if (!menu.classList.contains("visible")) return;
+      if (!items.length) return;
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusItem((activeIndex + 1) % items.length);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusItem((activeIndex - 1 + items.length) % items.length);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        focusItem(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        focusItem(items.length - 1);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        trigger.focus();
+      } else if (event.key === "Enter" || event.key === " ") {
+        const target = items[activeIndex];
+        if (target) {
+          event.preventDefault();
+          target.click();
+        }
+      }
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener("mouseenter", () => {
+        activeIndex = index;
+        items.forEach((other, i) => {
+          if (i === index) {
+            other.classList.add("bg-terminal-cyan/20", "text-terminal-cyan");
+            other.setAttribute("data-active", "true");
+          } else {
+            other.classList.remove("bg-terminal-cyan/20", "text-terminal-cyan");
+            other.removeAttribute("data-active");
+          }
+        });
+      });
+
+      item.addEventListener("click", (event) => {
+        if (item.getAttribute("aria-disabled") === "true") {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+        perform(item);
+      });
+    });
+
+    window.addEventListener("click", (event) => {
+      if (event.target instanceof Node && !root.contains(event.target)) {
+        close();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        close();
+        trigger.focus();
+      }
+    });
+
+    const matchesCombo = (event, combo) => {
+      const key = event.key.toLowerCase();
+      return (
+        key === (combo.key ?? "").toLowerCase() &&
+        !!combo.ctrl === event.ctrlKey &&
+        !!combo.alt === event.altKey &&
+        !!combo.shift === event.shiftKey &&
+        !!combo.meta === event.metaKey
+      );
+    };
+
+    const shouldIgnoreTarget = (target) =>
+      target.closest("input, textarea, select, [contenteditable='true']");
+
+    window.addEventListener("keydown", (event) => {
+      if (!comboBindings.length) return;
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      if (target && shouldIgnoreTarget(target)) return;
+      const binding = comboBindings.find(
+        (entry) => entry && matchesCombo(event, entry.combo),
+      );
+      if (binding && binding.item) {
+        event.preventDefault();
+        perform(binding.item);
+      }
+    });
+  })();
+</script>

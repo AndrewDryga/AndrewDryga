@@ -1,0 +1,27 @@
+---
+interface Props {
+  variant?: "default" | "muted" | "outline" | "primary" | "secondary" | "accent";
+  class?: string;
+}
+
+const { variant = "default", class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+
+const baseClass =
+  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-mono uppercase tracking-wide";
+
+const variants: Record<NonNullable<Props["variant"]>, string> = {
+  default: "border-border bg-card text-foreground",
+  muted: "border-border bg-terminal-surface/60 text-muted-foreground",
+  outline: "border-border text-muted-foreground",
+  primary: "border-primary bg-primary/10 text-primary",
+  secondary: "border-secondary bg-secondary/10 text-secondary",
+  accent: "border-accent bg-accent/10 text-accent",
+};
+
+const classes = [baseClass, variants[variant], className].filter(Boolean).join(" ");
+---
+
+<span class={classes} {...rest}>
+  <slot />
+</span>

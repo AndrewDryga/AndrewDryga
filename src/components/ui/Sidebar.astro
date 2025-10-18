@@ -1,0 +1,54 @@
+---
+interface NavItem {
+  label: string;
+  href?: string;
+  badge?: string;
+  active?: boolean;
+}
+
+interface Props {
+  title?: string;
+  items: NavItem[];
+  class?: string;
+}
+
+const { title, items, class: className = "" } = Astro.props as Props;
+---
+
+<aside
+  class={[
+    "flex h-full w-64 flex-col border border-border bg-terminal-bg/80 p-4 font-mono text-sm",
+    className,
+  ].filter(Boolean).join(" ")}
+>
+  {title && (
+    <h2 class="mb-4 text-xs uppercase tracking-wide text-muted-foreground">
+      {title}
+    </h2>
+  )}
+
+  <nav class="space-y-1">
+    {items.map((item) => (
+      <a
+        href={item.href ?? "#"}
+        class={[
+          "flex items-center justify-between rounded px-3 py-2 transition-colors",
+          item.active
+            ? "bg-terminal-cyan/10 text-terminal-cyan"
+            : "text-foreground hover:bg-terminal-cyan/10 hover:text-terminal-cyan",
+        ].join(" ")}
+      >
+        <span>{item.label}</span>
+        {item.badge && (
+          <span class="rounded bg-terminal-cyan/10 px-2 py-0.5 text-[10px] text-terminal-cyan">
+            {item.badge}
+          </span>
+        )}
+      </a>
+    ))}
+  </nav>
+
+  <div class="mt-auto pt-6 text-xs text-muted-foreground">
+    <slot name="footer" />
+  </div>
+</aside>

@@ -2,6 +2,8 @@
 import BaseLayout from "../../components/BaseLayout.astro";
 import { getCollection, getEntry } from "astro:content";
 import Header from "../../components/Header.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
 import { allProjects } from "../../data/projects";
 
 
@@ -83,7 +85,7 @@ const articleLd = {
   url: canonical,
   image: image ? new URL(image.src, site).toString() : undefined,
   keywords: tags.join(", "),
-  articleSection: "Engineering",
+  articleSection: post.data.category ?? "Blog",
 };
 
 // JSON-LD: BreadcrumbList
@@ -96,6 +98,8 @@ const breadcrumbLd = {
     { "@type": "ListItem", position: 3, name: post.data.title, item: canonical },
   ],
 };
+void articleLd;
+void breadcrumbLd;
 ---
 
 <BaseLayout {title} {description} {canonical}>
@@ -104,13 +108,14 @@ const breadcrumbLd = {
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)] gap-8">
       <article class="min-w-0">
         <header class="mb-10">
-          <nav class="font-mono text-sm text-muted-foreground mb-2" aria-label="breadcrumb">
-            <a href="/" class="transition-colors hover:text-foreground">Home</a>
-            <span class="mx-2 text-foreground/50">/</span>
-            <a href="/blog/" class="transition-colors hover:text-foreground">Blog</a>
-            <span class="mx-2 text-foreground/50">/</span>
-            <span class="text-foreground">{post.data.title}</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Blog", href: "/blog/" },
+              { label: post.data.title }
+            ]}
+            class="mb-2"
+          />
           <div class="font-mono text-terminal-yellow text-sm mb-2">$ cat ./blog/{post.slug}</div>
           <h1 class="text-4xl md:text-5xl font-bold font-sans leading-relaxed">
             <span class="text-foreground leading-snug">{post.data.title}</span><span class="text-terminal-yellow">.</span>
@@ -150,7 +155,7 @@ const breadcrumbLd = {
           </div>
         )}
 
-        <div class="prose prose-invert max-w-none prose-pre:bg-[#0b0f14] prose-pre:text-foreground prose-pre:border prose-pre:border-border prose-pre:rounded-md prose-pre:overflow-x-auto">
+        <div class="prose prose-invert max-w-none prose-pre:bg-[hsl(var(--terminal-surface))] prose-pre:text-foreground prose-pre:border prose-pre:border-border prose-pre:rounded-md prose-pre:overflow-x-auto">
           <Content />
         </div>
 
@@ -162,28 +167,12 @@ const breadcrumbLd = {
             </h2>
             <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
               {relatedProjects.map((project, idx) => (
-                <article
-                  class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-green transition-all duration-300 shadow-card hover:shadow-glow relative"
-                  style={`animation-delay: ${idx * 100}ms`}
-                >
-                  <a
-                    href={`/projects/${project.id}/`}
-                    class="absolute inset-0 rounded-lg"
-                    aria-label={`View project: ${project.name}`}
-                  ></a>
-                  <div class="mb-3">
-                    <h3 class="text-xl font-bold mb-2 text-foreground transition-colors group-hover:text-terminal-green">
-                      {project.name}
-                    </h3>
-                    {project.period && (
-                      <p class="text-xs font-mono text-foreground/60 mb-2">{project.period}</p>
-                    )}
-                    <p class="text-foreground/80 line-clamp-3">{project.description}</p>
-                  </div>
-                  <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3">
-                    View project →
-                  </span>
-                </article>
+                <ProjectCard
+                  project={project}
+                  index={idx}
+                  showImpact={false}
+                  clampDescription={true}
+                />
               ))}
             </div>
           </section>

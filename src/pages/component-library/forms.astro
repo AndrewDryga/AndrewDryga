@@ -1,0 +1,473 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Button from "@/components/ui/Button.astro";
+import ComboboxField from "@/components/ui/ComboboxField.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/forms/", site).toString();
+
+const frameworks = [
+  { value: "astro", label: "Astro" },
+  { value: "svelte", label: "Svelte" },
+  { value: "solid", label: "Solid" },
+  { value: "vue", label: "Vue" },
+];
+
+const checklist = [
+  "Associate every input with a visual label.",
+  "Group related fields with fieldsets and monospace legends.",
+  "Signal success and error states with both color and iconography.",
+  "Never rely solely on placeholder text for context.",
+];
+---
+
+<BaseLayout
+  title="Component Library — Form Patterns"
+  description="Terminal-themed forms, validation patterns, and inline scripting that work without React."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="forms" />
+
+      <header class="space-y-3">
+        <p class="font-mono text-sm text-terminal-green">$ forms --list</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-foreground">
+          Form patterns
+        </h1>
+        <p class="max-w-3xl text-sm text-muted-foreground">
+          Copy-paste ready form layouts with zero-client validation hooks,
+          focus-visible states, and terminal-friendly styling tokens.
+        </p>
+      </header>
+
+      <div class="space-y-16">
+        <section id="playground" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Interactive playground
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Swap frameworks, reset notes, and preview terminal-themed text
+              areas without leaving the page.
+            </p>
+          </header>
+
+          <article
+            class="rounded-lg border border-border bg-card/40 p-6 shadow-card"
+          >
+            <header class="mb-6 space-y-2">
+              <p class="font-mono text-sm text-terminal-green">
+                $ node forms/playground.ts
+              </p>
+              <h3 class="text-2xl font-semibold text-foreground">
+                Inline configuration
+              </h3>
+              <p class="text-sm text-muted-foreground">
+                Lightweight interactivity handled with a sprinkle of inline
+                script. Ideal for demos that shouldn’t ship additional bundles.
+              </p>
+            </header>
+
+            <form class="space-y-4" data-playground-form>
+              <label class="block">
+                <span
+                  class="font-mono text-xs uppercase tracking-wide text-muted-foreground"
+                >
+                  Framework
+                </span>
+                <select
+                  name="framework"
+                  class="mt-2 w-full rounded border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+                >
+                  {
+                    frameworks.map((fw) => (
+                      <option value={fw.value}>{fw.label}</option>
+                    ))
+                  }
+                </select>
+              </label>
+
+              <label class="block">
+                <span
+                  class="font-mono text-xs uppercase tracking-wide text-muted-foreground"
+                >
+                  Notes
+                </span>
+                <textarea
+                  name="notes"
+                  rows={3}
+                  class="mt-2 w-full rounded border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+                  placeholder="What would you build with this pattern?"
+                ></textarea>
+              </label>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="gap-2 border-terminal-cyan text-terminal-cyan hover:bg-terminal-cyan hover:text-background"
+                  data-playground-clear
+                >
+                  Clear notes
+                </Button>
+                <span class="font-mono text-xs text-muted-foreground">
+                  Selected:
+                  <span data-playground-selected class="text-terminal-green">
+                    Astro
+                  </span>
+                </span>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section id="form-elements" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Form building blocks
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Inputs, toggles, radios, selects, and submission feedback styled
+              to mirror the production contact form.
+            </p>
+          </header>
+
+          <form
+            data-component-form
+            class="bg-card border border-border rounded-lg p-6 space-y-6"
+          >
+            <div>
+              <label
+                class="block text-sm font-mono text-foreground mb-2"
+                for="name-input"
+              >
+                $ Name
+              </label>
+              <input
+                id="name-input"
+                name="name"
+                type="text"
+                placeholder="Enter your name..."
+                class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors"
+                required
+              />
+            </div>
+
+            <div class="grid gap-6 md:grid-cols-2">
+              <label class="block">
+                <span class="block text-sm font-mono text-foreground mb-2">
+                  $ Email
+                </span>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="dev@terminal.app"
+                  class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors"
+                  required
+                />
+              </label>
+              <label class="block">
+                <span class="block text-sm font-mono text-foreground mb-2">
+                  $ Company
+                </span>
+                <input
+                  name="company"
+                  type="text"
+                  placeholder="Orbital Systems"
+                  class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors"
+                />
+              </label>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-mono text-foreground mb-2"
+                for="message-input"
+              >
+                $ Message
+              </label>
+              <textarea
+                id="message-input"
+                name="message"
+                rows={4}
+                placeholder="Your message here..."
+                class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors resize-none"
+              ></textarea>
+            </div>
+
+            <fieldset class="space-y-2 rounded-lg border border-border p-4">
+              <legend
+                class="px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground"
+              >
+                Preferences
+              </legend>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="newsletter" class="sr-only peer" />
+                <span
+                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center peer-checked:border-terminal-cyan transition-colors"
+                >
+                  <span
+                    class="w-3 h-3 bg-terminal-cyan rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"
+                  ></span>
+                </span>
+                <span class="text-foreground font-mono text-sm">
+                  Subscribe to updates
+                </span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="beta" class="sr-only peer" />
+                <span
+                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center peer-checked:border-terminal-yellow transition-colors"
+                >
+                  <span
+                    class="w-3 h-3 bg-terminal-yellow rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"
+                  ></span>
+                </span>
+                <span class="text-foreground font-mono text-sm">
+                  Join beta channel
+                </span>
+              </label>
+            </fieldset>
+
+            <fieldset class="space-y-2 rounded-lg border border-border p-4">
+              <legend
+                class="px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground"
+              >
+                Experience level
+              </legend>
+              {
+                ["beginner", "intermediate", "advanced"].map((level) => (
+                  <label class="flex items-center gap-3 cursor-pointer capitalize">
+                    <input
+                      type="radio"
+                      name="experience"
+                      value={level}
+                      class="sr-only peer"
+                      defaultChecked={level === "intermediate"}
+                    />
+                    <span class="w-5 h-5 border-2 border-border rounded-full flex items-center justify-center peer-checked:border-terminal-cyan transition-colors">
+                      <span class="w-3 h-3 bg-terminal-cyan rounded-full opacity-0 peer-checked:opacity-100 transition-opacity" />
+                    </span>
+                    <span class="text-foreground font-mono text-sm">
+                      {level}
+                    </span>
+                  </label>
+                ))
+              }
+            </fieldset>
+
+            <div class="grid gap-6 md:grid-cols-2">
+              <label class="block">
+                <span class="block text-sm font-mono text-foreground mb-2">
+                  $ Framework
+                </span>
+                <div class="relative">
+                  <select
+                    name="framework"
+                    class="w-full appearance-none rounded border border-border bg-terminal-surface px-4 py-2 font-mono text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                  >
+                    <option value="astro">Astro</option>
+                    <option value="svelte">Svelte</option>
+                    <option value="solid">Solid</option>
+                    <option value="vue">Vue</option>
+                  </select>
+                  <span
+                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-terminal-cyan"
+                  >
+                    ▾
+                  </span>
+                </div>
+              </label>
+              <label class="block">
+                <span class="block text-sm font-mono text-foreground mb-2">
+                  $ Budget
+                </span>
+                <input
+                  type="number"
+                  name="budget"
+                  min="0"
+                  placeholder="25000"
+                  class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors"
+                />
+              </label>
+            </div>
+
+            <ComboboxField
+              name="framework_search"
+              label="$ Framework (searchable)"
+              options={frameworks}
+              defaultValue="astro"
+              searchPlaceholder="Search frameworks..."
+              class="font-mono text-sm"
+            />
+
+            <Button type="submit" class="w-full md:w-auto px-6 py-2">
+              Submit form
+            </Button>
+          </form>
+
+          <div
+            data-form-result
+            hidden
+            class="mt-6 border border-accent rounded-lg p-6 bg-card"
+          >
+            <div class="font-mono text-terminal-cyan mb-2">
+              $ Form submitted successfully!
+            </div>
+            <div class="font-mono text-sm space-y-1 text-foreground">
+              <div>Name: <span data-form-output="name"></span></div>
+              <div>Email: <span data-form-output="email"></span></div>
+              <div>Company: <span data-form-output="company"></span></div>
+              <div>Message: <span data-form-output="message"></span></div>
+              <div>Framework: <span data-form-output="framework"></span></div>
+              <div>
+                Search select: <span data-form-output="framework_search"></span>
+              </div>
+              <div>Newsletter: <span data-form-output="newsletter"></span></div>
+              <div>Beta: <span data-form-output="beta"></span></div>
+              <div>Experience: <span data-form-output="experience"></span></div>
+              <div>Budget: <span data-form-output="budget"></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="guidelines" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Validation checklist
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Guardrails to keep forms accessible and consistent with the
+              terminal aesthetic.
+            </p>
+          </header>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div
+              class="rounded-lg border border-terminal-cyan/40 bg-terminal-surface/70 p-5"
+            >
+              <h3
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan mb-3"
+              >
+                Required
+              </h3>
+              <ul class="space-y-2 text-sm text-foreground font-mono">
+                {
+                  checklist.map((item) => (
+                    <li class="flex gap-2">
+                      <span class="text-terminal-green">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div
+              class="rounded-lg border border-terminal-yellow/40 bg-terminal-surface/70 p-5"
+            >
+              <h3
+                class="font-mono text-xs uppercase tracking-wide text-terminal-yellow mb-3"
+              >
+                Nice to have
+              </h3>
+              <ul class="space-y-2 text-sm text-foreground font-mono">
+                <li class="flex gap-2">
+                  <span class="text-terminal-yellow">•</span>
+                  Provide inline feedback within 500ms.
+                </li>
+                <li class="flex gap-2">
+                  <span class="text-terminal-yellow">•</span>
+                  Mirror server validation messages on the client.
+                </li>
+                <li class="flex gap-2">
+                  <span class="text-terminal-yellow">•</span>
+                  Animate focus transitions with minimal easing.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (() => {
+    const form = document.querySelector("[data-playground-form]");
+    if (!form) return;
+
+    const select = form.querySelector("select[name='framework']");
+    const notes = form.querySelector("textarea[name='notes']");
+    const selected = form.querySelector("[data-playground-selected]");
+    const clear = form.querySelector("[data-playground-clear]");
+
+    if (!(select instanceof HTMLSelectElement)) return;
+    if (!(notes instanceof HTMLTextAreaElement)) return;
+    if (!(selected instanceof HTMLElement)) return;
+    if (!(clear instanceof HTMLElement)) return;
+
+    const updateLabel = () => {
+      const option = select.options[select.selectedIndex];
+      selected.textContent = option?.text ?? "Astro";
+    };
+
+    select.addEventListener("change", updateLabel);
+    clear.addEventListener("click", () => {
+      notes.value = "";
+      notes.focus();
+    });
+
+    updateLabel();
+  })();
+</script>
+
+<script is:inline>
+  (() => {
+    const form = document.querySelector("[data-component-form]");
+    if (!(form instanceof HTMLFormElement)) return;
+    const result = document.querySelector("[data-form-result]");
+    if (!(result instanceof HTMLElement)) return;
+
+    const output = (key) => result.querySelector(`[data-form-output='${key}']`);
+    const assign = (key, value) => {
+      const target = output(key);
+      if (target) target.textContent = value;
+    };
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const read = (key, fallback = "") => {
+        const value = formData.get(key);
+        return value == null ? fallback : String(value);
+      };
+
+      assign("name", read("name"));
+      assign("email", read("email"));
+      assign("company", read("company", "—"));
+      assign("message", read("message", "—"));
+      assign("framework", read("framework", "Astro"));
+      assign("framework_search", read("framework_search", "astro"));
+      assign("newsletter", formData.get("newsletter") === "on" ? "Yes" : "No");
+      assign("beta", formData.get("beta") === "on" ? "Enabled" : "Disabled");
+      assign("experience", read("experience", "intermediate"));
+      assign("budget", read("budget", "—"));
+
+      result.removeAttribute("hidden");
+      result.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  })();
+</script>
+

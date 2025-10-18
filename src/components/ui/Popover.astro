@@ -1,0 +1,64 @@
+---
+interface Props {
+  triggerLabel?: string;
+  class?: string;
+}
+
+const { triggerLabel = "Open popover", class: className = "" } =
+  Astro.props as Props;
+---
+
+<div
+  class={["relative inline-flex font-mono text-sm", className]
+    .filter(Boolean)
+    .join(" ")}
+  data-popover-wrapper
+>
+  <button
+    type="button"
+    data-popover-trigger
+    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+  >
+    <slot name="trigger">{triggerLabel}</slot>
+  </button>
+  <div
+    data-popover-content
+    class="invisible pointer-events-none absolute left-1/2 top-full z-40 mt-2 w-72 -translate-x-1/2 rounded-md border border-border bg-terminal-bg/95 p-4 text-xs shadow-[0_10px_40px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+  >
+    <slot />
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const wrapper = document.currentScript?.previousElementSibling;
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector("[data-popover-trigger]");
+    const content = wrapper.querySelector("[data-popover-content]");
+    if (!trigger || !content) return;
+
+    const open = () => {
+      content.classList.add("visible", "pointer-events-auto", "opacity-100");
+      content.classList.remove("invisible", "pointer-events-none");
+    };
+
+    const close = () => {
+      content.classList.remove("visible", "pointer-events-auto", "opacity-100");
+      content.classList.add("invisible", "pointer-events-none");
+    };
+
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (content.classList.contains("visible")) {
+        close();
+      } else {
+        open();
+      }
+    });
+
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") close();
+    });
+  })();
+</script>

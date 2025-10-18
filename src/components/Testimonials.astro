@@ -1,0 +1,448 @@
+---
+import type { Testimonial } from "../data/testimonials";
+
+interface Props {
+  testimonials: Testimonial[];
+}
+
+const { testimonials } = Astro.props;
+
+const totalTestimonials = testimonials.length;
+const commandText = "$ testimonials --list --format=detailed";
+const footerHref = "https://www.linkedin.com/in/andrew-dryga-bb382557/";
+
+function getBranchLabel(index: number): string | undefined {
+  if (index === 0) return "(HEAD -> main, origin/main)";
+  if (index === 1) return "(origin/main)";
+  return undefined;
+}
+
+function getCommitDateLabel(testimonial: Testimonial): string | undefined {
+  if (testimonial.commitDateLabel) {
+    return testimonial.commitDateLabel;
+  }
+
+  if (testimonial.commitDateISO) {
+    const date = new Date(testimonial.commitDateISO);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toUTCString();
+    }
+  }
+
+  return undefined;
+}
+---
+
+<section id="testimonials" class="py-16 md:py-24 px-4" data-testimonials-root>
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+      <p
+        class="font-mono text-terminal-green mb-2 overflow-hidden whitespace-nowrap"
+        data-testimonials-header
+      >
+        <span class="inline-block" data-testimonials-command>
+          {commandText}
+        </span>
+      </p>
+      <h2 class="text-3xl md:text-4xl font-bold">
+        <span class="text-terminal-cyan">Testimonials</span>
+      </h2>
+    </div>
+
+    <div
+      class="bg-terminal-surface border border-terminal-cyan/30 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,255,255,0.1)] mb-8"
+    >
+      <div
+        class="bg-terminal-bg border-b border-terminal-cyan/30 px-3 md:px-4 py-2 flex items-center gap-2"
+      >
+        <div class="flex gap-1.5" aria-hidden="true">
+          <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-destructive/80">
+          </div>
+          <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-secondary/80">
+          </div>
+          <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-accent/80">
+          </div>
+        </div>
+        <span
+          class="font-mono text-[10px] md:text-xs text-muted-foreground ml-2 truncate"
+        >
+          testimonials --output=terminal
+        </span>
+      </div>
+
+      <div
+        class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-y-auto md:overflow-hidden select-none"
+        data-testimonials-container
+        tabindex="0"
+      >
+        <div class="space-y-8" data-testimonials-list>
+          {
+            testimonials.map((testimonial, index) => {
+              const branchLabel = getBranchLabel(index);
+              const commitDate = getCommitDateLabel(testimonial);
+              const isActive = index === 0;
+              const articleClasses = [
+                "relative transition-all duration-300",
+                isActive
+                  ? "opacity-100 scale-[1.02]"
+                  : "opacity-0 pointer-events-none",
+              ].join(" ");
+
+              return (
+                <article
+                  class={articleClasses}
+                  data-testimonial
+                  data-index={index}
+                  aria-hidden={isActive ? "false" : "true"}
+                  aria-current={isActive ? "true" : "false"}
+                >
+                  <div
+                    class="absolute left-0 top-0 bottom-0 w-4 flex flex-col items-center"
+                    aria-hidden="true"
+                  >
+                    <div class="text-terminal-cyan">*</div>
+                    {index < testimonials.length - 1 && (
+                      <div class="flex-1 w-px bg-terminal-cyan/50 mt-1" />
+                    )}
+                  </div>
+
+                  <div class="ml-4 md:ml-6 space-y-1">
+                    <div class="flex items-center gap-1.5 md:gap-2 flex-wrap text-xs md:text-sm">
+                      {testimonial.linkedinUrl && testimonial.commitHash ? (
+                        <a
+                          href={testimonial.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-terminal-green hover:text-terminal-cyan transition-colors hover:underline break-all"
+                          title="View on LinkedIn"
+                        >
+                          {testimonial.commitHash}
+                        </a>
+                      ) : testimonial.commitHash ? (
+                        <span class="text-terminal-green break-all">
+                          {testimonial.commitHash}
+                        </span>
+                      ) : (
+                        <span class="text-terminal-green break-all">
+                          {testimonial.name}
+                        </span>
+                      )}
+                      {branchLabel && (
+                        <span class="text-terminal-cyan text-[10px] md:text-xs">
+                          {branchLabel}
+                        </span>
+                      )}
+                      {testimonial.branchName && (
+                        <span class="text-terminal-yellow text-xs md:text-sm">
+                          {testimonial.branchName}
+                        </span>
+                      )}
+                    </div>
+
+                    {testimonial.authorEmail && (
+                      <div class="text-muted-foreground flex items-start md:items-center gap-1.5 md:gap-2 flex-wrap text-xs md:text-sm">
+                        <span class="text-foreground/80 whitespace-nowrap">
+                          Author:
+                        </span>
+                        <span class="break-all">
+                          {testimonial.name} &lt;{testimonial.authorEmail}&gt;
+                        </span>
+                      </div>
+                    )}
+
+                    {commitDate && (
+                      <div class="text-muted-foreground flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+                        <span class="text-foreground/80">Date:</span>
+                        <span class="text-xs md:text-sm">{commitDate}</span>
+                      </div>
+                    )}
+
+                    <div class="h-2" aria-hidden="true" />
+
+                    <div class="pl-2 md:pl-4 space-y-2">
+                      <p class="text-foreground italic text-xs md:text-sm leading-relaxed">
+                        "{testimonial.quote}"
+                      </p>
+                      <div class="text-terminal-cyan text-xs md:text-sm">
+                        <p>
+                          — {testimonial.name}, {testimonial.title}
+                        </p>
+                        {testimonial.company && (
+                          <p class="ml-2 md:ml-3">{testimonial.company}</p>
+                        )}
+                        {testimonial.relationship && (
+                          <p class="ml-2 md:ml-3 text-muted-foreground/80">
+                            {testimonial.relationship}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          }
+        </div>
+
+        <div
+          class="flex items-center justify-center gap-1.5 md:gap-2 text-muted-foreground text-xs md:text-sm py-4 animate-pulse"
+          data-testimonials-hint
+          hidden={totalTestimonials <= 1}
+        >
+          <span class="hidden md:inline">Press</span>
+          <svg
+            class="w-3 h-3 md:w-4 md:h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m7 15 5-5 5 5"></path>
+          </svg>
+          <svg
+            class="w-3 h-3 md:w-4 md:h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m7 9 5 5 5-5"></path>
+          </svg>
+          <span class="hidden md:inline">to see more</span>
+          <span class="md:hidden">Scroll for more</span>
+        </div>
+      </div>
+
+      <div
+        class="bg-terminal-bg border-t border-terminal-cyan/30 px-3 md:px-4 py-2"
+      >
+        <div
+          class="flex items-center justify-between text-[10px] md:text-xs font-mono flex-wrap gap-2"
+        >
+          <span data-testimonials-status>
+            {
+              totalTestimonials > 0
+                ? `1/${totalTestimonials} commits`
+                : "0/0 commits"
+            }
+          </span>
+          <div class="flex items-center gap-2 md:gap-4">
+            <span class="text-terminal-cyan hidden md:inline">
+              ↑↓ navigate • g/G jump • j/k vim
+            </span>
+            <span class="text-terminal-cyan md:hidden">scroll</span>
+            <span class="text-terminal-green text-[10px] md:text-xs">
+              ● <span data-testimonials-footer-indicator>MORE</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <a
+        href={footerHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 font-mono text-terminal-cyan hover:text-terminal-green transition-colors"
+      >
+        View all recommendations on LinkedIn
+        <svg
+          class="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+          ></path>
+          <path d="M15 3h6v6"></path>
+          <path d="M10 14 21 3"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  (() => {
+    const root = document.querySelector("[data-testimonials-root]");
+    if (!root) return;
+
+    const list = root.querySelector("[data-testimonials-list]");
+    const container = root.querySelector("[data-testimonials-container]");
+    const status = root.querySelector("[data-testimonials-status]");
+    const hint = root.querySelector("[data-testimonials-hint]");
+    const footerIndicator = root.querySelector(
+      "[data-testimonials-footer-indicator]",
+    );
+    const header = root.querySelector("[data-testimonials-header]");
+
+    if (!list || !container) return;
+
+    const items = Array.from(list.querySelectorAll("[data-testimonial]"));
+    if (items.length === 0) return;
+
+    let activeIndex = 0;
+
+    const updateIndicator = (index) => {
+      if (!footerIndicator) return;
+      footerIndicator.textContent = index < items.length - 1 ? "MORE" : "END";
+    };
+
+    const scrollItemIntoView = (item, behavior = "smooth") => {
+      if (!item) return;
+      const top = item.offsetTop;
+      const height = item.offsetHeight;
+      const containerHeight = container.clientHeight;
+      const target = top - containerHeight / 2 + height / 2;
+      container.scrollTo({
+        top: Math.max(0, target),
+        behavior,
+      });
+    };
+
+    const setActive = (nextIndex, opts = {}) => {
+      const clamped = Math.max(0, Math.min(items.length - 1, nextIndex));
+      if (clamped === activeIndex && !opts.force) {
+        return;
+      }
+
+      items.forEach((item, idx) => {
+        const isActive = idx === clamped;
+        const isVisible = idx <= clamped;
+
+        if (!isVisible) {
+          item.classList.add("opacity-0", "pointer-events-none");
+          item.classList.remove("opacity-100", "scale-[1.02]", "opacity-70");
+          item.setAttribute("aria-hidden", "true");
+          item.setAttribute("aria-current", "false");
+        } else if (isActive) {
+          item.classList.add("opacity-100", "scale-[1.02]");
+          item.classList.remove(
+            "opacity-0",
+            "pointer-events-none",
+            "opacity-70",
+          );
+          item.setAttribute("aria-hidden", "false");
+          item.setAttribute("aria-current", "true");
+        } else {
+          item.classList.add("opacity-70");
+          item.classList.remove(
+            "opacity-0",
+            "pointer-events-none",
+            "opacity-100",
+            "scale-[1.02]",
+          );
+          item.setAttribute("aria-hidden", "false");
+          item.setAttribute("aria-current", "false");
+        }
+      });
+
+      const active = items[clamped];
+      if (opts.scroll !== false && active) {
+        scrollItemIntoView(active, opts.behavior ?? "smooth");
+      }
+
+      if (status) {
+        status.textContent = `${clamped + 1}/${items.length} commits`;
+      }
+
+      if (hint) {
+        hint.toggleAttribute("hidden", clamped >= items.length - 1);
+      }
+
+      updateIndicator(clamped);
+      activeIndex = clamped;
+    };
+
+    setActive(0, { scroll: false, force: true });
+
+    const preventArrowScroll = (event) => {
+      if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight"
+      ) {
+        event.preventDefault();
+      }
+    };
+
+    container.addEventListener("keydown", preventArrowScroll);
+
+    const onKeyDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      ) {
+        return;
+      }
+
+      if (container.contains(target)) {
+        return;
+      }
+
+      if (header) {
+        const rect = header.getBoundingClientRect();
+        if (rect.top < 0 || rect.top > 150) {
+          return;
+        }
+      }
+
+      switch (event.key) {
+        case "ArrowDown":
+        case "j":
+          if (activeIndex >= items.length - 1) {
+            return;
+          }
+          event.preventDefault();
+          setActive(activeIndex + 1);
+          break;
+        case "ArrowUp":
+        case "k":
+          if (activeIndex <= 0) {
+            return;
+          }
+          event.preventDefault();
+          setActive(activeIndex - 1);
+          break;
+        case "g":
+        case "Home":
+          event.preventDefault();
+          setActive(0, { behavior: "auto" });
+          break;
+        case "G":
+        case "End":
+          event.preventDefault();
+          setActive(items.length - 1);
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    const cleanup = () => {
+      container.removeEventListener("keydown", preventArrowScroll);
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("astro:before-swap", cleanup);
+    };
+
+    document.addEventListener("astro:before-swap", cleanup);
+  })();
+</script>

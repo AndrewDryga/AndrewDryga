@@ -3,6 +3,9 @@ title: "Bringing blockchain properties to centralized government databases"
 description: "How to design for immutability, auditability, and tamper evidence without running a blockchain in production."
 publishDate: 2017-07-27
 updatedDate: 2017-07-27
+category: "Database"
+readTime: "6 min read"
+cardGradient: "from-terminal-yellow to-terminal-green"
 tags:
   - Database
   - Architecture
@@ -14,122 +17,149 @@ relatedProjects:
 draft: false
 ---
 
-> This is a stub of the original article. A full migration is in progress. Below is a concise outline capturing the core ideas and implementation patterns.
+import {
+  SequenceDiagram,
+  Participants,
+  Participant,
+  Messages,
+  Message,
+  Note,
+} from "@/components/mdx/SequenceDiagram";
 
-## Why “blockchain properties” without a blockchain?
+Right now we are building [a large project in a healthcare field](https://medium.com/nebo-15/national-health-service-on-elixir-and-kubernetes-b1c2551f0dbb) for our government. One of the most interesting problems is making sure it is cryptographically impossible to alter records in the database—even if someone compromises the infrastructure.
 
-In regulated environments (e.g., government health systems, finance), we often need:
-- Tamper-evident history (immutability)
-- Strong audit trails (who, what, when)
-- Verifiable integrity at rest and in motion
-- Non-repudiation for critical actions
+Why does that matter? Investigations must be able to rely on the authenticity of medical records, and the government reimburses providers based on this data. Tampering equates to fraud and, more importantly, patient safety risks.
 
-You don’t always need a blockchain to get these properties. With the right primitives, a centralized system can emulate most of the guarantees while preserving operational simplicity and performance.
+> This post was originally written as an RFC. The design is now battle-tested, and I’ve cleaned it up for clarity and grammar while preserving the intent.
 
-## Properties to emulate
+## Why not just run a blockchain?
 
-- Immutability (append-only histories, no destructive updates)
-- Tamper evidence (hash-chaining, verifiable digests)
-- Non-repudiation (digital signatures by actors or services)
-- Time-ordering (monotonic sequence, trusted timestamps)
-- Auditability (complete, queryable event trails)
+The obvious answer in 2017 was “just use a blockchain.” In practice we had a few hard constraints:
 
-## Building blocks
+- The database stores extremely sensitive data (national healthcare). We cannot replicate it beyond the trust boundary.
+- Encryption alone is not enough. Algorithms age, bugs appear, and quantum attacks are no longer theoretical.
+- Proof-of-work/proof-of-stake style consensus burns CPU we simply don’t have in the budget.
 
-1) Append-only event log
-- Store domain events as immutable records.
-- Never update or delete historical events; derive state by folding events or projecting to read models.
+So we asked a better question: _how do we give the platform blockchain-like guarantees while keeping a centralized database?_ The answer hinges on strong signing practices plus tamper-evident storage.
 
-2) Hash-chaining
-- Each event E_n includes a `prev_hash` referencing `hash(E_{n-1})`.
-- Any mutation in history breaks the chain.
-- Periodically anchor chain heads (or checkpoints) in a separate trust domain (e.g., external timestamping service).
+## Data model (simplified)
 
-3) Merkle trees for batch integrity
-- For daily/hourly batches, compute a Merkle root over events.
-- Persist the root separately (e.g., in a write-once bucket or a different storage account/project).
-- Verifies membership and integrity of individual events efficiently.
+Everything a physician submits is signed with their private key, issued by a certified authority. Rows are immutable; we only append new versions.
 
-4) Digital signatures
-- Sign critical events with a service or user-held key.
-- Store signature and public key reference; verify on read or audit.
-- For machine actors, use KMS/HSM-managed keys with rotation and attestation.
+| Column                    | Type   | Modifiers |
+| ------------------------- | ------ | --------- |
+| `master_patient_index_id` | UUID   | not null  |
+| `patient_first_name`      | string | not null  |
+| `patient_last_name`       | string | not null  |
+| `patient_passport_number` | string | not null  |
+| `physician_personnel_id`  | UUID   | not null  |
+| `previous_block_hash`     | string | not null  |
+| `physician_signature`     | bytes  | not null  |
 
-5) Verifiable snapshots
-- Periodically materialize state snapshots with:
-  - Snapshot hash (over canonical serialization)
-  - Reference to the event chain head (height, hash)
-- Enable fast integrity checks and time-travel validation.
+The `physician_signature` covers the entire row payload. `previous_block_hash` links each record to the Merkle root of the prior block.
 
-6) Trusted timestamping
-- Use a monotonic sequence and a trusted clock source.
-- Optionally anchor daily Merkle roots to an external notary or public timestamping service for additional assurance.
+<SequenceDiagram className="my-6">
+  <Participants>
+    <Participant name="Physician" position="left" color="terminal-green" />
+    <Participant name="Ledger Service" position="right" color="primary" />
+  </Participants>
+  <Messages>
+    <Message label="Sign payload + prev_hash" type="success" />
+    <Message label="Submit signed row" />
+    <Message label="Persist row & enqueue block update" type="success" direction="left" />
+  </Messages>
+  <Note text="Every row links to the previous block. Altering history breaks the hash chain." />
+</SequenceDiagram>
 
-## Practical schema sketch
+Blocks are rolled every few minutes. The trade-off is simple: shorter windows mean lower exposure; longer windows reduce coordination overhead.
 
-Events (append-only):
-- id (UUID, sortable)
-- aggregate_id (entity identifier)
-- created_at (timestamp)
-- actor_id (user/service)
-- type (domain event)
-- payload (JSONB)
-- prev_hash (bytes)
-- hash (bytes)
-- signature (bytes, optional)
-- signing_key_id (ref, optional)
+## Failure scenarios
 
-Anchors (periodic integrity points):
-- period_start / period_end
-- merkle_root
-- chain_head_id / chain_head_hash
-- external_anchor_ref (optional)
-- created_at
+### Transactions not yet in a block
 
-Snapshots (materialized state with proofs):
-- aggregate_id
-- as_of_event_id
-- state (JSONB)
-- state_hash
-- chain_head_hash
-- created_at
+To alter a pending transaction you’d need the physician’s private key. Deleting a pending row is detectable via audit logs. This mirrors how Bitcoin treats unconfirmed transactions.
 
-## Verification routines
+### Transactions in the latest block
 
-- Chain verification:
-  - Recompute `hash(event)`; follow `prev_hash` linkage back from head.
-- Batch verification:
-  - Recompute Merkle root from events; compare to stored root.
-- Signature verification:
-  - Verify signature over canonical event representation with stored public key.
-- Snapshot verification:
-  - Recompute `state_hash`; validate it corresponds to the event chain as-of `as_of_event_id`.
+Every new write references the latest block hash. To tamper you would need either to:
 
-## Operational notes
+- Delete the block entirely (which we detect), or
+- Re-sign every row with each physician’s key (functionally impossible).
 
-- Keep canonical encodings stable (e.g., JSON Canonical Form or protobuf), otherwise hashes/signatures break.
-- Separate roles and storage for anchors (defense-in-depth).
-- Rotate keys with clear lineage; store verification metadata alongside events.
-- Make audits cheap: ship background jobs that verify a random sample + nightly full-batch.
+### Time is our ally
 
-## Trade-offs
+As more blocks confirm on top of a transaction, confidence increases—exactly like cumulative proof-of-work. We publish block headers externally so any third party can detect gaps.
 
-- You gain strong tamper-evidence and auditability with familiar infrastructure.
-- You do not gain decentralized consensus or trust minimization across multiple independent operators.
-- You must invest in careful canonicalization, key management, and verification tooling.
+## Implementation options we considered
 
-## When to reach for a real blockchain
+1. A database with first-class immutability guarantees (none fit our needs in 2017).
+2. A native extension enforcing signatures and hash chaining (risk: portability).
+3. An Ecto adapter encapsulating the logic (works, but ties us to Elixir).
+4. A dedicated Elixir service that enforces the rules while writing to PostgreSQL (our choice).
 
-- Multi-party trust minimization between independent and adversarial operators.
-- On-chain programmability and settlement requirements.
-- Public verifiability without dependence on a central operator.
+We landed on option 4 for maintainability and rollout speed.
 
-## Summary
+### Storage engines
 
-You can deliver most “blockchain-like” assurances in centralized systems by combining:
-- Append-only event sourcing
-- Hash chaining and Merkle roots
-- Digital signatures and trusted timestamps
-- Verifiable snapshots and routine audits
+Append-friendly, Dynamo-inspired stores (Cassandra, Riak) are a great fit. They shard naturally and make partial rebuilds easy. When we eventually need to scale horizontally, this is where we’ll go.
 
-This approach keeps systems operationally simple, performant, and compatible with existing governance while providing strong guarantees that matter in government and regulated environments.
+```text
+Ring topology snapshot (simplified)
+
+      [Node A]
+     /       \
+ [Node D]   [Node B]
+     \       /
+      [Node C]
+```
+
+For now a single highly-available PostgreSQL cluster is enough, and we can mix in Citus/Timescale if we need managed sharding later.
+
+### Consistency knobs (`N`, `W`, `R`)
+
+We still need to balance consistency and availability:
+
+- Writes that mutate business state use `W = ALL`.
+- Read paths that materialize blocks use `R = ALL`.
+- Non-critical reads (analytics, reporting) can be eventually consistent.
+
+The beauty of tunable consistency is that we pick what matters per operation.
+
+### Integrity checks
+
+Periodically we recompute hashes and signatures:
+
+- Chain verification: walk backwards, recomputing each hash.
+- Batch verification: recompute the Merkle root for the block.
+- Signature verification: validate with stored public keys.
+- Snapshot verification: recompute state digests and check pointers.
+
+Failures trigger an automated restore-from-backup, followed by another validation pass. If the check fails twice, the system halts and alerts humans.
+
+## CAP refresher
+
+| Choice | Guarantees         | Trade-off                                  |
+| ------ | ------------------ | ------------------------------------------ |
+| CP     | Strong consistency | You lose availability during partitions    |
+| AP     | High availability  | Clients may read stale data                |
+| CA     | Mythical           | Partitions _will_ happen in real systems   |
+
+We deliberately choose CP for writes that affect money or medical records. Everything else can degrade gracefully.
+
+## Open questions (still true years later)
+
+- What is the runbook when integrity checks fail?
+- How do we reject transactions that link to stale blocks without burning operators?
+- Should we anchor block headers in a public ledger (e.g., Ethereum) for extra assurance?
+
+These are policy decisions as much as technical ones.
+
+## Takeaways
+
+We achieved blockchain-style tamper evidence without adopting a full decentralized stack:
+
+- Physicians sign everything they submit.
+- Hash chaining + Merkle roots make tampering obvious.
+- External anchors raise the bar for attackers.
+
+The result is boring, audit-friendly infrastructure that satisfies regulators and keeps operations lean. That’s the goal.

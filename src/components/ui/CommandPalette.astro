@@ -1,0 +1,363 @@
+---
+interface CommandItem {
+  label: string;
+  shortcut?: string;
+  href?: string;
+  description?: string;
+}
+
+interface Props {
+  title?: string;
+  placeholder?: string;
+  items?: CommandItem[];
+  class?: string;
+  triggerLabel?: string;
+}
+
+const {
+  title = "Command Menu",
+  placeholder = "Type a command...",
+  items = [],
+  class: className = "",
+  triggerLabel = "⌘K",
+} = Astro.props as Props;
+---
+
+<div class={["relative", className].filter(Boolean).join(" ")}>
+  <button
+    type="button"
+    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 font-mono text-xs text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    data-command-trigger
+  >
+    <svg
+      class="h-3.5 w-3.5"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-3.5-3.5"></path>
+    </svg>
+    <span>Command palette</span>
+    <span
+      class="ml-auto inline-flex items-center rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground"
+    >
+      {triggerLabel}
+    </span>
+  </button>
+</div>
+
+<style>
+  dialog[data-command-dialog]:not([open]) {
+    display: none;
+  }
+</style>
+
+<dialog class="command-dialog" data-command-dialog>
+  <div
+    class="command-dialog__panel w-full max-w-xl overflow-hidden rounded-lg border border-border bg-terminal-bg shadow-[0_0_40px_rgba(34,211,238,0.2)] font-mono"
+  >
+    <div class="flex items-center border-b border-border px-4">
+      <svg
+        class="mr-3 h-4 w-4 text-terminal-cyan"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-3.5-3.5"></path>
+      </svg>
+      <input
+        type="search"
+        class="h-12 w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+        placeholder={placeholder}
+        data-command-input
+      />
+      <button
+        type="button"
+        class="ml-2 text-xs text-muted-foreground transition-colors hover:text-terminal-cyan"
+        data-command-close
+      >
+        ESC
+      </button>
+    </div>
+
+    <div class="max-h-72 overflow-y-auto p-2 space-y-1" data-command-results>
+      {
+        items.length > 0 ? (
+          items.map((item) => (
+            <a
+              href={item.href ?? "#"}
+              class="group flex items-center justify-between rounded px-3 py-2 min-h-[44px] text-sm text-foreground transition-colors hover:bg-terminal-cyan/10 focus:bg-terminal-cyan/10"
+              data-command-item
+              data-label={item.label.toLowerCase()}
+            >
+              <div>
+                <p class="font-semibold text-terminal-cyan group-hover:text-terminal-green">
+                  {item.label}
+                </p>
+                {item.description && (
+                  <p class="text-[11px] text-muted-foreground/80 mt-1">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+              {item.shortcut && (
+                <span class="ml-4 inline-flex items-center gap-1 text-[12px] font-mono text-muted-foreground">
+                  {item.shortcut.split("+").map((part) => (
+                    <kbd class="min-w-[1.75rem] px-2 py-1 border border-border/60 rounded bg-terminal-bg/80 text-center uppercase">
+                      {part.trim()}
+                    </kbd>
+                  ))}
+                </span>
+              )}
+            </a>
+          ))
+        ) : (
+          <p class="px-3 py-6 text-xs text-muted-foreground text-center">
+            <slot name="empty">No commands registered.</slot>
+          </p>
+        )
+      }
+    </div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (() => {
+    const dialog = document.currentScript?.previousElementSibling;
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    const wrapper = dialog.previousElementSibling;
+    if (!(wrapper instanceof HTMLElement)) return;
+    const trigger = wrapper.querySelector("[data-command-trigger]");
+    const input = dialog.querySelector("[data-command-input]");
+    const closeButton = dialog.querySelector("[data-command-close]");
+    const items = Array.from(
+      dialog.querySelectorAll("[data-command-item]"),
+    ).filter((node) => node instanceof HTMLElement);
+    const results = dialog.querySelector("[data-command-results]");
+
+    if (
+      !(trigger instanceof HTMLElement) ||
+      !(input instanceof HTMLInputElement) ||
+      !(results instanceof HTMLElement)
+    ) {
+      return;
+    }
+
+    let activeIndex = -1;
+
+    const visibleItems = () =>
+      items.filter((item) => !item.hasAttribute("hidden"));
+
+    const setActive = (index) => {
+      const visibles = visibleItems();
+      if (!visibles.length) {
+        activeIndex = -1;
+        return;
+      }
+      const clamped = (index + visibles.length) % visibles.length;
+      visibles.forEach((item, i) => {
+        if (i === clamped) {
+          item.classList.add("bg-terminal-cyan/10", "text-terminal-cyan");
+          item.setAttribute("data-active", "true");
+        } else {
+          item.classList.remove("bg-terminal-cyan/10", "text-terminal-cyan");
+          item.removeAttribute("data-active");
+        }
+      });
+      activeIndex = clamped;
+    };
+
+    const clearActive = () => {
+      items.forEach((item) => {
+        item.classList.remove("bg-terminal-cyan/10", "text-terminal-cyan");
+        item.removeAttribute("data-active");
+      });
+      activeIndex = -1;
+    };
+
+    const toggleAria = (isOpen) => {
+      trigger.setAttribute("aria-expanded", String(isOpen));
+      dialog.toggleAttribute("data-open", isOpen);
+    };
+
+    const openDialog = () => {
+      if (dialog.hasAttribute("open")) return;
+      if (typeof dialog.showModal === "function") {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute("open", "");
+      }
+      toggleAria(true);
+      input.value = "";
+      filter("");
+      input.focus();
+      const visibles = visibleItems();
+      if (visibles.length) {
+        setActive(0);
+      }
+    };
+
+    const closeDialog = () => {
+      if (!dialog.hasAttribute("open")) return;
+      if (typeof dialog.close === "function") {
+        dialog.close();
+      } else {
+        dialog.removeAttribute("open");
+      }
+      toggleAria(false);
+      clearActive();
+    };
+
+    const filter = (value) => {
+      const query = value.trim().toLowerCase();
+      let visibleCount = 0;
+      items.forEach((item) => {
+        const label = item.getAttribute("data-label") ?? "";
+        const matches = label.includes(query);
+        item.toggleAttribute("hidden", !matches);
+        if (matches) visibleCount += 1;
+      });
+
+      if (visibleCount === 0) {
+        results.setAttribute("data-empty", "true");
+      } else {
+        results.removeAttribute("data-empty");
+      }
+      if (visibleCount > 0) {
+        setActive(0);
+      } else {
+        clearActive();
+      }
+    };
+
+    trigger.addEventListener("click", openDialog);
+    closeButton?.addEventListener("click", closeDialog);
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) {
+        closeDialog();
+      }
+    });
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeDialog();
+    });
+
+    input.addEventListener("input", (event) => {
+      filter(event.target.value);
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (!dialog.hasAttribute("open")) return;
+      const visibles = visibleItems();
+      if (!visibles.length) return;
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActive(activeIndex + 1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActive(activeIndex - 1);
+      } else if (event.key === "Enter") {
+        const current = visibles[activeIndex >= 0 ? activeIndex : 0];
+        if (current) {
+          event.preventDefault();
+          current.click();
+          closeDialog();
+        }
+      }
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener("mouseenter", () => {
+        const visibles = visibleItems();
+        const visibleIndex = visibles.indexOf(item);
+        if (visibleIndex !== -1) {
+          setActive(visibleIndex);
+        }
+      });
+
+      item.addEventListener("click", (event) => {
+        if (item.hasAttribute("hidden")) {
+          event.preventDefault();
+          return;
+        }
+        closeDialog();
+      });
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        const isOpen = dialog.hasAttribute("open");
+        if (isOpen) {
+          closeDialog();
+        } else {
+          openDialog();
+        }
+      }
+      if (event.key === "Escape" && dialog.hasAttribute("open")) {
+        closeDialog();
+      }
+    });
+  })();
+</script>
+
+<style>
+  dialog.command-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(3rem, 6vw, 7rem) clamp(1.5rem, 4vw, 2.5rem);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    width: 100vw;
+    min-height: 100dvh;
+    opacity: 0;
+    transition: opacity 180ms ease-out;
+    z-index: 50;
+    box-sizing: border-box;
+  }
+
+  dialog.command-dialog:not([open]) {
+    display: none;
+  }
+
+  dialog.command-dialog::backdrop {
+    background: hsl(var(--terminal-bg) / 0.7);
+    backdrop-filter: blur(12px);
+  }
+
+  dialog.command-dialog[data-open] {
+    opacity: 1;
+  }
+
+  .command-dialog__panel {
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0;
+    transition:
+      transform 180ms ease-out,
+      opacity 180ms ease-out;
+  }
+
+  dialog.command-dialog[data-open] .command-dialog__panel {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  @media (max-width: 640px) {
+    dialog.command-dialog {
+      padding: 2rem 1rem;
+    }
+  }
+</style>

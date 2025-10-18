@@ -2,14 +2,18 @@
 import BaseLayout from "../../../components/BaseLayout.astro";
 import Header from "../../../components/Header.astro";
 import SectionHeader from "../../../components/SectionHeader.astro";
-
-import { blogPosts, categories } from "../../../data/blogPosts";
+import {
+  getBlogCategories,
+  loadBlogSummaries,
+  formatPublishDate,
+} from "../../../lib/blog";
 
 // Generate static paths for each category (except "All")
 export async function getStaticPaths() {
-  const slugs = categories
-    .filter((c) => c !== "All")
-    .map((c) => c.toLowerCase().replace(/\s+/g, "-"));
+  const posts = await loadBlogSummaries();
+  const slugs = getBlogCategories(posts).map((c) =>
+    c.toLowerCase().replace(/\s+/g, "-"),
+  );
 
   return slugs.map((slug) => ({
     params: { slug },
@@ -18,51 +22,39 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 
-// Resolve category name from slug
-const currentCategory =
-  categories.find((c) => c.toLowerCase().replace(/\s+/g, "-") === slug) ?? null;
+const allPosts = await loadBlogSummaries();
+const categoryList = getBlogCategories(allPosts);
+const categories = ["All", ...categoryList];
+const slugToCategory = new Map(
+  categoryList.map((c) => [c.toLowerCase().replace(/\s+/g, "-"), c]),
+);
+
+const currentCategory = slug ? (slugToCategory.get(slug) ?? null) : null;
 
 if (!currentCategory) {
   // Unknown category -> go back to blog index
   return Astro.redirect("/blog/");
 }
 
+const CATEGORY_INTRO: Record<string, string> = {
+  Architecture:
+    "Practical architecture notes from systems that shipped. Trade-offs, diagrams, and patterns that stayed simple under real load.",
+  Engineering:
+    "Hands-on product engineering from idea to production. Thin slices, fast feedback, and code that’s easy to change.",
+  Security:
+    "Pragmatic security in production: access, auth, and data safeguards that reduce risk without slowing delivery.",
+  Database:
+    "Schema design, migrations, and performance work that keep data correct and fast. Real incidents, fixes, and lessons.",
+  DevOps:
+    "Delivery pipelines, observability, and ops hygiene that keep teams shipping. Fewer surprises, calmer on-call.",
+};
+
 const title = "Blog — Andrew Dryga";
 const description =
-  "Thoughts on software engineering, distributed systems, and building products.";
+  (currentCategory && CATEGORY_INTRO[currentCategory]) ??
+  "Posts from this category. Practical notes from shipping real systems.";
 const canonical = Astro.url.href;
-
-const { getCollection } = await import("astro:content");
-const blogEntries = await getCollection(
-  "blog",
-  ({ data }: { data: { draft?: boolean } }) =>
-    import.meta.env.PROD ? !data.draft : true,
-);
-
-function estimateReadTime(body: string) {
-  const words = (body || "")
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/<\/?[^>]+>/g, " ")
-    .replace(/[#>*_`~\[\]\(\)!-]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean).length;
-  const minutes = Math.max(1, Math.round(words / 200));
-  return `${minutes} min read`;
-}
-
-const readTimeMap = Object.fromEntries(
-  blogEntries.map((e: { slug: string; body?: string }) => [
-    e.slug,
-    estimateReadTime(e.body ?? ""),
-  ]),
-);
-
-function formatDateStr(s: string) {
-  return new Date(s).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
+const consoleLine = `$ ls -la ./blog | grep ${slug}`;
 
 function categoryHref(cat: string | null) {
   if (!cat || cat === "All") {
@@ -73,10 +65,9 @@ function categoryHref(cat: string | null) {
 }
 
 // Filter posts by selected category
-const posts = blogPosts
+const posts = allPosts
   .filter((p) => p.category === currentCategory)
-  .slice()
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  .sort((a, b) => b.publishDate.getTime() - a.publishDate.getTime());
 ---
 
 <BaseLayout {title} {description} {canonical}>
@@ -86,15 +77,15 @@ const posts = blogPosts
     <div class="max-w-6xl mx-auto">
       <SectionHeader
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Blog" }]}
-        consoleLine="$ ls -la ./blog"
+        consoleLine={consoleLine}
         titleLeading="Blog &"
         titleAccent="Insights"
         accentColor="yellow"
-        description="Thoughts on software engineering, distributed systems, and building products."
+        description={description}
       >
         <div class="flex flex-wrap gap-2 mt-8 md:mt-12">
           {
-            ["All", ...categories.filter((c) => c !== "All")].map((cat) => {
+            categories.map((cat) => {
               const isActive = cat === currentCategory;
               return (
                 <a
@@ -118,10 +109,7 @@ const posts = blogPosts
         posts.length > 0 ? (
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {posts.map((post, index) => {
-              const href = post.link.endsWith("/")
-                ? post.link
-                : `${post.link}/`;
-              const slug = href.replace(/^\/blog\/|\/$/g, "");
+              const href = post.url;
               return (
                 <article
                   class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in relative"
@@ -132,23 +120,22 @@ const posts = blogPosts
                     class="absolute inset-0 rounded-lg"
                     aria-label={`Read more: ${post.title}`}
                   />
-                  <div class="space-y-4">
+                  <div class="flex h-full flex-col gap-4">
                     <div class="flex items-center justify-between">
                       <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
                         {post.category}
                       </span>
-                      <div class="font-mono text-xs text-muted-foreground flex items-center gap-3">
-                        <span>{formatDateStr(post.date)}</span>
-                        <span>{readTimeMap[slug] ?? ""}</span>
-                      </div>
+                      <span class="font-mono text-xs text-muted-foreground">
+                        {formatPublishDate(post.publishDate)}
+                      </span>
                     </div>
                     <h3 class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow">
                       {post.title}
                     </h3>
                     <p class="text-muted-foreground text-sm leading-relaxed">
-                      {post.excerpt}
+                      {post.description}
                     </p>
-                    <span class="inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                    <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
                       Read more →
                     </span>
                   </div>

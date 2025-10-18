@@ -1,0 +1,30 @@
+---
+interface Props {
+  name: string;
+  color?: "primary" | "accent" | "secondary" | "terminal-green";
+  position?: "left" | "right";
+  class?: string;
+}
+
+const {
+  name,
+  color = "primary",
+  position = "left",
+  class: className = "",
+} = Astro.props as Props;
+
+const colorMap: Record<NonNullable<Props["color"]>, string> = {
+  primary: "bg-primary/20 text-primary border-primary",
+  accent: "bg-accent/20 text-accent border-accent",
+  secondary: "bg-secondary/20 text-secondary border-secondary",
+  "terminal-green": "bg-terminal-green/20 text-terminal-green border-terminal-green",
+};
+
+const placement = position === "left" ? "left-[15%]" : "left-[85%]";
+---
+
+<div class={`absolute top-0 -translate-x-1/2 ${placement} ${className}`.trim()}>
+  <div class={`inline-block p-3 border-2 rounded font-bold ${colorMap[color]}`}>
+    {name}
+  </div>
+</div>

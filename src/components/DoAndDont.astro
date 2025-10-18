@@ -1,0 +1,51 @@
+---
+interface Props {
+  doText: string;
+  dontText: string;
+  class?: string;
+}
+
+const { doText, dontText, class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+---
+
+<div class={`grid md:grid-cols-2 gap-4 ${className}`.trim()} {...rest}>
+  <div class="border border-terminal-green rounded-lg p-4 bg-terminal-green/5">
+    <div class="flex items-center gap-2 text-terminal-green mb-2 font-mono text-sm">
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+      <span>Do</span>
+    </div>
+    <p class="text-foreground text-sm">{doText}</p>
+  </div>
+
+  <div class="border border-destructive rounded-lg p-4 bg-destructive/5">
+    <div class="flex items-center gap-2 text-destructive mb-2 font-mono text-sm">
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 6 6 18" />
+        <path d="M6 6l12 12" />
+      </svg>
+      <span>Don't</span>
+    </div>
+    <p class="text-foreground text-sm">{dontText}</p>
+  </div>
+</div>

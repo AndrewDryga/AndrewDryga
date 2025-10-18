@@ -1,0 +1,16 @@
+---
+interface Props {
+  multiple?: boolean;
+  class?: string;
+}
+
+const { multiple = false, class: className = "" } = Astro.props as Props;
+---
+
+<div
+  class={['space-y-2', className].filter(Boolean).join(' ')}
+  data-accordion
+  data-multiple={multiple ? 'true' : 'false'}
+>
+  <slot />
+</div>

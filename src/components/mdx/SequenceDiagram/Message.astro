@@ -1,0 +1,90 @@
+---
+interface Props {
+  label: string;
+  type?: "request" | "response" | "async" | "error" | "success";
+  direction?: "left" | "right";
+  class?: string;
+}
+
+const {
+  label,
+  type = "request",
+  direction,
+  class: className = "",
+} = Astro.props as Props;
+
+const styles: Record<
+  NonNullable<Props["type"]>,
+  {
+    line: string;
+    arrow: string;
+    text: string;
+    defaultDirection: "left" | "right";
+  }
+> = {
+  request: {
+    line: "border-primary",
+    arrow: "border-l-primary",
+    text: "text-foreground border-border",
+    defaultDirection: "right" as const,
+  },
+  response: {
+    line: "border-dashed border-secondary",
+    arrow: "border-r-secondary",
+    text: "text-secondary border-secondary",
+    defaultDirection: "left" as const,
+  },
+  async: {
+    line: "border-dashed border-accent",
+    arrow: "border-l-accent",
+    text: "text-accent border-accent",
+    defaultDirection: "right" as const,
+  },
+  error: {
+    line: "border-dashed border-destructive",
+    arrow: "border-r-destructive",
+    text: "text-destructive border-destructive",
+    defaultDirection: "left" as const,
+  },
+  success: {
+    line: "border-dashed border-terminal-green",
+    arrow: "border-r-terminal-green",
+    text: "text-terminal-green border-terminal-green",
+    defaultDirection: "left" as const,
+  },
+};
+
+const style = styles[type];
+const actualDirection = (direction ?? style.defaultDirection) as
+  | "left"
+  | "right";
+---
+
+<div class={`relative h-16 ${className}`.trim()}>
+  <div
+    class="absolute left-[15%] right-[15%] top-1/2 -translate-y-1/2 flex items-center"
+  >
+    <div class={`w-full border-t-2 relative ${style.line}`}>
+      {
+        actualDirection === "right" ? (
+          <div
+            class={`absolute right-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] -translate-y-[calc(50%+1px)] ${style.arrow}`}
+          />
+        ) : (
+          <div
+            class={`absolute left-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] -translate-y-[calc(50%+1px)] ${style.arrow}`}
+          />
+        )
+      }
+    </div>
+  </div>
+  <div
+    class="absolute -top-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+  >
+    <div
+      class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}
+    >
+      {label}
+    </div>
+  </div>
+</div>

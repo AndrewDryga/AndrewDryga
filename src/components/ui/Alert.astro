@@ -1,0 +1,70 @@
+---
+interface Props {
+  variant?: "default" | "destructive" | "warning" | "success" | "info";
+  title?: string;
+  description?: string;
+  icon?: string;
+  class?: string;
+}
+
+const {
+  variant = "default",
+  title,
+  description,
+  icon,
+  class: className = "",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+
+const variantClasses: Record<NonNullable<Props["variant"]>, string> = {
+  default:
+    "border-terminal-cyan/40 bg-terminal-cyan/10 text-terminal-cyan",
+  destructive:
+    "border-destructive/50 bg-destructive/10 text-destructive",
+  warning:
+    "border-terminal-yellow/40 bg-terminal-yellow/10 text-terminal-yellow",
+  success:
+    "border-terminal-green/40 bg-terminal-green/10 text-terminal-green",
+  info: "border-terminal-cyan/50 bg-terminal-cyan/10 text-terminal-cyan",
+};
+
+const containerClasses = [
+  "rounded-lg border p-4 space-y-3",
+  variantClasses[variant],
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={containerClasses} role="status" {...rest}>
+  {title && (
+    <div class="flex items-start gap-3">
+      {icon && (
+        <span class="inline-flex h-5 w-5 items-center justify-center -translate-y-[1px]">
+          {icon}
+        </span>
+      )}
+      <div>
+        <p class="font-mono text-sm uppercase tracking-wide">{title}</p>
+        {description && (
+          <p class="text-sm text-foreground/80 mt-1">{description}</p>
+        )}
+        <slot />
+      </div>
+    </div>
+  )}
+
+  {!title && (
+    <div class="flex items-start gap-3">
+      {icon && (
+        <span class="inline-flex h-5 w-5 items-center justify-center -translate-y-[1px]">
+          {icon}
+        </span>
+      )}
+      <div class="text-sm text-foreground/80">
+        {description ?? <slot />}
+      </div>
+    </div>
+  )}
+</div>

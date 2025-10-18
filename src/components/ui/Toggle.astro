@@ -1,0 +1,31 @@
+---
+interface Props {
+  pressed?: boolean;
+  class?: string;
+  value?: string;
+}
+
+const {
+  pressed = false,
+  class: className = "",
+  value,
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<button
+  type="button"
+  role="switch"
+  aria-checked={pressed}
+  data-toggle={value ?? ""}
+  class={[
+    "inline-flex items-center rounded border px-3 py-1.5 font-mono text-xs transition-colors",
+    pressed
+      ? "border-terminal-cyan bg-terminal-cyan/10 text-terminal-cyan"
+      : "border-border text-muted-foreground hover:border-terminal-cyan hover:text-terminal-cyan",
+    className,
+  ].filter(Boolean).join(" ")}
+  {...rest}
+>
+  <slot />
+</button>

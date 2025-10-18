@@ -1,0 +1,39 @@
+---
+import { componentLibraryEntries } from "@/data/componentLibrary";
+
+interface Props {
+  current: string;
+  class?: string;
+}
+
+const { current, class: className = "" } = Astro.props as Props;
+---
+
+<nav
+  aria-label="Component library"
+  class={[
+    "flex flex-wrap gap-3 font-mono text-xs text-muted-foreground",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ")}
+>
+  {
+    componentLibraryEntries.map((item) => {
+      const isCurrent = item.slug === current;
+      return (
+        <a
+          href={item.href}
+          aria-current={isCurrent ? "page" : undefined}
+          class={`rounded-md border px-3 py-1 transition-colors ${
+            isCurrent
+              ? "border-terminal-cyan text-terminal-cyan"
+              : "border-border hover:border-terminal-cyan/60 hover:text-terminal-cyan"
+          }`}
+        >
+          {item.label}
+        </a>
+      );
+    })
+  }
+</nav>

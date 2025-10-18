@@ -1,0 +1,27 @@
+---
+interface Props {
+  value: number;
+  label?: string;
+  class?: string;
+}
+
+const {
+  value,
+  label,
+  class: className = "",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+
+const clamped = Math.max(0, Math.min(100, value));
+const filledBlocks = Math.round((clamped / 100) * 24);
+const emptyBlocks = 24 - filledBlocks;
+const progress = "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+---
+
+<div class={`space-y-2 ${className}`.trim()} {...rest}>
+  {label && <div class="text-sm font-mono text-foreground">{label}</div>}
+  <div class="font-mono text-sm text-terminal-green flex items-center gap-2">
+    <span>[{progress}]</span>
+    <span class="text-foreground">{clamped}%</span>
+  </div>
+</div>

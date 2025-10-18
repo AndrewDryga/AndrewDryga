@@ -1,0 +1,160 @@
+---
+import Button from "./Button.astro";
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  name: string;
+  options: Option[];
+  label?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  class?: string;
+}
+
+const {
+  name,
+  options,
+  label,
+  defaultValue = options[0]?.value ?? "",
+  placeholder = "Select option",
+  searchPlaceholder = "Search...",
+  class: className = "",
+} = Astro.props as Props;
+
+const selected = options.find((opt) => opt.value === defaultValue) ??
+  options[0] ?? { value: "", label: "" };
+const id = `combobox-${crypto.randomUUID()}`;
+---
+
+<div
+  id={id}
+  class={["relative", className].filter(Boolean).join(" ")}
+  data-combobox
+  data-combobox-options={JSON.stringify(options)}
+>
+  <input type="hidden" name={name} value={selected.value} data-combobox-value />
+  {
+    label && (
+      <span class="block text-sm font-mono text-foreground mb-2">{label}</span>
+    )
+  }
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    class="flex w-full items-center justify-between px-4 py-2 text-sm"
+    data-combobox-trigger
+    aria-haspopup="listbox"
+    aria-expanded="false"
+  >
+    <span data-combobox-label>{selected.label}</span>
+    <span class="text-terminal-cyan">▾</span>
+  </Button>
+  <div
+    class="absolute left-0 right-0 z-20 mt-2 hidden rounded-lg border border-border bg-terminal-bg/95 p-3 shadow-[0_0_30px_rgba(34,211,238,0.25)]"
+    data-combobox-panel
+  >
+    <input
+      type="search"
+      class="mb-2 w-full rounded border border-border bg-terminal-surface px-3 py-2 text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+      placeholder={searchPlaceholder}
+      data-combobox-input
+    />
+    <ul class="max-h-48 overflow-y-auto space-y-1" data-combobox-list></ul>
+  </div>
+</div>
+
+<script is:inline data-combobox-id={id}>
+  (() => {
+    const script = document.currentScript;
+    const rootId = script?.dataset.comboboxId;
+    if (!rootId) return;
+    const root = document.getElementById(rootId);
+    if (!root) return;
+
+    const trigger = root.querySelector("[data-combobox-trigger]");
+    const panel = root.querySelector("[data-combobox-panel]");
+    const input = root.querySelector("[data-combobox-input]");
+    const list = root.querySelector("[data-combobox-list]");
+    const hidden = root.querySelector("[data-combobox-value]");
+    const label = root.querySelector("[data-combobox-label]");
+
+    if (
+      !(trigger instanceof HTMLElement) ||
+      !(panel instanceof HTMLElement) ||
+      !(input instanceof HTMLInputElement) ||
+      !(list instanceof HTMLElement) ||
+      !(hidden instanceof HTMLInputElement) ||
+      !(label instanceof HTMLElement)
+    )
+      return;
+
+    const optionsRaw = root.getAttribute("data-combobox-options") ?? "[]";
+    let options;
+    try {
+      options = JSON.parse(optionsRaw);
+    } catch {
+      options = [];
+    }
+    if (!Array.isArray(options)) options = [];
+    root.removeAttribute("data-combobox-options");
+
+    const render = (items) => {
+      list.innerHTML = "";
+      if (!Array.isArray(items)) return;
+      items.forEach((option) => {
+        if (!option || typeof option !== "object") return;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          "flex w-full items-center justify-between rounded px-3 py-2 text-sm transition-colors hover:bg-terminal-cyan/10";
+        button.dataset.value = option.value ?? "";
+        button.innerHTML = `<span class="font-mono text-foreground">${option.label ?? ""}</span><span class="text-xs text-muted-foreground">${option.value ?? ""}</span>`;
+        button.addEventListener("click", () => {
+          hidden.value = option.value ?? "";
+          label.textContent = option.label ?? "";
+          panel.classList.add("hidden");
+          trigger.setAttribute("aria-expanded", "false");
+        });
+        list.appendChild(button);
+      });
+    };
+
+    render(options);
+
+    trigger.addEventListener("click", () => {
+      const isHidden = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !isHidden);
+      trigger.setAttribute("aria-expanded", String(isHidden));
+      if (isHidden) {
+        input.value = "";
+        input.focus();
+        render(options);
+      }
+    });
+
+    input.addEventListener("input", () => {
+      const value = input.value.toLowerCase();
+      const filtered = options.filter(
+        (option) =>
+          option.label.toLowerCase().includes(value) ||
+          option.value.toLowerCase().includes(value),
+      );
+      render(filtered);
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!root.contains(target)) {
+        panel.classList.add("hidden");
+        trigger.setAttribute("aria-expanded", "false");
+      }
+    });
+  })();
+</script>

@@ -1,0 +1,39 @@
+---
+interface Props {
+  type?: "blocks" | "dots" | "cursor" | "pulse";
+  text?: string;
+  class?: string;
+}
+
+const { type = "blocks", text, class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+---
+
+<div class={`font-mono text-sm ${className}`.trim()} {...rest}>
+  {
+    type === "blocks" ? (
+      <span class="inline-flex items-center gap-1">
+        <span class="animate-pulse">█</span>
+        <span class="animate-pulse" style="animation-delay: 0.15s">▓</span>
+        <span class="animate-pulse" style="animation-delay: 0.3s">▒</span>
+        <span class="animate-pulse" style="animation-delay: 0.45s">░</span>
+        {text && <span class="ml-2">{text}</span>}
+      </span>
+    ) : type === "dots" ? (
+      <span class="font-mono">
+        {text}
+        <span class="animate-pulse">...</span>
+      </span>
+    ) : type === "cursor" ? (
+      <span class="flex items-center gap-2">
+        <span class="animate-spin inline-block">|</span>
+        {text && <span>{text}</span>}
+      </span>
+    ) : (
+      <span class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+        {text && <span>{text}</span>}
+      </span>
+    )
+  }
+</div>

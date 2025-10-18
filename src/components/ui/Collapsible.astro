@@ -1,0 +1,44 @@
+---
+interface Props {
+  open?: boolean;
+  defaultOpen?: boolean;
+  class?: string;
+  summary?: string;
+}
+
+const {
+  open,
+  defaultOpen,
+  class: className = "",
+  summary = "",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<details
+  class={[
+    "group rounded-lg border border-border bg-card/60 transition-colors",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ")}
+  open={open}
+  {...(defaultOpen !== undefined ? { open: undefined, ...(defaultOpen ? { open: true } : {}) } : {})}
+  {...rest}
+>
+  <summary class="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 font-mono text-sm text-foreground transition-colors hover:text-terminal-cyan">
+    <span>{summary}</span>
+    <svg
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      class="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </summary>
+  <div class="px-4 pb-4 text-sm text-muted-foreground">
+    <slot />
+  </div>
+</details>

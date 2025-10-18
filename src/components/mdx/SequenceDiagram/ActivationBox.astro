@@ -1,0 +1,20 @@
+---
+interface Props {
+  position?: "left" | "right";
+  class?: string;
+}
+
+const { position = "left", class: className = "" } = Astro.props as Props;
+
+const indicatorPosition =
+  position === "left"
+    ? "left-[15%] -translate-x-1/2"
+    : "left-[85%] -translate-x-1/2";
+---
+
+<div class={`relative ${className}`.trim()}>
+  <div
+    class={`absolute w-3 bg-primary/10 border border-primary top-0 bottom-0 ${indicatorPosition}`.trim()}
+  ></div>
+  <slot />
+</div>

@@ -1,0 +1,276 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import {
+  SequenceDiagram,
+  Participants,
+  Participant,
+  Messages,
+  Message,
+  Note,
+  SelfCall,
+  ActivationBox,
+} from "@/components/mdx/SequenceDiagram";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/charts/", site).toString();
+
+const pieLegend = [
+  { label: "Build", color: "text-terminal-cyan" },
+  { label: "QA", color: "text-terminal-green" },
+  { label: "Deploy", color: "text-terminal-yellow" },
+  { label: "Ops", color: "text-muted-foreground" },
+];
+
+const pieAscii = [
+  '<span class="text-muted-foreground">        </span><span class="text-terminal-cyan">░░██████</span><span class="text-terminal-green">▓▓</span><span class="text-muted-foreground">        </span>',
+  '<span class="text-muted-foreground">     </span><span class="text-terminal-cyan">░░██████████</span><span class="text-terminal-green">▓▓░░</span><span class="text-muted-foreground">     </span>',
+  '<span class="text-terminal-cyan">   ████████</span><span class="text-terminal-green">▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">░░░ </span>',
+  '<span class="text-terminal-cyan">  █████████</span><span class="text-terminal-green">▓▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒▒</span><span class="text-muted-foreground">░░░</span>',
+  '<span class="text-terminal-cyan">  █████████</span><span class="text-terminal-green">▓▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒▒▒</span><span class="text-muted-foreground">░░░</span>',
+  '<span class="text-terminal-cyan">   ████████</span><span class="text-terminal-green">▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">░░░ </span>',
+  '<span class="text-muted-foreground">     </span><span class="text-terminal-cyan">░░██████████</span><span class="text-muted-foreground">░░░░</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">  </span>',
+  '<span class="text-muted-foreground">        ░░░░░░░░░░░░░░        </span>',
+].join("<br />");
+
+const sparklinePoints = [8, 11, 7, 13, 15, 12, 18, 20, 17, 23];
+
+const barSeries = [
+  { label: "Mon", value: 6 },
+  { label: "Tue", value: 9 },
+  { label: "Wed", value: 4 },
+  { label: "Thu", value: 11 },
+  { label: "Fri", value: 7 },
+];
+
+function buildSparkline(points: number[]) {
+  const glyphs = ["▁", "▂", "▃", "▅", "▆", "▇", "█"];
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  return points
+    .map((value) => {
+      if (max === min) return glyphs[0];
+      const normalized = (value - min) / (max - min);
+      const index = Math.min(
+        glyphs.length - 1,
+        Math.floor(normalized * glyphs.length),
+      );
+      return glyphs[index];
+    })
+    .join("");
+}
+
+const sparkline = buildSparkline(sparklinePoints);
+---
+
+<BaseLayout
+  title="Component Library — Charts & Flows"
+  description="Terminal-native charts, ASCII spark lines, vertical bars, and flow diagrams."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="charts" />
+
+      <header class="space-y-3">
+        <p class="font-mono text-sm text-terminal-green">$ viz charts</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-foreground">
+          Charts &amp; flows
+        </h1>
+        <p class="max-w-3xl text-sm text-muted-foreground">
+          Compose dashboard-friendly visuals without leaving the terminal
+          aesthetic — ASCII pies, spark lines, vertical bars, and annotated
+          flows.
+        </p>
+      </header>
+
+      <div class="space-y-16">
+        <section id="pie" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">ASCII pie chart</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Traditional pie chart reimagined with block characters and
+              monospace legends for dark terminals.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-[minmax(0,360px)_1fr]">
+            <pre
+              class="rounded-lg border border-border bg-terminal-surface p-6 font-mono text-lg leading-snug"
+              set:html={pieAscii}
+            />
+            <div class="space-y-4">
+              <h3
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Legend
+              </h3>
+              <ul class="grid gap-3 sm:grid-cols-2 font-mono text-sm">
+                {
+                  pieLegend.map((item) => (
+                    <li class="flex items-center gap-3">
+                      <span
+                        class={`inline-flex h-3 w-3 rounded ${item.color} bg-current`}
+                        aria-hidden="true"
+                      />
+                      <span class="text-foreground">{item.label}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+              <p class="font-mono text-xs text-muted-foreground">
+                Rendered from a fixed grid — replace glyphs with unicode blocks
+                to adjust segment weighting.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="sparkline" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Spark line trend</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              A week of deployment throughput presented as a single line of
+              unicode characters.
+            </p>
+          </header>
+
+          <div class="rounded-lg border border-border bg-card p-6 font-mono">
+            <div class="flex flex-wrap items-baseline gap-3">
+              <span class="text-terminal-cyan text-lg tracking-[0.3em]">
+                {sparkline}
+              </span>
+              <span class="text-xs text-muted-foreground">
+                min {Math.min(...sparklinePoints)} / max {
+                  Math.max(...sparklinePoints)
+                }
+              </span>
+            </div>
+            <p class="mt-4 text-xs text-muted-foreground">
+              Use the glyph set `▁▂▃▄▅▆▇█` and normalise incoming metrics to map
+              values to characters.
+            </p>
+          </div>
+        </section>
+
+        <section id="bars" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Vertical bar chart
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Weekly deploy count displayed as stacked unicode bars with tabular
+              labels.
+            </p>
+          </header>
+
+          <div
+            class="rounded-lg border border-border bg-terminal-surface p-6 font-mono text-sm"
+          >
+            <div class="flex items-end justify-between gap-3">
+              {
+                barSeries.map((bar) => (
+                  <div class="flex flex-col items-center gap-2">
+                    <div
+                      class="w-8 rounded-t bg-terminal-cyan text-background text-xs text-center"
+                      style={`height:${bar.value * 12}px`}
+                    >
+                      {bar.value}
+                    </div>
+                    <span class="text-muted-foreground">{bar.label}</span>
+                  </div>
+                ))
+              }
+            </div>
+            <p class="mt-4 text-xs text-muted-foreground">
+              Multiply values by a pixel scalar (12px here) to translate counts
+              into heights while keeping the palette monochrome.
+            </p>
+          </div>
+        </section>
+
+        <section id="flow" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Deployment flow</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Text-only process diagram inspired by the linked example, complete
+              with branch annotations.
+            </p>
+          </header>
+
+          <div
+            class="rounded-lg border border-border bg-card p-6 font-mono text-sm leading-relaxed"
+          >
+            <pre
+              class="whitespace-pre text-terminal-cyan">
+┌────────────┐    ┌──────────────┐    ┌────────────┐
+│ Stage build│──▶│ Quality gate  │──▶│ Deploy      │
+│    ci/cd   │    │    checks    │    │   fly.io   │
+└────────────┘    └──────────────┘    └────────────┘
+         │                │                   │
+         │         ┌──────▼───────┐           │
+         │         │ Rollback path│◀──────────┘
+         │         │   alerting   │
+         │         └──────────────┘
+         ▼
+┌────────────┐
+│ Observe    │
+│  metrics   │
+└────────────┘</pre>
+            <p class="mt-4 text-xs text-muted-foreground">
+              Compose diagrams using monospace boxes; each node includes a
+              primary label and a secondary descriptor beneath it.
+            </p>
+          </div>
+        </section>
+
+                <section id="sequence" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Request sequence</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Success and fallback flows for the session endpoint rendered with terminal-native annotations.
+            </p>
+          </header>
+
+          <SequenceDiagram class="space-y-6">
+            <Participants>
+              <Participant name="Client" color="primary" position="left" />
+              <Participant name="Auth API" color="accent" position="right" />
+            </Participants>
+            <Messages>
+              <Message label="POST /sessions" type="request" direction="right" />
+              <ActivationBox position="right">
+                <Message label="Verify credentials" type="async" direction="left" />
+                <Message label="Persist session" type="async" direction="left" />
+              </ActivationBox>
+              <Message label="200 OK + token" type="response" direction="left" />
+            </Messages>
+            <Note text="Emit audit event to the security stream." position="right" />
+          </SequenceDiagram>
+
+          <SequenceDiagram class="space-y-6">
+            <Participants>
+              <Participant name="Client" color="primary" position="left" />
+              <Participant name="Auth API" color="accent" position="right" />
+            </Participants>
+            <Messages>
+              <Message label="POST /sessions" type="request" direction="right" />
+              <Message label="401 Unauthorized" type="error" direction="left" />
+              <SelfCall label="Retry after 2s" position="left" />
+            </Messages>
+            <Note text="Fallback retries the API every 2s up to 4 attempts." position="center" />
+            <Note text="Escalate to security and email reset link after the final retry." position="right" />
+          </SequenceDiagram>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

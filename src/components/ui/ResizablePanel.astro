@@ -1,0 +1,82 @@
+---
+interface Props {
+  min?: number;
+  max?: number;
+  initial?: number;
+  side?: "left" | "right";
+  class?: string;
+}
+
+const {
+  min = 240,
+  max = 640,
+  initial = 320,
+  side = "left",
+  class: className = "",
+} = Astro.props as Props;
+---
+
+<div
+  class={[
+    "relative flex",
+    side === "left" ? "flex-row" : "flex-row-reverse",
+    className,
+  ].filter(Boolean).join(" ")}
+  data-resizable
+  style={`--min:${min}px; --max:${max}px; --initial:${initial}px;`}
+>
+  <div class="flex-1"><slot /></div>
+  <div
+    class="flex h-full w-1 cursor-col-resize items-center justify-center bg-terminal-cyan/20"
+    role="separator"
+    aria-orientation="vertical"
+    tabindex="0"
+    data-resize-handle
+  >
+    <span class="h-8 w-[2px] bg-terminal-cyan/60"></span>
+  </div>
+  <div data-resize-shadow class="absolute inset-y-0" hidden></div>
+</div>
+
+<script is:inline>
+  (() => {
+    const container = document.querySelector('[data-resizable]');
+    if (!container) return;
+    const handle = container.querySelector('[data-resize-handle]');
+    const panel = container.firstElementChild;
+    const shadow = container.querySelector('[data-resize-shadow]');
+    const min = Number(getComputedStyle(container).getPropertyValue('--min'));
+    const max = Number(getComputedStyle(container).getPropertyValue('--max'));
+    const initial = Number(getComputedStyle(container).getPropertyValue('--initial'));
+    if (!(handle instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+    panel.style.flexBasis = `${initial}px`;
+
+    const startResize = (startX) => {
+      if (!(shadow instanceof HTMLElement)) return;
+      shadow.hidden = false;
+      shadow.style.width = `${panel.getBoundingClientRect().width}px`;
+      shadow.style.left = container.classList.contains('flex-row-reverse') ? 'auto' : '0';
+      shadow.style.right = container.classList.contains('flex-row-reverse') ? '0' : 'auto';
+
+      const onMove = (event) => {
+        const delta = event.clientX - startX;
+        const direction = container.classList.contains('flex-row-reverse') ? -1 : 1;
+        const next = Math.min(max, Math.max(min, initial + delta * direction));
+        panel.style.flexBasis = `${next}px`;
+      };
+
+      const stop = () => {
+        shadow.hidden = true;
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', stop);
+      };
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', stop, { once: true });
+    };
+
+    handle.addEventListener('mousedown', (event) => {
+      startResize(event.clientX);
+    });
+  })();
+</script>

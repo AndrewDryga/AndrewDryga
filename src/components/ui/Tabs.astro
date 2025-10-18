@@ -1,0 +1,80 @@
+---
+type TabContent =
+  | AstroComponentFactory
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
+
+interface Props {
+  items: { label: string; value: string; content: TabContent }[];
+  defaultValue?: string;
+  class?: string;
+}
+
+const { items, defaultValue, class: className = "" } = Astro.props as Props;
+const firstValue = defaultValue ?? items[0]?.value ?? "";
+---
+
+<div
+  class={["flex flex-col gap-4", className].filter(Boolean).join(" ")}
+  data-tabs
+  data-default={firstValue}
+>
+  <div class="flex gap-2 border-b border-border/60">
+    {
+      items.map((item) => (
+        <button
+          type="button"
+          data-tab-trigger={item.value}
+          class="rounded-t-md px-4 py-2 font-mono text-xs uppercase tracking-wide text-muted-foreground transition-colors"
+        >
+          {item.label}
+        </button>
+      ))
+    }
+  </div>
+  <div
+    class="rounded-lg border border-border bg-terminal-surface/80 p-4 text-sm text-foreground"
+    data-tab-panels
+  >
+    {
+      items.map((item) => (
+        <div data-tab-panel={item.value} hidden>
+          {typeof item.content === "function" ? <item.content /> : item.content}
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const wrapper = document.currentScript?.previousElementSibling;
+    if (!wrapper) return;
+    const defaultValue = wrapper.dataset.default ?? "";
+    const triggers = wrapper.querySelectorAll("[data-tab-trigger]");
+    const panels = wrapper.querySelectorAll("[data-tab-panel]");
+
+    const activate = (value) => {
+      triggers.forEach((trigger) => {
+        const isActive = trigger.getAttribute("data-tab-trigger") === value;
+        trigger.classList.toggle("text-terminal-cyan", isActive);
+        trigger.classList.toggle("border-b-2", isActive);
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel.getAttribute("data-tab-panel") !== value;
+      });
+    };
+
+    triggers.forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const value = trigger.getAttribute("data-tab-trigger");
+        if (value) activate(value);
+      });
+    });
+
+    activate(defaultValue);
+  })();
+</script>

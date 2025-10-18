@@ -1,0 +1,91 @@
+---
+interface Props {
+  value?: string;
+  class?: string;
+}
+
+const { value, class: className = "" } = Astro.props as Props;
+---
+
+<div
+  class={['w-full max-w-sm rounded-lg border border-border bg-terminal-bg/80 p-4 font-mono text-xs text-foreground', className].filter(Boolean).join(' ')}
+  data-calendar
+  data-value={value ?? ''}
+>
+  <div class="mb-4 flex items-center justify-between">
+    <button type="button" data-calendar-prev class="rounded border border-border px-2 py-1 text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Prev</button>
+    <div class="text-terminal-cyan" data-calendar-label></div>
+    <button type="button" data-calendar-next class="rounded border border-border px-2 py-1 text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Next</button>
+  </div>
+
+  <div class="grid grid-cols-7 gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day) => (
+      <div class="text-center">{day}</div>
+    ))}
+  </div>
+  <div class="mt-1 grid grid-cols-7 gap-1" data-calendar-grid></div>
+</div>
+
+<script is:inline>
+  (() => {
+    const calendar = document.currentScript?.previousElementSibling;
+    if (!calendar) return;
+    const label = calendar.querySelector('[data-calendar-label]');
+    const grid = calendar.querySelector('[data-calendar-grid]');
+    const prev = calendar.querySelector('[data-calendar-prev]');
+    const next = calendar.querySelector('[data-calendar-next]');
+    if (!label || !grid || !prev || !next) return;
+
+    const selected = calendar.dataset.value ? new Date(calendar.dataset.value) : new Date();
+    const current = new Date(selected);
+    current.setDate(1);
+
+    const render = () => {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const monthName = current.toLocaleString('en-US', { month: 'long' });
+      label.textContent = `${monthName} ${year}`;
+
+      grid.innerHTML = '';
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i += 1) {
+        const spacer = document.createElement('div');
+        grid.append(spacer);
+      }
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const date = new Date(year, month, day);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = String(day);
+        button.className = 'aspect-square rounded border border-transparent text-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan';
+
+        if (selected && date.toDateString() === selected.toDateString()) {
+          button.classList.add('border-terminal-cyan', 'bg-terminal-cyan/10', 'text-terminal-cyan');
+        }
+
+        button.addEventListener('click', () => {
+          calendar.dataset.value = date.toISOString();
+          selected.setTime(date.getTime());
+          render();
+          calendar.dispatchEvent(new CustomEvent('change', { detail: date }));
+        });
+
+        grid.append(button);
+      }
+    };
+
+    prev.addEventListener('click', () => {
+      current.setMonth(current.getMonth() - 1);
+      render();
+    });
+    next.addEventListener('click', () => {
+      current.setMonth(current.getMonth() + 1);
+      render();
+    });
+
+    render();
+  })();
+</script>

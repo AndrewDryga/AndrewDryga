@@ -1,0 +1,305 @@
+---
+import Button from "./Button.astro";
+
+interface Props {
+  id?: string;
+  title?: string;
+  description?: string;
+  triggerLabel?: string;
+  class?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm?: string;
+  size?: "sm" | "md" | "lg";
+}
+
+const {
+  id = `dialog-${crypto.randomUUID()}`,
+  title,
+  description,
+  triggerLabel = "Open dialog",
+  class: className = "",
+  confirmLabel,
+  cancelLabel,
+  onConfirm,
+  size = "md",
+} = Astro.props as Props;
+
+const hasFooterSlot = Astro.slots.has("footer");
+const hasActionButtons = Boolean(cancelLabel || confirmLabel);
+const sizeMap: Record<NonNullable<Props["size"]>, string> = {
+  sm: "max-w-md",
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+};
+const panelSizeClass = sizeMap[size];
+const titleId = title ? `${id}-title` : undefined;
+const descriptionId = description ? `${id}-description` : undefined;
+---
+
+<Button
+  type="button"
+  variant="outline"
+  size="sm"
+  data-dialog-trigger={id}
+  class="border-terminal-cyan text-terminal-cyan hover:bg-terminal-cyan hover:text-background"
+>
+  <slot name="trigger">{triggerLabel}</slot>
+</Button>
+
+<dialog
+  id={id}
+  class={`dialog-root ${className}`.trim()}
+  aria-labelledby={titleId}
+  aria-describedby={descriptionId}
+  data-dialog-root
+>
+  <div
+    class={`dialog-panel ${panelSizeClass} w-full font-mono text-sm text-foreground`}
+    data-dialog-content
+    role="document"
+    tabindex="-1"
+  >
+    <header class="dialog-header">
+      <div class="flex w-full items-center gap-3">
+        {
+          title && (
+            <h3 id={titleId} class="text-sm font-semibold text-terminal-cyan">
+              {title}
+            </h3>
+          )
+        }
+        {
+          !title && (
+            <span class="text-sm font-semibold text-terminal-cyan">Dialog</span>
+          )
+        }
+        <button
+          type="button"
+          data-dialog-close
+          class="ml-auto text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-terminal-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan/40"
+          aria-label="Close dialog"
+        >
+          ESC
+        </button>
+      </div>
+      {
+        description && (
+          <p
+            id={descriptionId}
+            class="mt-2 font-sans text-sm leading-relaxed text-muted-foreground"
+          >
+            {description}
+          </p>
+        )
+      }
+    </header>
+    <div class="dialog-body font-sans">
+      <slot />
+    </div>
+    <footer class="dialog-footer">
+      {hasFooterSlot && <slot name="footer" />}
+      {
+        !hasFooterSlot && hasActionButtons && cancelLabel && (
+          <Button type="button" variant="outline" size="sm" data-dialog-close>
+            {cancelLabel}
+          </Button>
+        )
+      }
+      {
+        !hasFooterSlot && hasActionButtons && confirmLabel && (
+          <Button
+            type="button"
+            variant="glow"
+            size="sm"
+            onclick={onConfirm ?? undefined}
+            data-dialog-close
+          >
+            {confirmLabel}
+          </Button>
+        )
+      }
+      {
+        !hasFooterSlot && !hasActionButtons && (
+          <Button
+            variant="outline"
+            size="sm"
+            data-dialog-close
+            data-dialog-default
+            data-shortcut="Enter"
+          >
+            Close
+          </Button>
+        )
+      }
+    </footer>
+  </div>
+</dialog>
+
+<script is:inline>
+  (() => {
+    const script = document.currentScript;
+    const dialog = script?.previousElementSibling;
+    if (!(dialog instanceof HTMLDialogElement)) return;
+
+    const id = dialog.id;
+    const trigger = document.querySelector(`[data-dialog-trigger='${id}']`);
+    if (!(trigger instanceof HTMLElement)) return;
+
+    const panel = dialog.querySelector("[data-dialog-content]");
+    const closeButtons = dialog.querySelectorAll("[data-dialog-close]");
+    const defaultButton = dialog.querySelector("[data-dialog-default]");
+
+    if (dialog.open) {
+      dialog.close();
+    }
+
+    const open = () => {
+      if (!dialog.open) {
+        try {
+          dialog.showModal();
+        } catch {
+          dialog.setAttribute("open", "");
+        }
+      }
+      requestAnimationFrame(() => {
+        dialog.setAttribute("data-open", "true");
+        document.documentElement.classList.add("dialog-open");
+        panel?.setAttribute("data-open", "true");
+        if (panel instanceof HTMLElement) {
+          panel.focus({ preventScroll: true });
+        } else {
+          dialog.focus();
+        }
+      });
+    };
+
+    const close = () => {
+      if (dialog.open) {
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+      }
+      dialog.removeAttribute("data-open");
+      document.documentElement.classList.remove("dialog-open");
+      panel?.removeAttribute("data-open");
+      trigger.focus();
+    };
+
+    trigger.addEventListener("click", open);
+    closeButtons.forEach((btn) => btn.addEventListener("click", close));
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) {
+        close();
+      }
+    });
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      close();
+    });
+    dialog.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        close();
+      } else if (event.key === "Enter" && defaultButton) {
+        defaultButton.dispatchEvent(new Event("click", { bubbles: true }));
+      }
+    });
+  })();
+</script>
+
+<style is:inline>
+  dialog.dialog-root {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(3rem, 6vw, 7rem) clamp(1.5rem, 4vw, 2.5rem);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0;
+    transition: opacity 180ms ease-out;
+    z-index: 50;
+    width: 100vw;
+    min-height: 100dvh;
+    box-sizing: border-box;
+  }
+
+  dialog.dialog-root:not([open]) {
+    display: none;
+  }
+
+  dialog.dialog-root::backdrop {
+    background: hsl(var(--terminal-bg) / 0.7);
+    backdrop-filter: blur(12px);
+  }
+
+  dialog.dialog-root[data-open="true"] {
+    opacity: 1;
+  }
+
+  .dialog-panel {
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--terminal-bg));
+    box-shadow: 0 0 20px hsl(var(--terminal-cyan) / 0.2);
+    transition:
+      transform 180ms ease-out,
+      opacity 180ms ease-out;
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: calc(100dvh - clamp(4rem, 10vw, 8rem));
+  }
+
+  .dialog-panel[data-open="true"] {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  .dialog-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.35);
+    padding: 1rem 1.25rem;
+  }
+
+  .dialog-body {
+    padding: 1.25rem 1.25rem 1.5rem;
+    font-family: var(--font-sans, "Inter", system-ui, sans-serif);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground) / 0.9);
+    overflow-y: auto;
+  }
+
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 0.9rem 1.25rem 1.1rem;
+    border-top: 1px solid hsl(var(--border) / 0.35);
+  }
+
+  .dialog-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 640px) {
+    dialog.dialog-root {
+      padding: 2rem 1rem;
+    }
+    .dialog-panel {
+      max-height: calc(100dvh - 2.5rem);
+    }
+  }
+</style>

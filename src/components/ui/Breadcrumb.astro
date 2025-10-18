@@ -1,0 +1,21 @@
+---
+interface Props {
+  class?: string;
+  ariaLabel?: string;
+}
+
+const { class: className = "", ariaLabel = "Breadcrumb", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+---
+
+<nav
+  aria-label={ariaLabel}
+  class={["font-mono text-xs text-muted-foreground", className]
+    .filter(Boolean)
+    .join(" ")}
+  {...rest}
+>
+  <ol class="flex flex-wrap items-center gap-2">
+    <slot />
+  </ol>
+</nav>

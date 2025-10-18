@@ -26,6 +26,8 @@ const ogImageUrl = ogImage
 
 // Public env var for Mixpanel; set in deployment as PUBLIC_MIXPANEL_TOKEN
 const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
+const IS_DEV = import.meta.env.DEV;
+const mixpanelScript = new URL("../scripts/mixpanel.ts", import.meta.url).toString();
 ---
 
 <!DOCTYPE html>
@@ -38,8 +40,8 @@ const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
     <meta name="description" content={description} />
     <link rel="canonical" href={url} />
 
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f14" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0b0f14" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="hsl(220 15% 8%)" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="hsl(220 15% 8%)" />
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="dryga.com" />
@@ -55,6 +57,7 @@ const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
     <meta name="mixpanel-token" content={MIXPANEL_TOKEN ?? ""} />
+    <meta name="astro-dev" content={IS_DEV ? "true" : "false"} />
 
     <script type="application/ld+json" is:inline>
       {JSON.stringify({
@@ -82,49 +85,7 @@ const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
     <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin />
 
-
-
-    <!-- Mixpanel (privacy-aware; respects Do Not Track) -->
-    <script type="module" is:inline>
-      const token = (document.querySelector('meta[name="mixpanel-token"]')?.getAttribute("content")) || "";
-      const isDev = import.meta.env.DEV;
-      const dnt =
-        (navigator.doNotTrack === "1") ||
-        (window.doNotTrack === "1") ||
-        (navigator.msDoNotTrack === "1");
-
-      if (token && !dnt) {
-        try {
-          const mpMod = await import("mixpanel-browser");
-          const mixpanel = mpMod.default;
-          mixpanel.init(token, {
-            debug: !!isDev,
-            track_pageview: true,
-            persistence: "localStorage"
-          });
-
-          // Track initial page load
-          mixpanel.track("Page View", {
-            path: location.pathname + location.search,
-            title: document.title
-          });
-
-          // Optional: track outbound link clicks
-          const onClick = (e) => {
-            const a = e.target.closest("a[href]");
-            if (!a) return;
-            const url = a.getAttribute("href");
-            try {
-              const sameOrigin = a.origin === location.origin;
-              mixpanel.track("Link Click", { url, sameOrigin });
-            } catch {}
-          };
-          addEventListener("click", onClick, { capture: true });
-        } catch (err) {
-          // Silently ignore Mixpanel init errors in production
-        }
-      }
-    </script>
+    <script type="module" src={mixpanelScript}></script>
   </head>
   <body class="h-full bg-background text-foreground antialiased">
     <a

@@ -1,0 +1,28 @@
+---
+interface Props {
+  content: string;
+  class?: string;
+}
+
+const { content, class: className = "" } = Astro.props as Props;
+---
+
+<span
+  class={["relative inline-flex group", className].filter(Boolean).join(" ")}
+  data-tooltip
+>
+  <slot />
+  <span
+    role="tooltip"
+    class="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 rounded border border-border bg-terminal-bg/95 px-3 py-2 text-[11px] font-mono text-terminal-cyan opacity-0 transition-opacity duration-150 whitespace-normal text-left leading-snug w-max max-w-xs group-hover:opacity-100 group-focus-within:opacity-100"
+  >
+    {content}
+  </span>
+</span>
+
+<style>
+  [data-tooltip]:hover span[role="tooltip"],
+  [data-tooltip]:focus-within span[role="tooltip"] {
+    opacity: 1;
+  }
+</style>

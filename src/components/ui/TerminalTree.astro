@@ -1,0 +1,30 @@
+---
+interface TreeLine {
+  text: string;
+  tone?: "cyan" | "green" | "muted";
+}
+
+interface Props {
+  lines: TreeLine[];
+  class?: string;
+}
+
+const { lines, class: className = "" } = Astro.props as Props;
+
+if (!Array.isArray(lines) || lines.length === 0) {
+  throw new Error("TerminalTree requires at least one line");
+}
+
+const toneClasses = {
+  cyan: "text-terminal-cyan",
+  green: "text-terminal-green",
+  muted: "text-muted-foreground",
+} as const;
+---
+
+<div class={["font-mono text-sm space-y-1", className].filter(Boolean).join(" ")}
+>
+  {lines.map((line) => (
+    <div class={toneClasses[line.tone ?? "muted"]}>{line.text}</div>
+  ))}
+</div>

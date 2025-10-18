@@ -1,0 +1,15 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "", ...rest } = Astro.props as Props & Record<string, unknown>;
+
+const classes = ["flex items-center p-6 pt-0", className]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={classes} {...rest}>
+  <slot />
+</div>

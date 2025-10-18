@@ -1,0 +1,85 @@
+---
+interface Column {
+  header: string;
+  accessor?: string;
+  class?: string;
+  render?: (row: Record<string, any>) => any;
+}
+
+interface Props extends astroHTML.JSX.HTMLAttributes<HTMLTableElement> {
+  columns: Column[];
+  data: Record<string, any>[];
+  class?: string;
+  caption?: string;
+}
+
+const props = Astro.props as Props;
+const { columns, data, class: className = "", caption, ...rest } = props;
+---
+
+<table
+  {...rest}
+  class={["w-full table-auto text-left text-sm text-foreground", className]
+    .filter(Boolean)
+    .join(" ")}
+>
+  {
+    caption && (
+      <caption class="caption-top px-4 py-2 text-sm font-mono text-muted-foreground">
+        {caption}
+      </caption>
+    )
+  }
+  <thead class="border-b border-border text-terminal-cyan">
+    <tr>
+      {
+        columns.map((column) => (
+          <th
+            class={[
+              "px-3 py-2 font-mono text-xs uppercase tracking-wide",
+              column.class ?? "",
+            ].join(" ")}
+          >
+            {column.header}
+          </th>
+        ))
+      }
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-border/60">
+    {
+      data.map((row) => (
+        <tr>
+          {columns.map((column) => {
+            const result = column.render
+              ? column.render(row)
+              : column.accessor
+                ? (row[column.accessor] ?? "")
+                : "";
+            const extraClass =
+              result && typeof result === "object" && !Array.isArray(result)
+                ? (result.className ?? "")
+                : "";
+            const content =
+              result && typeof result === "object" && !Array.isArray(result)
+                ? (result.content ?? "")
+                : result;
+            return (
+              <td
+                class={[
+                  "px-3 py-2 text-muted-foreground",
+                  column.class ?? "",
+                  extraClass,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {content}
+              </td>
+            );
+          })}
+        </tr>
+      ))
+    }
+  </tbody>
+</table>

@@ -1,0 +1,305 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Alert from "@/components/ui/Alert.astro";
+import Button from "@/components/ui/Button.astro";
+import Skeleton from "@/components/ui/Skeleton.astro";
+import TerminalSpinner from "@/components/TerminalSpinner.astro";
+import TerminalProgressBar from "@/components/TerminalProgressBar.astro";
+import EmptyState from "@/components/EmptyState.astro";
+import DoAndDont from "@/components/DoAndDont.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/states/", site).toString();
+---
+
+<BaseLayout
+  title="Component Library — States"
+  description="Loading, empty, and error treatments for terminal surfaces."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="states" />
+
+      <SectionHeader
+        consoleLine="$ cat states.md"
+        title="States & feedback"
+        description="Skeletons, spinners, empty states, and error treatments for the terminal theme."
+        accentColor="cyan"
+      />
+
+      <div class="space-y-16">
+        <section id="loading" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Loading patterns</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Skeleton placeholders and terminal inspired spinners cover known
+              and unknown load durations.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-4">
+                Card skeleton
+              </div>
+              <div class="space-y-3">
+                <Skeleton class="h-4 w-3/4" />
+                <Skeleton class="h-4 w-full" />
+                <Skeleton class="h-4 w-5/6" />
+                <Skeleton class="h-32 w-full mt-4" />
+                <div class="flex gap-2 mt-4">
+                  <Skeleton class="h-8 w-20" />
+                  <Skeleton class="h-8 w-20" />
+                </div>
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-4">
+                Text skeleton
+              </div>
+              <div class="space-y-2">
+                <Skeleton class="h-3 w-full" />
+                <Skeleton class="h-3 w-11/12" />
+                <Skeleton class="h-3 w-4/5" />
+                <Skeleton class="h-3 w-full" />
+                <Skeleton class="h-3 w-2/3" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-3">
+                Terminal spinner
+              </div>
+              <TerminalSpinner type="blocks" text="Loading..." />
+            </div>
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-3">
+                Button loading
+              </div>
+              <Button disabled class="gap-2">
+                <span class="inline-block animate-spin">⣾</span>
+                Processing...
+              </Button>
+            </div>
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-3">
+                Full page
+              </div>
+              <div
+                class="flex flex-col items-center justify-center h-32 bg-terminal-surface rounded"
+              >
+                <TerminalSpinner type="cursor" text="Initializing..." />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-3">
+                ASCII progress
+              </div>
+              <TerminalProgressBar value={67} label="Uploading files" />
+            </div>
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <div class="font-mono text-sm text-muted-foreground mb-3">
+                Multi-step indicator
+              </div>
+              <div class="space-y-2 font-mono text-sm">
+                <div class="text-terminal-green">✓ Dependencies installed</div>
+                <div class="text-primary flex items-center gap-2">
+                  <span class="animate-pulse">▸</span> Building project...
+                </div>
+                <div class="text-muted-foreground">○ Deploy to production</div>
+              </div>
+            </div>
+          </div>
+
+          <DoAndDont
+            doText="Use skeleton loaders when layout is known and predictable."
+            dontText="Don't display skeletons for content that renders instantly—show the payload instead."
+          />
+        </section>
+
+        <section id="alerts" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Inline alerts</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Success, warning, and error banners keep runtime feedback visible
+              without leaving the page flow.
+            </p>
+          </header>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <Alert
+              title="Deployment ready"
+              description="Ship the preview build to production once smoke tests pass."
+              icon="✓"
+              variant="success"
+            />
+            <Alert
+              title="Attention required"
+              description="Services degraded in eu-west-1. Investigate before deploying."
+              icon="!"
+              variant="warning"
+            >
+              <Button variant="outline-primary" class="mt-3 text-xs">
+                View status
+              </Button>
+            </Alert>
+            <Alert
+              title="Sync failed"
+              description="API responded with 500. Retry after collecting logs."
+              icon="✗"
+              variant="destructive"
+            />
+            <Alert
+              title="New version available"
+              description="v2.1.0 adds keyboard-driven dropdowns and drawers."
+              icon="▸"
+            >
+              <Button variant="ghost" class="mt-3 text-xs text-terminal-cyan">
+                View changelog
+              </Button>
+            </Alert>
+          </div>
+        </section>
+
+        <section id="empty-states" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Empty states</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Terminal prompts with descriptive copy and CTA slots keep
+              first-use experiences actionable.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <EmptyState command="ls -la" message="No items found">
+              <div
+                slot="icon"
+                class="flex h-12 w-12 items-center justify-center rounded-full bg-terminal-cyan/10 text-terminal-cyan"
+              >
+                <svg
+                  class="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 21l-6-6"></path>
+                  <circle cx="11" cy="11" r="8"></circle>
+                </svg>
+              </div>
+              <Button slot="action">Create first item</Button>
+            </EmptyState>
+
+            <EmptyState
+              command="grep 'search term'"
+              message="Try adjusting your search"
+              output="0 matches found"
+              class="border-terminal-yellow/60"
+            >
+              <div
+                slot="icon"
+                class="flex h-12 w-12 items-center justify-center rounded-full bg-terminal-yellow/10 text-terminal-yellow"
+              >
+                <svg
+                  class="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                  <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+              </div>
+            </EmptyState>
+          </div>
+        </section>
+
+        <section id="error-states" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Error states</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Error components lean on high contrast, clear actions, and
+              structured troubleshooting copy.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div
+              class="border border-destructive rounded-lg p-8 bg-destructive/5 text-center space-y-4"
+            >
+              <svg
+                class="h-12 w-12 text-destructive mx-auto"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <div class="font-mono text-sm text-destructive">ERROR 500</div>
+              <p class="text-foreground font-bold">Internal server error</p>
+              <pre
+                class="font-mono text-xs text-muted-foreground">
+Stack trace: handleRequest@server.js:42
+processTicksAndRejections
+              </pre>
+              <Button variant="destructive" size="sm">Reload page</Button>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  class="w-full px-3 py-2 bg-input border border-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-destructive"
+                  value="invalid-email"
+                />
+                <p class="text-xs text-destructive font-mono mt-1">
+                  ✗ Invalid email format
+                </p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  class="w-full px-3 py-2 bg-input border border-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-destructive"
+                  value="123"
+                />
+                <p class="text-xs text-destructive font-mono mt-1">
+                  ✗ Must be at least 8 characters
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,87 @@
+---
+/**
+ * Breadcrumbs.astro
+ *
+ * A reusable breadcrumb navigation component with consistent spacing
+ * and styling across the site.
+ *
+ * Usage:
+ * <Breadcrumbs
+ *   items={[
+ *     { label: "Home", href: "/" },
+ *     { label: "Projects", href: "/projects" },
+ *     { label: "eHealth: National Health Service of Ukraine" },
+ *   ]}
+ * />
+ */
+
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+  ariaLabel?: string;
+}
+
+export interface Props {
+  // Ordered list of breadcrumb items from root to current page.
+  items: BreadcrumbItem[];
+
+  // Optional size: "sm" (default) or "md"
+  size?: "sm" | "md";
+
+  // Visual separator between items. Defaults to "/"
+  separator?: string;
+
+  // Optional aria-label for the nav element
+  ariaLabel?: string;
+
+  // Additional classes for the nav wrapper
+  class?: string;
+}
+
+const {
+  items = [],
+  size = "sm",
+  separator = "/",
+  ariaLabel = "breadcrumb",
+  class: className = "",
+} = Astro.props as Props;
+
+const sizeClass = size === "md" ? "text-base" : "text-sm";
+---
+
+{items.length > 0 && (
+  <nav
+    class={["font-mono", sizeClass, "text-muted-foreground", className].filter(Boolean).join(" ")}
+    aria-label={ariaLabel}
+  >
+    <ol class="flex flex-wrap items-center">
+      {items.map((b, i) => {
+        const isLast = i === items.length - 1;
+        return (
+          <>
+            <li class="inline-flex items-center">
+              {b.href && !isLast ? (
+                <a
+                  href={b.href}
+                  aria-label={b.ariaLabel ?? b.label}
+                  class="transition-colors hover:text-foreground"
+                >
+                  {b.label}
+                </a>
+              ) : (
+                <span class="text-foreground" aria-current={isLast ? "page" : undefined}>
+                  {b.label}
+                </span>
+              )}
+            </li>
+            {!isLast && (
+              <li aria-hidden="true">
+                <span class="mx-2 text-foreground/50">{separator}</span>
+              </li>
+            )}
+          </>
+        );
+      })}
+    </ol>
+  </nav>
+)}

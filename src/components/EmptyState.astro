@@ -1,0 +1,44 @@
+---
+import TerminalPrompt from "./TerminalPrompt.astro";
+
+interface Props {
+  command: string;
+  message: string;
+  output?: string;
+  class?: string;
+}
+
+const { command, message, output, class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+---
+
+<div
+  class={`border border-border rounded-lg p-8 bg-card text-center ${className}`.trim()}
+  {...rest}
+>
+  {
+    Astro.slots.has("icon") && (
+      <div class="flex justify-center mb-4">
+        <slot name="icon" />
+      </div>
+    )
+  }
+
+  <div class="flex justify-center mb-2">
+    <slot name="prompt">
+      <TerminalPrompt command={command} />
+    </slot>
+  </div>
+
+  {output && (
+    <pre class="font-mono text-xs text-muted-foreground mb-4 whitespace-pre-wrap">
+      {output}
+    </pre>
+  )}
+
+  <p class="text-sm text-muted-foreground mb-4">{message}</p>
+
+  {
+    Astro.slots.has("action") && <slot name="action" />
+  }
+</div>

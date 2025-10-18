@@ -1,0 +1,19 @@
+---
+import Drawer from "./Drawer.astro";
+
+interface Props {
+  id?: string;
+  title?: string;
+  description?: string;
+  triggerLabel?: string;
+  side?: "left" | "right";
+  class?: string;
+}
+
+const props = Astro.props as Props;
+---
+
+<Drawer {...props}>
+  <slot />
+  <slot name="footer" slot="footer" />
+</Drawer>

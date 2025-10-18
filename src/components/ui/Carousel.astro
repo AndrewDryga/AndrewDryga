@@ -1,0 +1,81 @@
+---
+interface Slide {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+interface Props {
+  slides: Slide[];
+  class?: string;
+}
+
+const { slides, class: className = "" } = Astro.props as Props;
+---
+
+<div class={['relative w-full overflow-hidden rounded-lg border border-border bg-terminal-surface/60', className].filter(Boolean).join(' ')} data-carousel>
+  <div class="flex transition-transform duration-500" data-carousel-track>
+    {slides.map((slide) => (
+      <div class="min-w-full flex-shrink-0 p-6">
+        {slide.image && (
+          <img src={slide.image} alt={slide.title ?? ''} class="mb-4 h-40 w-full rounded-md object-cover" loading="lazy" />
+        )}
+        {slide.title && (
+          <h3 class="font-mono text-sm uppercase tracking-wide text-terminal-cyan">{slide.title}</h3>
+        )}
+        {slide.description && (
+          <p class="mt-2 text-sm text-muted-foreground">{slide.description}</p>
+        )}
+      </div>
+    ))}
+  </div>
+  <button type="button" data-carousel-prev class="absolute left-3 top-1/2 -translate-y-1/2 rounded border border-border bg-terminal-bg/80 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Prev</button>
+  <button type="button" data-carousel-next class="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-terminal-bg/80 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Next</button>
+  <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2" data-carousel-dots>
+    {slides.map((_, index) => (
+      <button type="button" data-carousel-dot={index} class="h-2 w-2 rounded-full bg-border transition-colors" aria-label={`Go to slide ${index + 1}`}></button>
+    ))}
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const root = document.currentScript?.previousElementSibling;
+    if (!root) return;
+    const track = root.querySelector('[data-carousel-track]');
+    const prev = root.querySelector('[data-carousel-prev]');
+    const next = root.querySelector('[data-carousel-next]');
+    const dots = Array.from(root.querySelectorAll('[data-carousel-dot]'));
+    if (!track || !prev || !next) return;
+    const slides = Array.from(track.children);
+    let index = 0;
+
+    const update = () => {
+      const offset = index * -100;
+      track.style.transform = `translateX(${offset}%)`;
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('bg-terminal-cyan', idx === index);
+      });
+    };
+
+    prev.addEventListener('click', () => {
+      index = (index - 1 + slides.length) % slides.length;
+      update();
+    });
+    next.addEventListener('click', () => {
+      index = (index + 1) % slides.length;
+      update();
+    });
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const value = Number(dot.getAttribute('data-carousel-dot'));
+        if (!Number.isNaN(value)) {
+          index = value;
+          update();
+        }
+      });
+    });
+
+    update();
+  })();
+</script>

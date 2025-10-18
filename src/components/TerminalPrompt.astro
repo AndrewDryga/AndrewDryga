@@ -1,0 +1,22 @@
+---
+interface Props {
+  command: string;
+  color?: "cyan" | "green" | "yellow" | "primary";
+  class?: string;
+}
+
+const { command, color = "cyan", class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+
+const colorMap: Record<NonNullable<Props["color"]>, string> = {
+  cyan: "text-terminal-cyan",
+  green: "text-terminal-green",
+  yellow: "text-terminal-yellow",
+  primary: "text-primary",
+};
+---
+
+<div class={`font-mono text-sm ${className}`.trim()} {...rest}>
+  <span class={colorMap[color]}>$ </span>
+  <span class="text-foreground">{command}</span>
+</div>

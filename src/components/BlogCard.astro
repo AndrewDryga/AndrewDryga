@@ -1,0 +1,57 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  category: string;
+  publishDate: string;
+  animationDelay?: number;
+  class?: string;
+}
+
+const {
+  href,
+  title,
+  description,
+  category,
+  publishDate,
+  animationDelay = 0,
+  class: className = "",
+} = Astro.props as Props;
+
+const classes = [
+  "group relative flex h-full flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-card transition-all duration-300 hover:border-terminal-yellow hover:shadow-glow animate-fade-in",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<article class={classes} style={`animation-delay: ${animationDelay}ms`}>
+  <a
+    href={href}
+    class="absolute inset-0 rounded-lg"
+    aria-label={`Read more: ${title}`}
+  />
+
+  <div class="flex h-full flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+        {category}
+      </span>
+      <span class="font-mono text-xs text-muted-foreground">{publishDate}</span>
+    </div>
+
+    <h3 class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow">
+      {title}
+    </h3>
+
+    <p class="text-muted-foreground text-sm leading-relaxed">
+      {description}
+    </p>
+
+    <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+      Read more →
+    </span>
+  </div>
+</article>

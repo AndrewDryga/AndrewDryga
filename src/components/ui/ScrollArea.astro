@@ -1,0 +1,25 @@
+---
+interface Props {
+  class?: string;
+  height?: string;
+}
+
+const {
+  class: className = "",
+  height = "280px",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<div
+  class={[
+    "relative overflow-hidden rounded-lg border border-border bg-terminal-surface/60",
+    className,
+  ].filter(Boolean).join(" ")}
+  style={`--scroll-height:${height};`}
+  {...rest}
+>
+  <div class="max-h-[var(--scroll-height)] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-terminal-cyan/60">
+    <slot />
+  </div>
+</div>

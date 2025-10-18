@@ -1,0 +1,647 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Button from "@/components/ui/Button.astro";
+import CommandPalette from "@/components/ui/CommandPalette.astro";
+import Toaster from "@/components/ui/Toaster.astro";
+import Dialog from "@/components/ui/Dialog.astro";
+import Drawer from "@/components/ui/Drawer.astro";
+import ContextMenu from "@/components/ui/ContextMenu.astro";
+import TerminalWindow from "@/components/ui/TerminalWindow.astro";
+import TerminalTree from "@/components/ui/TerminalTree.astro";
+import TypingLooper from "@/components/ui/TypingLooper.astro";
+import TerminalPrompt from "@/components/TerminalPrompt.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/tui/", site).toString();
+
+const commandPaletteItems = [
+  {
+    label: "Open projects",
+    shortcut: "⌘P",
+    href: "/projects",
+    description:
+      "Jump to the latest case studies without leaving the keyboard.",
+  },
+  {
+    label: "Create draft blog post",
+    shortcut: "⌘B",
+    href: "/blog",
+    description: "Spin up a new MDX entry in the content collection.",
+  },
+  {
+    label: "Run build",
+    shortcut: "⌘⇧B",
+    description: "Trigger the Astro build and tail the output in the terminal.",
+  },
+  {
+    label: "Focus contact section",
+    shortcut: "⌘/",
+    href: "/#contact",
+    description:
+      "Scroll to the contact form with focus placed in the first field.",
+  },
+];
+
+const toastExamples = [
+  {
+    variant: "success",
+    title: "Build succeeded",
+    description: "Deployed to production in 18s.",
+  },
+  {
+    variant: "warning",
+    title: "Migration pending",
+    description: "Apply database changes before the next release.",
+  },
+  {
+    variant: "destructive",
+    title: "Deploy failed",
+    description: "Rollback triggered, see logs for details.",
+  },
+];
+
+const contextMenuItems = [
+  { label: "Open file", shortcut: "↵" },
+  { label: "Reveal in Finder", shortcut: "⇧⌘R" },
+  { label: "Copy path", shortcut: "⌘C" },
+  { label: "Delete permanently", shortcut: "⌘⌫", disabled: true },
+];
+
+const boxDrawingArt = [
+  "┌─────────────────────┐",
+  "│ Terminal Window     │",
+  "├─────────────────────┤",
+  "│ Content area        │",
+  "│ With borders        │",
+  "└─────────────────────┘",
+].join("\n");
+
+const asciiHeading = [
+  "     _    ____ ____ ___ ___",
+  "    / \\  / ___/ ___|_ _|_ _|",
+  "   / _ \\ \\___ \\___ \\| | | |",
+  "  / ___ \\ ___) |__) | | | |",
+  " /_/   \\_\\____/____/___|___|",
+].join("\n");
+---
+
+<BaseLayout
+  title="Component Library — TUI Elements"
+  description="Command palettes, search, toasts, and modals inspired by modern terminal UIs."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="tui" />
+
+      <SectionHeader
+        consoleLine="$ tui elements"
+        title="Modern TUI elements"
+        description="Status bars, command palettes, toasts, context menus, and terminal shells without React islands."
+        accentColor="cyan"
+      />
+
+      <div class="space-y-16">
+        <section id="status-bar" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Status bar</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Editor-style status bar showing connection health, branch, and
+              cursor location.
+            </p>
+          </header>
+
+          <div class="border border-border rounded-lg overflow-hidden bg-card">
+            <div
+              class="bg-terminal-surface border-y border-border p-4 font-mono text-xs"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <span class="flex items-center gap-1">
+                    <span
+                      class="w-2 h-2 bg-terminal-green rounded-full animate-pulse"
+                    ></span>
+                    <span class="text-foreground">Connected</span>
+                  </span>
+                  <span class="text-muted-foreground">|</span>
+                  <span class="text-terminal-cyan">Branch: main</span>
+                  <span class="text-muted-foreground">|</span>
+                  <span class="text-foreground">Files: 42</span>
+                </div>
+                <div class="flex items-center gap-4 text-muted-foreground">
+                  <span>Line 156:12</span>
+                  <span>|</span>
+                  <span>UTF-8</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-muted-foreground font-mono px-6 py-3">
+              Bottom status bar with context info
+            </p>
+          </div>
+        </section>
+
+        <section id="command-palette" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Command palette</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Native dialog wired with keyboard hints, active state styles, and
+              zero client libraries.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <CommandPalette items={commandPaletteItems} class="w-full" />
+              <p class="font-mono text-xs text-muted-foreground">
+                Press <span class="text-terminal-cyan">⌘K</span> (or <span
+                  class="text-terminal-cyan">Ctrl+K</span
+                >) to open, arrow through options, and hit return to run the
+                highlighted command.
+              </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6 space-y-3">
+              <h3
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Interaction notes
+              </h3>
+              <ul class="space-y-2 text-sm text-muted-foreground font-mono">
+                <li>• Focus stays inside the dialog until it is closed.</li>
+                <li>• Use ↑/↓ to move between results before hitting enter.</li>
+                <li>• Results filter in real-time without hydration.</li>
+                <li>• Escape key or backdrop click closes the palette.</li>
+                <li>
+                  • Slots allow custom empty states via <code
+                    class="bg-terminal-surface px-1 rounded">slot="empty"</code
+                  >.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="toasts" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Toast notifications
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Trigger global notifications by dispatching lightweight events—no
+              toast manager island required.
+            </p>
+          </header>
+
+          <Toaster position="bottom-right" />
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <div class="flex flex-wrap gap-3">
+                {
+                  toastExamples.map((toast, index) => (
+                    <Button
+                      size="sm"
+                      variant={
+                        toast.variant === "destructive"
+                          ? "destructive"
+                          : toast.variant === "warning"
+                            ? "outline-secondary"
+                            : "outline-primary"
+                      }
+                      data-toast-trigger={toast.variant}
+                      shortcut={`cmd+${index + 1}`}
+                    >
+                      {`Fire ${toast.variant} toast`}
+                    </Button>
+                  ))
+                }
+              </div>
+              <p class="font-mono text-xs text-muted-foreground">
+                Buttons dispatch <code class="bg-terminal-surface px-1 rounded"
+                  >window.dispatchEvent(new CustomEvent("toast"))</code
+                > detail payloads.
+              </p>
+            </div>
+
+            <div
+              class="rounded-lg border border-border bg-card p-6 space-y-3 font-mono text-sm text-muted-foreground"
+            >
+              <p>Toast payload shape:</p>
+              <pre
+                class="rounded bg-terminal-surface/80 p-4 text-xs text-terminal-cyan overflow-x-auto">{`{ title: "Build succeeded", description: "Deployed to production", variant: "success" }`}</pre>
+              <p class="text-xs">
+                Extend the event detail to tweak duration, vary copy, or stack
+                multiple toasts.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="context-menu" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Context menu</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Right-click actions mirror editor behaviour with keyboard support
+              and terminal-styled glyphs.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <ContextMenu items={contextMenuItems}>
+                <div
+                  class="rounded-md border border-dashed border-terminal-cyan/40 bg-terminal-surface/80 p-6 text-center"
+                >
+                  <p
+                    class="font-mono text-xs text-terminal-cyan uppercase tracking-wide"
+                  >
+                    Right-click zone
+                  </p>
+                  <p class="text-sm text-muted-foreground">
+                    Invoke the menu anywhere inside this block.
+                  </p>
+                </div>
+              </ContextMenu>
+              <p class="text-xs font-mono text-muted-foreground">
+                Menu anchors near the cursor, traps focus, and closes on ESC or
+                outside click.
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6 space-y-3">
+              <h3
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Keyboard combos
+              </h3>
+              <ul class="space-y-2 text-sm text-muted-foreground font-mono">
+                <li>• ↵ runs the highlighted action instantly.</li>
+                <li>• ↑/↓ cycle through menu items without the mouse.</li>
+                <li>• Type to filter—items listen for first-letter matches.</li>
+                <li>
+                  • Custom shortcuts (⌘C, ⇧⌘R) dispatch via <code
+                    class="bg-terminal-surface px-1 rounded">data-combo</code
+                  > metadata.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="search" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Search interface</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Input with keyboard shortcut hint and result list styled like fzf.
+            </p>
+          </header>
+
+          <div class="space-y-4">
+            <div
+              class="border border-primary rounded-lg p-3 bg-terminal-surface"
+            >
+              <div class="flex items-center gap-2 font-mono text-sm">
+                <span class="text-primary">$</span>
+                <input
+                  type="text"
+                  placeholder="grep -r 'search term' ."
+                  class="flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+                />
+                <kbd
+                  class="px-2 py-1 bg-muted border border-border rounded text-xs"
+                  >⌘K</kbd
+                >
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg bg-card">
+              <div
+                class="p-2 space-y-1 font-mono text-sm max-h-48 overflow-y-auto"
+              >
+                <div
+                  class="px-3 py-2 hover:bg-muted/50 rounded cursor-pointer transition-colors"
+                >
+                  <div class="text-foreground mb-1">
+                    src/components/Hero.astro
+                  </div>
+                  <div class="text-xs text-muted-foreground">
+                    Line 42: const hero = ...
+                  </div>
+                </div>
+                <div
+                  class="px-3 py-2 hover:bg-muted/50 rounded cursor-pointer transition-colors"
+                >
+                  <div class="text-foreground mb-1">src/pages/index.astro</div>
+                  <div class="text-xs text-muted-foreground">
+                    Line 18: import Hero from ...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="terminal-shells" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Terminal shells</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Window frames, prompts, and directory trees that render live CLI
+              output without shipping client frameworks.
+            </p>
+          </header>
+
+          <div class="space-y-6">
+            <TerminalWindow
+              tone="neutral"
+              bodyClass="p-6 space-y-3 font-mono text-sm"
+            >
+              <TerminalPrompt command="npm run dev" color="cyan" />
+              <div class="text-terminal-green">
+                <span
+                  class="inline-block w-2 h-4 bg-terminal-green animate-pulse mr-1"
+                  aria-hidden="true">_</span
+                >
+                Server running at http://localhost:5173
+              </div>
+            </TerminalWindow>
+
+            <TerminalWindow
+              tone="card"
+              bodyClass="p-6 font-mono text-sm space-y-1"
+            >
+              <TerminalTree
+                lines={[
+                  { text: "~/projects/portfolio" },
+                  { text: "├── src/", tone: "cyan" },
+                  { text: "│ ├── components/", tone: "cyan" },
+                  { text: "│ │ ├── Hero.astro", tone: "green" },
+                  { text: "│ │ ├── About.astro", tone: "green" },
+                  { text: "│ │ └── Contact.astro", tone: "green" },
+                  { text: "│ └── pages/", tone: "cyan" },
+                  { text: "│   └── index.astro", tone: "green" },
+                  { text: "└── package.json", tone: "cyan" },
+                ]}
+              />
+            </TerminalWindow>
+
+            <TerminalWindow
+              tone="primary"
+              title="terminal.sh"
+              bodyClass="p-6 space-y-2 font-mono text-sm"
+            >
+              <div class="text-primary">$ whoami</div>
+              <div class="text-foreground">andrew_dryga</div>
+              <div class="text-primary flex items-center gap-2">
+                $
+                <TypingLooper
+                  texts={[
+                    "initializing...",
+                    "npm install",
+                    "building project...",
+                    "ready!",
+                  ]}
+                />
+              </div>
+            </TerminalWindow>
+          </div>
+        </section>
+
+        <section id="terminal-art" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Terminal art &amp; decorations
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Reusable ASCII accents and box drawing characters pulled straight
+              from the live site.
+            </p>
+          </header>
+
+          <div class="space-y-6">
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Box drawing characters
+              </h3>
+              <div class="font-mono text-sm">
+                <pre
+                  class="text-terminal-cyan whitespace-pre">{boxDrawingArt}</pre>
+                <code class="text-xs text-muted-foreground block mt-3"
+                  >Framed containers and terminal windows</code
+                >
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Section separators
+              </h3>
+              <div class="font-mono text-sm space-y-3">
+                <div class="text-muted-foreground">───────────────────────</div>
+                <div class="text-terminal-cyan">═══════════════════════</div>
+                <div class="text-terminal-green">━━━━━━━━━━━━━━━━━━━━━━━</div>
+                <div class="text-terminal-yellow">▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</div>
+                <code class="text-xs text-muted-foreground block"
+                  >Horizontal dividers</code
+                >
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Corner brackets
+              </h3>
+              <div class="font-mono text-sm space-y-2">
+                <div class="text-terminal-cyan">┌─ Component Title ─┐</div>
+                <div class="text-terminal-green">╭── Section Header ──╮</div>
+                <div class="text-terminal-yellow">┏━━ Important Note ━━┓</div>
+                <div class="text-foreground">[ Wrapped Content ]</div>
+                <div class="text-primary">⟨ Angular brackets ⟩</div>
+                <code class="text-xs text-muted-foreground block"
+                  >Decorative label wrappers</code
+                >
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Bullet points &amp; status
+              </h3>
+              <div class="font-mono text-sm space-y-2">
+                <div class="text-foreground">• Standard bullet point</div>
+                <div class="text-terminal-cyan">▸ Arrow bullet point</div>
+                <div class="text-terminal-yellow">▹ Hollow arrow</div>
+                <div class="text-terminal-green">[✓] Completed task</div>
+                <div class="text-secondary">[!] Warning indicator</div>
+                <div class="text-destructive">[×] Error state</div>
+                <div class="text-muted-foreground">[…] In progress</div>
+                <code class="text-xs text-muted-foreground block mt-3"
+                  >Status markers &amp; bullets</code
+                >
+              </div>
+            </div>
+
+            <div
+              class="border border-border rounded-lg p-6 bg-terminal-surface"
+            >
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                ASCII art elements
+              </h3>
+              <div class="font-mono text-xs">
+                <pre
+                  class="text-terminal-cyan whitespace-pre">{asciiHeading}</pre>
+                <code class="text-xs text-muted-foreground block mt-3"
+                  >Use sparingly for hero embellishments</code
+                >
+              </div>
+            </div>
+
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Progress bars
+              </h3>
+              <div class="font-mono text-sm space-y-2">
+                <div class="text-terminal-cyan">████████████████████ 100%</div>
+                <div class="text-terminal-green">█████████████░░░░░░░ 65%</div>
+                <div class="text-terminal-yellow">███████░░░░░░░░░░░░░ 35%</div>
+                <div class="text-muted-foreground">░░░░░░░░░░░░░░░░░░░░ 0%</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="modal" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Dialogs &amp; drawers
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Modal surfaces reuse the same primitives from the UI components
+              page but tailored for content workflows.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Dialog
+                title="Archive draft"
+                description="Move the current post into the archive bucket and notify collaborators."
+                triggerLabel="Open dialog"
+              >
+                <p class="text-sm text-muted-foreground">
+                  Archiving keeps history intact while hiding unfinished drafts
+                  from the public feed.
+                </p>
+                <div slot="footer" class="flex items-center gap-2">
+                  <Button
+                    variant="outline-primary"
+                    class="text-xs"
+                    data-dialog-close
+                    shortcut="cmd+shift+a"
+                  >
+                    Archive draft
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    class="text-xs text-muted-foreground hover:text-terminal-cyan"
+                    data-dialog-close
+                    shortcut="cmd+."
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </Dialog>
+              <p class="text-xs font-mono text-muted-foreground">
+                Dialog keeps focus trapped until the action completes or the
+                user presses ESC.
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Drawer
+                title="Content drawer"
+                description="Edit hero copy, toggles, and CTA labels without leaving the page."
+                triggerLabel="Open drawer"
+                side="right"
+              >
+                <div class="space-y-3 text-sm text-muted-foreground">
+                  <label
+                    class="flex flex-col gap-1 font-mono text-xs text-muted-foreground"
+                  >
+                    <span>Primary headline</span>
+                    <input
+                      type="text"
+                      value="Ship reliable platforms without the chaos."
+                      class="rounded border border-border bg-terminal-surface px-3 py-2 text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                    />
+                  </label>
+                  <label
+                    class="flex flex-col gap-1 font-mono text-xs text-muted-foreground"
+                  >
+                    <span>Call to action</span>
+                    <input
+                      type="text"
+                      value="Deploy now"
+                      class="rounded border border-border bg-terminal-surface px-3 py-2 text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                    />
+                  </label>
+                </div>
+                <div slot="footer" class="flex justify-end">
+                  <Button
+                    variant="shortcut"
+                    shortcut="cmd+s"
+                    class="min-w-[14rem]"
+                  >
+                    Publish changes
+                  </Button>
+                </div>
+              </Drawer>
+              <p class="text-xs font-mono text-muted-foreground">
+                Drawer slides in with focus-ready inputs for quick edits on
+                narrow viewports.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline data-toast-samples={JSON.stringify(toastExamples)}>
+  (() => {
+    const script = document.currentScript;
+    if (!script) return;
+    const raw = script.getAttribute("data-toast-samples");
+    let samples = [];
+    if (typeof raw === "string" && raw.length > 0) {
+      try {
+        samples = JSON.parse(raw);
+      } catch {
+        samples = [];
+      }
+    }
+    if (!Array.isArray(samples)) samples = [];
+    script.removeAttribute("data-toast-samples");
+    const buttons = document.querySelectorAll("[data-toast-trigger]");
+    if (!buttons.length) return;
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const variant = button.getAttribute("data-toast-trigger") ?? "default";
+        const sample =
+          samples.find((item) => item.variant === variant) ?? samples[0];
+        if (!sample) return;
+        window.dispatchEvent(new CustomEvent("toast", { detail: sample }));
+      });
+    });
+  })();
+</script>

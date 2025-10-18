@@ -1,0 +1,50 @@
+---
+interface Props {
+  name?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
+  class?: string;
+}
+
+const {
+  name,
+  min = 0,
+  max = 100,
+  step = 1,
+  value = 50,
+  class: className = "",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<div class={['flex flex-col gap-2 font-mono text-xs', className].filter(Boolean).join(' ')}>
+  <input
+    type="range"
+    class="h-2 w-full appearance-none rounded-full bg-terminal-surface accent-terminal-cyan"
+    name={name}
+    min={min}
+    max={max}
+    step={step}
+    value={value}
+    data-slider
+    {...rest}
+  />
+  <div class="flex justify-between text-muted-foreground">
+    <span>{min}</span>
+    <span data-slider-value>{value}</span>
+    <span>{max}</span>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const slider = document.currentScript?.previousElementSibling?.querySelector('[data-slider]');
+    const display = document.currentScript?.previousElementSibling?.querySelector('[data-slider-value]');
+    if (!(slider instanceof HTMLInputElement) || !display) return;
+    slider.addEventListener('input', () => {
+      display.textContent = slider.value;
+    });
+  })();
+</script>

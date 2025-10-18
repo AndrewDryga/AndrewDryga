@@ -1,0 +1,17 @@
+---
+interface Props extends astroHTML.JSX.HTMLAttributes<HTMLLabelElement> {
+  class?: string;
+}
+
+const { class: className = "", ...rest } = Astro.props as Props;
+---
+
+<label
+  class={[
+    "font-mono text-xs uppercase tracking-wide text-muted-foreground",
+    className,
+  ].filter(Boolean).join(" ")}
+  {...rest}
+>
+  <slot />
+</label>

@@ -1,0 +1,18 @@
+---
+import Index from "../index.astro";
+import { allProjects } from "../../../data/projects";
+
+// Pre-render path-based pagination pages: /projects/page/1/, /projects/page/2/, ...
+export async function getStaticPaths() {
+  const PAGE_SIZE = 6;
+  const totalPages = Math.max(1, Math.ceil(allProjects.length / PAGE_SIZE));
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+  }));
+}
+---
+
+<!-- Proxy render to the main projects index.
+     The index page reads Astro.url (which includes /projects/page/N/) and handles pagination. -->
+<Index />

@@ -1,0 +1,16 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props as Props;
+---
+
+<div class={['group relative inline-flex', className].filter(Boolean).join(' ')} data-hovercard>
+  <slot name="trigger" />
+  <div
+    class="pointer-events-none absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-md border border-border bg-terminal-bg/95 p-4 opacity-0 shadow-[0_10px_40px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100"
+  >
+    <slot />
+  </div>
+</div>

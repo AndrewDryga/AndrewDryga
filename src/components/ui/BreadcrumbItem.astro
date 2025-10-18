@@ -1,0 +1,27 @@
+---
+interface Props {
+  href?: string;
+  current?: boolean;
+  class?: string;
+}
+
+const { href, current = false, class: className = "", ...rest } =
+  Astro.props as Props & Record<string, unknown>;
+---
+
+<li class={["inline-flex items-center gap-2", className].filter(Boolean).join(" ")} {...rest}>
+  {
+    href && !current ? (
+      <a
+        href={href}
+        class="inline-flex items-center gap-2 rounded px-2 py-1 transition-colors hover:text-terminal-cyan"
+      >
+        <slot />
+      </a>
+    ) : (
+      <span class="inline-flex items-center gap-2 text-foreground">
+        <slot />
+      </span>
+    )
+  }
+</li>

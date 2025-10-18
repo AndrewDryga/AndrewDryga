@@ -1,0 +1,54 @@
+---
+interface Props {
+  title?: string;
+  tone?: "neutral" | "primary" | "cyan" | "card";
+  class?: string;
+  bodyClass?: string;
+}
+
+const {
+  title = "terminal.sh",
+  tone = "neutral",
+  class: className = "",
+  bodyClass = "p-6 space-y-2 font-mono text-sm",
+} = Astro.props as Props;
+
+const toneClasses: Record<typeof tone, string> = {
+  neutral: "border border-border bg-terminal-surface",
+  primary: "border border-primary bg-card",
+  cyan: "border border-terminal-cyan/40 bg-terminal-surface",
+  card: "border border-border bg-card",
+};
+
+const headerBorder =
+  tone === "primary" ? "border-primary/40" : "border-border/40";
+const wrapperClasses = [
+  "rounded-lg overflow-hidden",
+  toneClasses[tone],
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+const innerClasses = [bodyClass].filter(Boolean).join(" ");
+---
+
+<div class={wrapperClasses}>
+  <div
+    class={`flex items-center gap-2 border-b ${headerBorder} px-4 py-3 bg-terminal-bg/40`}
+    aria-hidden="true"
+  >
+    <span class="h-2.5 w-2.5 rounded-full bg-destructive/70"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-secondary/70"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-terminal-green/70"></span>
+    {
+      title && (
+        <span class="ml-3 font-mono text-xs uppercase tracking-wide text-muted-foreground">
+          {title}
+        </span>
+      )
+    }
+  </div>
+  <div class={innerClasses}>
+    <slot />
+  </div>
+</div>

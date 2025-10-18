@@ -1,4 +1,6 @@
 ---
+import Breadcrumbs from "./Breadcrumbs.astro";
+
 export interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -47,8 +49,8 @@ const accentTextClass =
   accentColor === "yellow"
     ? "text-terminal-yellow"
     : accentColor === "cyan"
-    ? "text-terminal-cyan"
-    : "text-terminal-green";
+      ? "text-terminal-cyan"
+      : "text-terminal-green";
 
 const consoleTextClass = accentTextClass;
 
@@ -57,42 +59,39 @@ const useSplitTitle = !!(titleLeading || titleAccent || titleTrailing);
 ---
 
 <header class={["mb-10", className].filter(Boolean).join(" ")}>
-  {breadcrumbs.length > 0 && (
-    <nav class="font-mono text-sm text-muted-foreground mb-2" aria-label="breadcrumb">
-      {breadcrumbs.map((b, i) => (
-        <>
-          {b.href ? (
-            <a href={b.href} class="transition-colors hover:text-foreground">{b.label}</a>
-          ) : (
-            <span class="text-foreground">{b.label}</span>
-          )}
-          {i < breadcrumbs.length - 1 && <span class="mx-2 text-foreground/50">/</span>}
-        </>
-      ))}
-    </nav>
-  )}
+  {breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} class="mb-2" />}
 
-  {consoleLine && (
-    <div class={["font-mono text-sm mb-2", consoleTextClass].join(" ")}>{consoleLine}</div>
-  )}
+  {
+    consoleLine && (
+      <div class={["font-mono text-sm mb-2", consoleTextClass].join(" ")}>
+        {consoleLine}
+      </div>
+    )
+  }
 
   <h1 class="text-4xl md:text-5xl font-bold font-sans">
-    {useSplitTitle ? (
-      <>
-        {titleLeading && <span class="text-foreground">{titleLeading} </span>}
-        {titleAccent && <span class={accentTextClass}>{titleAccent}</span>}
-        {titleTrailing && <span class="text-foreground"> {titleTrailing}</span>}
-      </>
-    ) : (
-      <span class="text-foreground">{title}</span>
-    )}
+    {
+      useSplitTitle ? (
+        <>
+          {titleLeading && <span class="text-foreground">{titleLeading} </span>}
+          {titleAccent && <span class={accentTextClass}>{titleAccent}</span>}
+          {titleTrailing && (
+            <span class="text-foreground"> {titleTrailing}</span>
+          )}
+        </>
+      ) : (
+        <span class="text-foreground">{title}</span>
+      )
+    }
   </h1>
 
-  {description && (
-    <p class="text-muted-foreground max-w-2xl mt-3 leading-relaxed">
-      {description}
-    </p>
-  )}
+  {
+    description && (
+      <p class="text-muted-foreground max-w-2xl mt-3 leading-relaxed">
+        {description}
+      </p>
+    )
+  }
 
   <!-- Consumers can inject controls like filters below via default slot -->
   <slot />

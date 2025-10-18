@@ -1,0 +1,22 @@
+---
+interface Props {
+  text: string;
+  position?: "left" | "right" | "center";
+  class?: string;
+}
+
+const { text, position = "center", class: className = "" } = Astro.props as Props;
+
+const alignment =
+  position === "left"
+    ? "justify-start"
+    : position === "right"
+      ? "justify-end"
+      : "justify-center";
+---
+
+<div class={`relative h-12 flex items-center ${alignment} ${className}`.trim()}>
+  <div class="inline-block bg-secondary/10 px-3 py-2 text-secondary text-[10px] border border-secondary rounded italic">
+    {text}
+  </div>
+</div>

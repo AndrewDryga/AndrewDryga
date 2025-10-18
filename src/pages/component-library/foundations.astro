@@ -1,0 +1,765 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import Button from "@/components/ui/Button.astro";
+import BreakpointCard from "@/components/ui/BreakpointCard.astro";
+import BreakpointCard from "@/components/ui/BreakpointCard.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/foundations/", site).toString();
+
+const accessibilityChecklist = [
+  "All interactive elements are keyboard accessible",
+  "Focus indicators are visible (2px minimum)",
+  "Color contrast meets WCAG AA (4.5:1)",
+  "Images include descriptive alt text",
+  "Form inputs have associated labels",
+  "ARIA labels cover icon-only buttons",
+];
+
+const spacingScale = [
+  {
+    token: "xs",
+    label: "xs (4px)",
+    width: "4px",
+    usage: "0.25rem — tight spacing, icon gaps",
+  },
+  {
+    token: "sm",
+    label: "sm (8px)",
+    width: "8px",
+    usage: "0.5rem — small gaps, inline elements",
+  },
+  {
+    token: "base",
+    label: "base (16px)",
+    width: "16px",
+    usage: "1rem — default spacing unit",
+  },
+  {
+    token: "md",
+    label: "md (24px)",
+    width: "24px",
+    usage: "1.5rem — component spacing",
+  },
+  {
+    token: "lg",
+    label: "lg (32px)",
+    width: "32px",
+    usage: "2rem — section internal spacing",
+  },
+  {
+    token: "xl",
+    label: "xl (48px)",
+    width: "48px",
+    usage: "3rem — large component gaps",
+  },
+  {
+    token: "2xl",
+    label: "2xl (64px)",
+    width: "64px",
+    usage: "4rem — section dividers",
+  },
+];
+
+const verticalRhythm = [
+  {
+    label: "Section Spacing",
+    colorClass: "bg-primary/10 text-primary border-l-2 border-primary",
+    items: [
+      {
+        token: "mb-16",
+        usage: "4rem — between major sections",
+        height: "96px",
+      },
+      {
+        token: "mb-24",
+        usage: "6rem — between content areas",
+        height: "144px",
+      },
+    ],
+  },
+  {
+    label: "Component Spacing",
+    colorClass: "bg-accent/10 text-accent border-l-2 border-accent",
+    items: [
+      {
+        token: "mb-6",
+        usage: "1.5rem — between related components",
+        height: "72px",
+      },
+      { token: "mb-8", usage: "2rem — component groups", height: "96px" },
+    ],
+  },
+  {
+    label: "Element Spacing",
+    colorClass: "bg-secondary/10 text-secondary border-l-2 border-secondary",
+    items: [
+      {
+        token: "mb-2",
+        usage: "0.5rem — tight element spacing",
+        height: "32px",
+      },
+      {
+        token: "mb-4",
+        usage: "1rem — standard element spacing",
+        height: "48px",
+      },
+    ],
+  },
+];
+
+const primaryColors = [
+  {
+    name: "Primary (Cyan)",
+    swatch: "bg-primary",
+    value: "hsl(180 100% 50%)",
+    usage: "Main actions, links",
+  },
+  {
+    name: "Secondary (Yellow)",
+    swatch: "bg-secondary",
+    value: "hsl(60 100% 50%)",
+    usage: "Secondary actions",
+  },
+  {
+    name: "Accent (Green)",
+    swatch: "bg-accent",
+    value: "hsl(120 100% 50%)",
+    usage: "Highlights, success",
+  },
+  {
+    name: "Muted",
+    swatch: "bg-muted",
+    value: "hsl(220 15% 15%)",
+    usage: "Subtle backgrounds",
+  },
+];
+
+const terminalPalette = [
+  {
+    name: "Terminal Cyan",
+    swatch: "bg-terminal-cyan",
+    value: "hsl(180 100% 50%)",
+    usage: "Commands, info",
+  },
+  {
+    name: "Terminal Green",
+    swatch: "bg-terminal-green",
+    value: "hsl(120 100% 50%)",
+    usage: "Success, prompts",
+  },
+  {
+    name: "Terminal Yellow",
+    swatch: "bg-terminal-yellow",
+    value: "hsl(60 100% 50%)",
+    usage: "Warnings, highlights",
+  },
+  {
+    name: "Destructive",
+    swatch: "bg-destructive",
+    value: "hsl(0 84% 60%)",
+    usage: "Errors, deletion",
+  },
+];
+
+const surfacePalette = [
+  {
+    name: "Terminal background",
+    swatch: "bg-terminal-bg border border-border",
+    value: "hsl(220 15% 8%)",
+    usage: "Main background",
+  },
+  {
+    name: "Terminal surface",
+    swatch: "bg-terminal-surface border border-border",
+    value: "hsl(220 15% 12%)",
+    usage: "Cards, containers",
+  },
+  {
+    name: "Foreground",
+    swatch: "bg-foreground",
+    value: "hsl(180 100% 90%)",
+    usage: "Primary text",
+  },
+];
+---
+
+<BaseLayout
+  title="Component Library — Foundations"
+  description="Brand identity, spacing, typography, and color tokens that power the terminal aesthetic."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="foundations" />
+
+      <SectionHeader
+        consoleLine="$ tree brand"
+        title="Foundations"
+        description="Typography, colors, spacing, breakpoints, and accessibility primitives that underpin every component in the library."
+        accentColor="cyan"
+      />
+
+      <div class="space-y-16">
+        <section class="space-y-6" id="brand-identity">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Brand identity</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Logo mark, wordmark, and palette tiles that keep marketing and
+              product surfaces in sync.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <article
+              class="rounded-lg border border-border bg-card/40 p-6 shadow-card transition-colors hover:border-terminal-cyan/60"
+            >
+              <div class="font-mono text-3xl text-terminal-cyan">$ _</div>
+              <h3 class="mt-4 text-xl font-semibold text-foreground">
+                Logo mark
+              </h3>
+              <p class="mt-2 text-sm text-muted-foreground">
+                Terminal cursor logo for favicons, badges, and navigation.
+              </p>
+            </article>
+
+            <article
+              class="rounded-lg border border-border bg-card/40 p-6 shadow-card transition-colors hover:border-terminal-cyan/60"
+            >
+              <div class="font-mono text-2xl text-terminal-green">
+                ~/andrewdryga_
+              </div>
+              <h3 class="mt-4 text-xl font-semibold text-foreground">
+                Wordmark
+              </h3>
+              <p class="mt-2 text-sm text-muted-foreground">
+                Monospace lockup for headings, social previews, and long-form
+                content.
+              </p>
+            </article>
+
+            <article
+              class="rounded-lg border border-border bg-card/40 p-6 shadow-card transition-colors hover:border-terminal-cyan/60"
+            >
+              <div class="font-mono text-sm text-terminal-yellow">
+                primary → accent
+              </div>
+              <h3 class="mt-4 text-xl font-semibold text-foreground">
+                Palette
+              </h3>
+              <p class="mt-2 text-sm text-muted-foreground">
+                Cyan, green, and yellow anchors with neutral backgrounds for
+                depth.
+              </p>
+            </article>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6">
+              <h3 class="text-lg font-semibold text-foreground mb-4">
+                Design principles
+              </h3>
+              <ul class="space-y-3 text-sm text-muted-foreground">
+                <li class="flex gap-3">
+                  <span class="text-terminal-cyan font-mono">▸</span>
+                  Clarity through minimalism — every pixel serves a purpose.
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-terminal-green font-mono">▸</span>
+                  Terminal authenticity — monospace fonts, prompts, and cursors.
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-terminal-yellow font-mono">▸</span>
+                  Functional aesthetics — beautiful because it works.
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-primary font-mono">▸</span>
+                  Consistent rhythm — predictable spacing and typography.
+                </li>
+              </ul>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6">
+              <h3 class="text-lg font-semibold text-foreground mb-4">
+                Voice &amp; tone
+              </h3>
+              <div class="grid sm:grid-cols-2 gap-4 font-mono text-sm">
+                <div class="rounded border border-terminal-green/50 p-4">
+                  <div
+                    class="text-terminal-green uppercase tracking-wide text-xs mb-2"
+                  >
+                    ✓ Do
+                  </div>
+                  <p>$ deploy --production</p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    Concise, precise, actionable.
+                  </p>
+                </div>
+                <div class="rounded border border-destructive/50 p-4">
+                  <div
+                    class="text-destructive uppercase tracking-wide text-xs mb-2"
+                  >
+                    ✗ Don't
+                  </div>
+                  <p>Please click here to deploy to production!</p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    Verbose, unclear, overly friendly.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-6" id="spacing-system">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Spacing system</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Consistent spacing tokens keep components aligned without bespoke
+              margins.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-foreground mb-4">
+              Spacing scale
+            </h3>
+            <div class="space-y-3">
+              {
+                spacingScale.map((item) => (
+                  <div class="flex items-center gap-4">
+                    <code class="text-sm font-mono text-terminal-cyan w-24">
+                      {item.label}
+                    </code>
+                    <div
+                      class="h-4 bg-terminal-cyan/60"
+                      style={`width:${item.width}`}
+                    />
+                    <code class="text-xs text-muted-foreground">
+                      {item.usage}
+                    </code>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-border bg-card p-6">
+            <h3 class="text-lg font-semibold text-foreground mb-4">
+              Vertical rhythm guide
+            </h3>
+            <div class="grid gap-6 md:grid-cols-3">
+              {
+                verticalRhythm.map((group) => (
+                  <div class="space-y-4">
+                    <div
+                      class={`inline-block px-3 py-1 rounded text-xs font-mono ${group.colorClass}`.trim()}
+                    >
+                      {group.label}
+                    </div>
+                    <div class="space-y-3 border-l-2 border-border/60 pl-4">
+                      {group.items.map((item) => (
+                        <div class="space-y-2">
+                          <code class="block text-sm font-mono text-foreground">
+                            {item.token}
+                          </code>
+                          <code class="block text-xs text-muted-foreground">
+                            {item.usage}
+                          </code>
+                          <div
+                            class="rounded border-2 border-dashed border-terminal-cyan/40 bg-terminal-cyan/10 flex items-center justify-center"
+                            style={`height: ${item.height}`}
+                          >
+                            <span class="text-xs text-muted-foreground font-mono">
+                              {item.height} vertical space
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="border border-border rounded-lg p-4 bg-card">
+                <code class="text-sm font-mono text-terminal-cyan block mb-2"
+                  >max-w-6xl</code
+                >
+                <p class="text-xs text-muted-foreground">
+                  Large content (1152px)
+                </p>
+                <p class="text-xs text-foreground mt-2">
+                  Use for main layouts and hero bands.
+                </p>
+              </div>
+              <div class="border border-border rounded-lg p-4 bg-card">
+                <code class="text-sm font-mono text-terminal-cyan block mb-2"
+                  >max-w-4xl</code
+                >
+                <p class="text-xs text-muted-foreground">
+                  Reading width (896px)
+                </p>
+                <p class="text-xs text-foreground mt-2">
+                  Use for blog posts and longform copy.
+                </p>
+              </div>
+              <div class="border border-border rounded-lg p-4 bg-card">
+                <code class="text-sm font-mono text-terminal-cyan block mb-2"
+                  >max-w-2xl</code
+                >
+                <p class="text-xs text-muted-foreground">
+                  Narrow content (672px)
+                </p>
+                <p class="text-xs text-foreground mt-2">
+                  Use for forms, dialogs, and cards.
+                </p>
+              </div>
+            </div>
+            <div class="bg-card border border-border rounded-lg p-6">
+              <h4 class="font-bold text-foreground mb-3">Padding guidelines</h4>
+              <div class="space-y-2 text-sm font-mono">
+                <div class="flex justify-between">
+                  <code class="text-terminal-cyan">px-4</code>
+                  <code class="text-muted-foreground">Mobile containers</code>
+                </div>
+                <div class="flex justify-between">
+                  <code class="text-terminal-cyan">px-6</code>
+                  <code class="text-muted-foreground">Tablet containers</code>
+                </div>
+                <div class="flex justify-between">
+                  <code class="text-terminal-cyan">px-8</code>
+                  <code class="text-muted-foreground">Desktop containers</code>
+                </div>
+                <div class="flex justify-between">
+                  <code class="text-terminal-cyan">gap-4 / gap-6 / gap-8</code>
+                  <code class="text-muted-foreground">Grid & flex spacing</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="space-y-6" id="breakpoints">
+            <header class="space-y-3">
+              <h2 class="text-3xl font-bold text-foreground">
+                Responsive breakpoints
+              </h2>
+              <p class="text-sm text-muted-foreground max-w-2xl">
+                Reference cards for the core sm / md / lg ranges that guide
+                component sizing across viewports.
+              </p>
+            </header>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <BreakpointCard
+                label="sm — 640px"
+                description="Large phones & small tablets"
+                tone="cyan"
+              />
+              <BreakpointCard
+                label="md — 768px"
+                description="Tablets & compact laptops"
+                tone="green"
+              />
+              <BreakpointCard
+                label="lg — 1024px"
+                description="Desktops & wide layouts"
+                tone="yellow"
+              />
+            </div>
+            <p class="text-xs text-muted-foreground font-mono">
+              xl (1280px) and 2xl (1440px) extend the same spacing rhythm—swap
+              to `max-w-7xl` or custom grids when dashboards need extra width.
+            </p>
+          </section>
+
+          <!-- Layout & Grid -->
+          <section id="layout" class="space-y-6">
+            <header class="space-y-3">
+              <h2 class="text-3xl font-bold text-foreground">
+                Layout &amp; Grid
+              </h2>
+              <p class="text-sm text-muted-foreground max-w-2xl">
+                Responsive grid patterns covering two-column, three-column, and
+                automatic layouts.
+              </p>
+            </header>
+
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-sm font-mono text-muted-foreground mb-4">
+                  2 Column Grid
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div
+                    class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground"
+                  >
+                    Column 1
+                  </div>
+                  <div
+                    class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground"
+                  >
+                    Column 2
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-mono text-muted-foreground mb-4">
+                  3 Column Grid
+                </h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                  <div
+                    class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground"
+                  >
+                    Col 1
+                  </div>
+                  <div
+                    class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground"
+                  >
+                    Col 2
+                  </div>
+                  <div
+                    class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground"
+                  >
+                    Col 3
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-mono text-muted-foreground mb-4">
+                  Responsive Grid (4 → 2 → 1)
+                </h3>
+                <div
+                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                >
+                  {
+                    [1, 2, 3, 4].map((item) => (
+                      <div class="border border-border rounded-lg p-4 bg-card text-center font-mono text-muted-foreground">
+                        Item {item}
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="space-y-6" id="accessibility">
+            <header class="space-y-3">
+              <h2 class="text-3xl font-bold text-foreground">Accessibility</h2>
+              <p class="text-sm text-muted-foreground max-w-2xl">
+                Focus states, contrast, and aria affordances that keep the
+                terminal theme inclusive.
+              </p>
+            </header>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="border border-border rounded-lg p-6 bg-card">
+                <div class="font-mono text-sm text-muted-foreground mb-3">
+                  Button focus
+                </div>
+                <Button>Focus me</Button>
+              </div>
+              <div class="border border-border rounded-lg p-6 bg-card">
+                <div class="font-mono text-sm text-muted-foreground mb-3">
+                  Input focus
+                </div>
+                <input
+                  type="text"
+                  placeholder="Type here..."
+                  class="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+                />
+              </div>
+              <div class="border border-border rounded-lg p-6 bg-card">
+                <div class="font-mono text-sm text-muted-foreground mb-3">
+                  Link focus
+                </div>
+                <a
+                  href="#"
+                  class="text-terminal-cyan underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-terminal-cyan rounded px-1"
+                >
+                  Focusable link
+                </a>
+              </div>
+            </div>
+
+            <div
+              class="rounded-lg border border-primary/40 bg-terminal-surface/50 p-6"
+            >
+              <div
+                class="font-mono text-xs text-primary uppercase tracking-wide mb-3"
+              >
+                Accessibility checklist
+              </div>
+              <ul class="space-y-2 text-sm text-muted-foreground font-mono">
+                {accessibilityChecklist.map((item) => <li>✓ {item}</li>)}
+              </ul>
+            </div>
+          </section>
+
+          <section class="space-y-6" id="typography">
+            <header class="space-y-3">
+              <h2 class="text-3xl font-bold text-foreground">Typography</h2>
+              <p class="text-sm text-muted-foreground max-w-2xl">
+                JetBrains Mono and Inter pairings for headers, body, and
+                metadata.
+              </p>
+            </header>
+
+            <div class="rounded-lg border border-border bg-card p-6 space-y-6">
+              <div class="border-b border-border pb-4">
+                <p class="text-6xl font-bold text-foreground mb-2">
+                  Display XL
+                </p>
+                <code class="text-xs text-muted-foreground"
+                  >text-6xl font-bold — hero headings</code
+                >
+              </div>
+              <div class="border-b border-border pb-4">
+                <h1 class="text-5xl font-bold text-foreground mb-2">
+                  Display Large
+                </h1>
+                <code class="text-xs text-muted-foreground"
+                  >text-5xl font-bold — page titles</code
+                >
+              </div>
+              <div class="border-b border-border pb-4">
+                <h2 class="text-4xl font-bold text-foreground mb-2">
+                  Heading 1
+                </h2>
+                <code class="text-xs text-muted-foreground"
+                  >text-4xl font-bold — section headings</code
+                >
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="space-y-2">
+                  <p class="font-semibold">Weights</p>
+                  <ul class="space-y-1 text-sm text-muted-foreground">
+                    <li>
+                      <span class="text-foreground font-normal"
+                        >Normal (400)</span
+                      >
+                    </li>
+                    <li>
+                      <span class="text-foreground font-medium"
+                        >Medium (500)</span
+                      >
+                    </li>
+                    <li>
+                      <span class="text-foreground font-semibold"
+                        >Semibold (600)</span
+                      >
+                    </li>
+                    <li>
+                      <span class="text-foreground font-bold">Bold (700)</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="space-y-2">
+                  <p class="font-semibold">Usage</p>
+                  <ul class="space-y-1 text-sm text-muted-foreground">
+                    <li>Monospace — commands, code, metadata</li>
+                    <li>Inter sans-serif — headings, paragraphs</li>
+                    <li>Italic — quotes, emphasis</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="space-y-6" id="colors">
+            <header class="space-y-3">
+              <h2 class="text-3xl font-bold text-foreground">Color palette</h2>
+              <p class="text-sm text-muted-foreground max-w-2xl">
+                Semantic tokens for actions, feedback, and surfaces. All colors
+                ship as CSS variables and Tailwind utilities.
+              </p>
+            </header>
+
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {
+                primaryColors.map((color) => (
+                  <div class="rounded-lg border border-border bg-card p-5">
+                    <div
+                      class={`w-full h-20 rounded ${color.swatch} mb-2 border border-border/40`}
+                    />
+                    <div class="font-mono text-sm text-foreground">
+                      {color.name}
+                    </div>
+                    <div class="text-xs text-muted-foreground font-mono">
+                      {color.value}
+                    </div>
+                    <div class="text-xs text-muted-foreground mt-1">
+                      {color.usage}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+
+            <h3 class="text-lg font-semibold text-foreground mt-10">
+              Terminal palette
+            </h3>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {
+                terminalPalette.map((color) => (
+                  <div class="rounded-lg border border-border bg-card p-5">
+                    <div class={`w-full h-20 rounded ${color.swatch} mb-2`} />
+                    <div class="font-mono text-sm text-foreground">
+                      {color.name}
+                    </div>
+                    <div class="text-xs text-muted-foreground font-mono">
+                      {color.value}
+                    </div>
+                    <div class="text-xs text-muted-foreground mt-1">
+                      {color.usage}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+
+            <h3 class="text-lg font-semibold text-foreground mt-10">
+              Surface colors
+            </h3>
+            <div class="grid gap-4 md:grid-cols-3">
+              {
+                surfacePalette.map((color) => (
+                  <div class="rounded-lg border border-border bg-card p-5">
+                    <div
+                      class={`w-full h-20 rounded mb-2 ${color.swatch}`.trim()}
+                    />
+                    <div class="font-mono text-sm text-foreground">
+                      {color.name}
+                    </div>
+                    <div class="text-xs text-muted-foreground font-mono">
+                      {color.value}
+                    </div>
+                    <div class="text-xs text-muted-foreground mt-1">
+                      {color.usage}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

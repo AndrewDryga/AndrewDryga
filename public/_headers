@@ -10,9 +10,7 @@
   Cross-Origin-Resource-Policy: same-origin
 
   # Content Security Policy
-  # Note: 'unsafe-inline' for scripts is included to support current inline Mixpanel init.
-  # Tighten with nonces/hashes when migrating to non-inline scripts.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https: blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.mixpanel.com https://*.mxpnl.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https: blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.mixpanel.com https://*.mxpnl.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
   # HTML caching (short max-age at browser, cache at edge)
   Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600

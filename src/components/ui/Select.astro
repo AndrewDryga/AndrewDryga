@@ -1,0 +1,91 @@
+---
+interface Option {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  name?: string;
+  options: Option[];
+  placeholder?: string;
+  class?: string;
+}
+
+const {
+  name,
+  options,
+  placeholder = "Select option",
+  class: className = "",
+  ...rest
+} = Astro.props as Props & Record<string, unknown>;
+---
+
+<div class={['relative font-mono text-sm', className].filter(Boolean).join(' ')} data-select>
+  <button
+    type="button"
+    class="flex w-full items-center justify-between rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-left text-foreground transition-colors hover:border-terminal-cyan/70 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    data-select-trigger
+  >
+    <span data-select-label>{placeholder}</span>
+    <svg class="h-3 w-3" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </button>
+  <input type="hidden" name={name} data-select-input {...rest}>
+  <div
+    data-select-list
+    class="invisible pointer-events-none absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_10px_40px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+  >
+    {
+      options.map((option) => (
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded px-2 py-1 text-left text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
+          data-select-option
+          data-value={option.value}
+        >
+          {option.label}
+        </button>
+      ))
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const wrapper = document.currentScript?.previousElementSibling;
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector('[data-select-trigger]');
+    const list = wrapper.querySelector('[data-select-list]');
+    const label = wrapper.querySelector('[data-select-label]');
+    const input = wrapper.querySelector('[data-select-input]');
+    const options = wrapper.querySelectorAll('[data-select-option]');
+    if (!trigger || !list || !label || !input) return;
+
+    const open = () => {
+      list.classList.add('visible', 'pointer-events-auto', 'opacity-100');
+      list.classList.remove('invisible', 'pointer-events-none');
+    };
+    const close = () => {
+      list.classList.remove('visible', 'pointer-events-auto', 'opacity-100');
+      list.classList.add('invisible', 'pointer-events-none');
+    };
+
+    trigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (list.classList.contains('visible')) close(); else open();
+    });
+
+    options.forEach((option) => {
+      option.addEventListener('click', () => {
+        const value = option.getAttribute('data-value') ?? '';
+        label.textContent = option.textContent?.trim() ?? '';
+        input.value = value;
+        wrapper.dispatchEvent(new CustomEvent('change', { detail: value }));
+        close();
+      });
+    });
+
+    window.addEventListener('click', close);
+  })();
+</script>

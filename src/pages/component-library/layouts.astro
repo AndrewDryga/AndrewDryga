@@ -1,0 +1,289 @@
+---
+import BaseLayout from "@/components/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import BreadcrumbItem from "@/components/ui/BreadcrumbItem.astro";
+import Sidebar from "@/components/ui/Sidebar.astro";
+import HamburgerMenu from "@/components/ui/HamburgerMenu.astro";
+
+if (import.meta.env.PROD) {
+  return Astro.redirect("/");
+}
+
+const site = Astro.site ?? new URL("https://dryga.com/");
+const canonical = new URL("/component-library/layouts/", site).toString();
+
+const sidebarItems = [
+  { label: "Dashboard", active: true },
+  { label: "Projects", href: "#" },
+  { label: "Settings", href: "#" },
+  { label: "Help & support", href: "#" },
+];
+
+const breadcrumbTrail = [
+  { label: "~", href: "/" },
+  { label: "projects", href: "/projects" },
+  { label: "portfolio", href: "/projects/portfolio" },
+  { label: "index.astro", current: true },
+];
+
+const navigationLinks = [
+  { label: "Home", href: "#", active: true },
+  { label: "About", href: "#" },
+  { label: "Projects", href: "#" },
+  { label: "Contact", href: "#" },
+];
+---
+
+<BaseLayout
+  title="Component Library — Layouts"
+  description="Hero shells and footer structures that define the terminal aesthetic."
+  canonical={canonical}
+  noIndex
+>
+  <Header slot="header" />
+
+  <section class="px-4 py-12 md:py-16">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10">
+      <ComponentLibraryNav current="layouts" />
+
+      <SectionHeader
+        consoleLine="$ tree layouts"
+        title="Layout primitives"
+        description="Starter hero markup, navigation blocks, and footer templates for terminal-first pages."
+        accentColor="cyan"
+      />
+
+      <div class="space-y-12">
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <p class="font-mono text-sm text-terminal-green">
+              $ cat hero.astro
+            </p>
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground">
+              Hero headline
+            </h2>
+            <p class="max-w-3xl text-sm text-muted-foreground leading-relaxed">
+              Drop-in hero layout with terminal prompt accent, dual
+              call-to-actions, and copy blocks tuned for developer marketing
+              pages.
+            </p>
+          </header>
+
+          <div
+            class="rounded-lg border border-terminal-cyan/40 bg-terminal-surface/80 p-6 space-y-6"
+          >
+            <div class="flex flex-wrap items-center gap-3 text-terminal-cyan">
+              <span class="font-mono text-sm">~/landing</span>
+              <span class="animate-pulse font-mono">▊</span>
+            </div>
+            <h3 class="text-4xl font-bold text-foreground">
+              Ship reliable platforms without the chaos.
+            </h3>
+            <p class="max-w-2xl text-sm text-muted-foreground">
+              Opinionated building blocks for terminal-inspired marketing pages
+              and product UI. Works with Tailwind out of the box.
+            </p>
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <a
+                href="#"
+                class="inline-flex items-center justify-center rounded-md border border-terminal-cyan px-4 py-2 font-mono text-sm text-terminal-cyan transition-colors hover:bg-terminal-cyan hover:text-background"
+              >
+                Primary CTA
+              </a>
+              <a
+                href="#"
+                class="inline-flex items-center justify-center rounded-md border border-terminal-green px-4 py-2 font-mono text-sm text-terminal-green transition-colors hover:bg-terminal-green hover:text-background"
+              >
+                Secondary CTA
+              </a>
+            </div>
+          </div>
+
+          <dl class="grid gap-4 md:grid-cols-3">
+            <div
+              class="rounded-lg border border-border/60 bg-background/40 p-4"
+            >
+              <dt
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Launch-ready
+              </dt>
+              <dd class="mt-2 text-sm text-muted-foreground">
+                Terminal accent, supporting copy, and primary/secondary CTA
+                slots.
+              </dd>
+            </div>
+            <div
+              class="rounded-lg border border-border/60 bg-background/40 p-4"
+            >
+              <dt
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Responsive
+              </dt>
+              <dd class="mt-2 text-sm text-muted-foreground">
+                Stacks neatly on mobile without custom breakpoints or scripts.
+              </dd>
+            </div>
+            <div
+              class="rounded-lg border border-border/60 bg-background/40 p-4"
+            >
+              <dt
+                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
+              >
+                Accessible
+              </dt>
+              <dd class="mt-2 text-sm text-muted-foreground">
+                Semantic headings, consistent focus order, and WCAG-compliant
+                contrast.
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Navigation blocks
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Breadcrumbs, sidebar menus, and hamburger toggles that anchor the
+              layout shell.
+            </p>
+          </header>
+
+          <div class="border border-border rounded-lg p-6 bg-card">
+            <h3 class="text-lg font-bold text-foreground mb-4">
+              Breadcrumb trail
+            </h3>
+            <Breadcrumb class="font-mono text-sm text-foreground">
+              {
+                breadcrumbTrail.map((item, index) => (
+                  <>
+                    <BreadcrumbItem
+                      href={item.href}
+                      current={item.current}
+                      class={item.current ? "text-foreground" : "text-primary"}
+                    >
+                      {item.label}
+                    </BreadcrumbItem>
+                    {index < breadcrumbTrail.length - 1 ? (
+                      <li class="text-muted-foreground">/</li>
+                    ) : null}
+                  </>
+                ))
+              }
+            </Breadcrumb>
+            <p class="text-xs text-muted-foreground font-mono mt-3">
+              Mirrors filesystem notation with monospace separators.
+            </p>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div
+              class="border border-border rounded-lg p-6 bg-terminal-surface"
+            >
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Sidebar navigation
+              </h3>
+              <Sidebar
+                title="Navigation"
+                items={sidebarItems}
+                class="!w-full md:!w-64"
+              >
+                <span slot="footer">Last sync · 2 hours ago</span>
+              </Sidebar>
+              <p class="text-xs text-muted-foreground font-mono mt-3">
+                Terminal shell with focus-trapped menu.
+              </p>
+            </div>
+            <div class="border border-border rounded-lg p-6 bg-card">
+              <h3 class="text-lg font-bold text-foreground mb-4">
+                Hamburger toggle
+              </h3>
+              <HamburgerMenu logo="~/NAV" links={navigationLinks} />
+              <p class="text-xs text-muted-foreground font-mono mt-3">
+                Animated icon respects reduced motion and keeps 44px targets.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Footer templates</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Terminal-flavoured footers ranging from compressed single-line
+              bars to multi-column navigation blocks.
+            </p>
+          </header>
+
+          <div class="space-y-6">
+            <div
+              class="border border-border rounded-lg overflow-hidden bg-terminal-surface"
+            >
+              <Header variant="footer" />
+            </div>
+
+            <div
+              class="border border-border rounded-lg overflow-hidden bg-card"
+            >
+              <div class="border-t border-border p-6 bg-terminal-surface">
+                <div
+                  class="flex flex-col md:flex-row justify-between items-center gap-4 font-mono text-sm"
+                >
+                  <div class="flex items-center gap-2 text-terminal-cyan">
+                    <span aria-hidden="true">▸</span>
+                    <span>andrew_dryga@terminal.dev</span>
+                  </div>
+                  <div class="flex items-center gap-4 text-muted-foreground">
+                    <span>Last deploy · 2h ago</span>
+                    <span>Uptime · 99.9%</span>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="border-t border-border bg-card p-6 font-mono text-xs text-muted-foreground"
+              >
+                <div
+                  class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span>© 2025 Andrew Dryga</span>
+                  <span>~/src/pages/component-library/layouts.astro</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="border border-primary rounded-lg overflow-hidden bg-terminal-surface"
+            >
+              <div class="p-6 font-mono text-sm space-y-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-primary">$</span>
+                  <span class="text-foreground">Built with Astro 4.x</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-secondary">$</span>
+                  <span class="text-foreground">Last updated: Oct 14, 2025</span
+                  >
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-accent">$</span>
+                  <span class="text-foreground">
+                    Status: <span class="text-terminal-green">✓ Online</span>
+                  </span>
+                </div>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono px-6 pb-4">
+                Command-line style footer for dashboards and status pages.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

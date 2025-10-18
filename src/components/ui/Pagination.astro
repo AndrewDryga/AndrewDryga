@@ -1,0 +1,51 @@
+---
+interface Props {
+  current: number;
+  total: number;
+  hrefBuilder?: (page: number) => string;
+  class?: string;
+}
+
+const {
+  current,
+  total,
+  hrefBuilder = (page: number) => `?page=${page}`,
+  class: className = "",
+} = Astro.props as Props;
+
+const pages = Array.from({ length: total }, (_, i) => i + 1);
+---
+
+<nav
+  class={['inline-flex items-center gap-2 font-mono text-xs', className].filter(Boolean).join(' ')}
+  aria-label="Pagination"
+>
+  <a
+    class="rounded border border-border px-3 py-1 text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan"
+    href={hrefBuilder(Math.max(1, current - 1))}
+    aria-disabled={current === 1 ? 'true' : undefined}
+  >
+    Prev
+  </a>
+  {pages.map((page) => (
+    <a
+      href={hrefBuilder(page)}
+      class={[
+        'rounded border px-3 py-1 transition-colors',
+        page === current
+          ? 'border-terminal-cyan bg-terminal-cyan/10 text-terminal-cyan'
+          : 'border-border text-foreground hover:border-terminal-cyan hover:text-terminal-cyan',
+      ].join(' ')}
+      aria-current={page === current ? 'page' : undefined}
+    >
+      {page}
+    </a>
+  ))}
+  <a
+    class="rounded border border-border px-3 py-1 text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan"
+    href={hrefBuilder(Math.min(total, current + 1))}
+    aria-disabled={current === total ? 'true' : undefined}
+  >
+    Next
+  </a>
+</nav>
