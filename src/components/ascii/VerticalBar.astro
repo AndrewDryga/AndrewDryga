@@ -1,0 +1,64 @@
+---
+interface Bar {
+  label: string;
+  value: number;
+  color?: string;
+}
+
+interface Props {
+  bars: Bar[];
+  maxHeight?: number;
+  class?: string;
+}
+
+const {
+  bars = [],
+  maxHeight = 8,
+  class: className = "",
+} = Astro.props as Props;
+
+const maxValue = Math.max(0, ...bars.map((bar) => bar.value));
+
+const columns = bars.map((bar) => {
+  const color = bar.color ?? "text-terminal-cyan";
+  const value = Math.max(0, bar.value);
+  const height =
+    maxValue === 0
+      ? 0
+      : Math.max(0, Math.round((value / maxValue) * maxHeight));
+
+  const rows: string[] = [];
+  for (let level = maxHeight; level >= 1; level -= 1) {
+    rows.push(height >= level && value > 0 ? "█" : "·");
+  }
+
+  return { ...bar, value, color, rows };
+});
+---
+
+<div
+  class={[
+    "flex flex-wrap items-end gap-4 font-mono text-[12px] leading-tight",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ")}
+>
+  {
+    columns.map((column) => (
+      <div class="flex flex-col items-center gap-1 min-w-[1.5rem]">
+        <div class="flex flex-col items-center gap-[2px]">
+          {column.rows.map((glyph) => (
+            <span
+              class={glyph === "█" ? column.color : "text-muted-foreground/35"}
+            >
+              {glyph}
+            </span>
+          ))}
+        </div>
+        <span class={`text-[11px] ${column.color}`}>{column.value}</span>
+        <span class={`text-[11px] ${column.color}`}>{column.label}</span>
+      </div>
+    ))
+  }
+</div>

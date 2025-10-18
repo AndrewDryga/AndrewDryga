@@ -13,6 +13,7 @@ import {
   ActivationBox,
 } from "@/components/mdx/SequenceDiagram";
 import AsciiStackedBar from "@/components/ascii/StackedBar.astro";
+import AsciiVerticalBar from "@/components/ascii/VerticalBar.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -31,11 +32,11 @@ const pieSegments = [
 const sparklinePoints = [8, 11, 7, 13, 15, 12, 18, 20, 17, 23];
 
 const barSeries = [
-  { label: "Mon", value: 6 },
-  { label: "Tue", value: 9 },
-  { label: "Wed", value: 4 },
-  { label: "Thu", value: 11 },
-  { label: "Fri", value: 7 },
+  { label: "Mon", value: 6, color: "text-terminal-cyan" },
+  { label: "Tue", value: 9, color: "text-terminal-green" },
+  { label: "Wed", value: 4, color: "text-terminal-yellow" },
+  { label: "Thu", value: 11, color: "text-primary" },
+  { label: "Fri", value: 7, color: "text-muted-foreground" },
 ];
 
 function buildSparkline(points: number[]) {
@@ -85,16 +86,20 @@ const sparkline = buildSparkline(sparklinePoints);
       <div class="space-y-16">
         <section id="stacked" class="space-y-6">
           <header class="space-y-3">
-            <h2 class="text-3xl font-bold text-foreground">ASCII stacked bar</h2>
+            <h2 class="text-3xl font-bold text-foreground">
+              ASCII stacked bar
+            </h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Horizontal resource split rendered as a single stacked bar so proportions stay legible in monospace terminals.
+              Horizontal resource split rendered as a single stacked bar so
+              proportions stay legible in monospace terminals.
             </p>
           </header>
 
           <div class="rounded-lg border border-border bg-card p-5">
             <AsciiStackedBar segments={pieSegments} width={32} />
             <p class="mt-6 font-mono text-xs text-muted-foreground">
-              Each block represents roughly 3% of the weekly pipeline — tweak the weights to match your own mix.
+              Each block represents roughly 3% of the weekly pipeline — tweak
+              the weights to match your own mix.
             </p>
           </div>
         </section>
@@ -129,35 +134,20 @@ const sparkline = buildSparkline(sparklinePoints);
         <section id="bars" class="space-y-6">
           <header class="space-y-3">
             <h2 class="text-3xl font-bold text-foreground">
-              Vertical bar chart
+              ASCII vertical bars
             </h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Weekly deploy count displayed as stacked unicode bars with tabular
-              labels.
+              Deployment throughput rendered as stacked glyphs — five columns,
+              left aligned, no filler.
             </p>
           </header>
 
-          <div
-            class="rounded-lg border border-border bg-terminal-surface p-6 font-mono text-sm"
-          >
-            <div class="flex items-end justify-between gap-3">
-              {
-                barSeries.map((bar) => (
-                  <div class="flex flex-col items-center gap-2">
-                    <div
-                      class="w-8 rounded-t bg-terminal-cyan text-background text-xs text-center"
-                      style={`height:${bar.value * 12}px`}
-                    >
-                      {bar.value}
-                    </div>
-                    <span class="text-muted-foreground">{bar.label}</span>
-                  </div>
-                ))
-              }
-            </div>
-            <p class="mt-4 text-xs text-muted-foreground">
-              Multiply values by a pixel scalar (12px here) to translate counts
-              into heights while keeping the palette monochrome.
+          <div class="rounded-lg border border-border bg-card p-5">
+            <AsciiVerticalBar bars={barSeries} maxHeight={9} />
+            <p class="mt-4 font-mono text-xs text-muted-foreground">
+              Each block equals roughly one release per day — tweak <code
+                >maxHeight</code
+              > to match your scale.
             </p>
           </div>
         </section>
@@ -176,18 +166,19 @@ const sparkline = buildSparkline(sparklinePoints);
           >
             <pre
               class="whitespace-pre text-terminal-cyan">
-┌────────────┐    ┌──────────────┐    ┌────────────┐
-│ Stage build│──▶│ Quality gate  │──▶│ Deploy      │
-│    ci/cd   │    │    checks    │    │   fly.io   │
-└────────────┘    └──────────────┘    └────────────┘
-         │                │                   │
-         │         ┌──────▼───────┐           │
-         │         │ Rollback path│◀──────────┘
-         │         │   alerting   │
-         │         └──────────────┘
+┌─────────────┐    ┌──────────────┐    ┌────────────┐
+│ Stage build │───▶│ Quality gate │───▶│   Deploy   │
+│    ci/cd    │    │    checks    │    │   fly.io   │
+└─────────────┘    └──────────────┘    └────────────┘
+         │                 │                  │
+         │                 ▼                  │
+         │         ┌───────────────┐          │
+         │         │ Rollback path │◀─────────┘
+         │         │   alerting    │
+         │         └───────────────┘
          ▼
 ┌────────────┐
-│ Observe    │
+│  Observe   │
 │  metrics   │
 └────────────┘</pre>
             <p class="mt-4 text-xs text-muted-foreground">
