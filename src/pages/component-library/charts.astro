@@ -12,6 +12,7 @@ import {
   SelfCall,
   ActivationBox,
 } from "@/components/mdx/SequenceDiagram";
+import AsciiStackedBar from "@/components/ascii/StackedBar.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -20,23 +21,12 @@ if (import.meta.env.PROD) {
 const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL("/component-library/charts/", site).toString();
 
-const pieLegend = [
-  { label: "Build", color: "text-terminal-cyan" },
-  { label: "QA", color: "text-terminal-green" },
-  { label: "Deploy", color: "text-terminal-yellow" },
-  { label: "Ops", color: "text-muted-foreground" },
+const pieSegments = [
+  { label: "Build", color: "text-terminal-cyan", value: 34 },
+  { label: "QA", color: "text-terminal-green", value: 26 },
+  { label: "Deploy", color: "text-terminal-yellow", value: 22 },
+  { label: "Ops", color: "text-muted-foreground", value: 18 },
 ];
-
-const pieAscii = [
-  '<span class="text-muted-foreground">        </span><span class="text-terminal-cyan">░░██████</span><span class="text-terminal-green">▓▓</span><span class="text-muted-foreground">        </span>',
-  '<span class="text-muted-foreground">     </span><span class="text-terminal-cyan">░░██████████</span><span class="text-terminal-green">▓▓░░</span><span class="text-muted-foreground">     </span>',
-  '<span class="text-terminal-cyan">   ████████</span><span class="text-terminal-green">▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">░░░ </span>',
-  '<span class="text-terminal-cyan">  █████████</span><span class="text-terminal-green">▓▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒▒</span><span class="text-muted-foreground">░░░</span>',
-  '<span class="text-terminal-cyan">  █████████</span><span class="text-terminal-green">▓▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒▒▒</span><span class="text-muted-foreground">░░░</span>',
-  '<span class="text-terminal-cyan">   ████████</span><span class="text-terminal-green">▓▓▓▓▓</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">░░░ </span>',
-  '<span class="text-muted-foreground">     </span><span class="text-terminal-cyan">░░██████████</span><span class="text-muted-foreground">░░░░</span><span class="text-terminal-yellow">▒▒</span><span class="text-muted-foreground">  </span>',
-  '<span class="text-muted-foreground">        ░░░░░░░░░░░░░░        </span>',
-].join("<br />");
 
 const sparklinePoints = [8, 11, 7, 13, 15, 12, 18, 20, 17, 23];
 
@@ -93,44 +83,19 @@ const sparkline = buildSparkline(sparklinePoints);
       </header>
 
       <div class="space-y-16">
-        <section id="pie" class="space-y-6">
+        <section id="stacked" class="space-y-6">
           <header class="space-y-3">
-            <h2 class="text-3xl font-bold text-foreground">ASCII pie chart</h2>
+            <h2 class="text-3xl font-bold text-foreground">ASCII stacked bar</h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Traditional pie chart reimagined with block characters and
-              monospace legends for dark terminals.
+              Horizontal resource split rendered as a single stacked bar so proportions stay legible in monospace terminals.
             </p>
           </header>
 
-          <div class="grid gap-6 md:grid-cols-[minmax(0,360px)_1fr]">
-            <pre
-              class="rounded-lg border border-border bg-terminal-surface p-6 font-mono text-lg leading-snug"
-              set:html={pieAscii}
-            />
-            <div class="space-y-4">
-              <h3
-                class="font-mono text-xs uppercase tracking-wide text-terminal-cyan"
-              >
-                Legend
-              </h3>
-              <ul class="grid gap-3 sm:grid-cols-2 font-mono text-sm">
-                {
-                  pieLegend.map((item) => (
-                    <li class="flex items-center gap-3">
-                      <span
-                        class={`inline-flex h-3 w-3 rounded ${item.color} bg-current`}
-                        aria-hidden="true"
-                      />
-                      <span class="text-foreground">{item.label}</span>
-                    </li>
-                  ))
-                }
-              </ul>
-              <p class="font-mono text-xs text-muted-foreground">
-                Rendered from a fixed grid — replace glyphs with unicode blocks
-                to adjust segment weighting.
-              </p>
-            </div>
+          <div class="rounded-lg border border-border bg-card p-5">
+            <AsciiStackedBar segments={pieSegments} width={32} />
+            <p class="mt-6 font-mono text-xs text-muted-foreground">
+              Each block represents roughly 3% of the weekly pipeline — tweak the weights to match your own mix.
+            </p>
           </div>
         </section>
 
@@ -232,11 +197,12 @@ const sparkline = buildSparkline(sparklinePoints);
           </div>
         </section>
 
-                <section id="sequence" class="space-y-6">
+        <section id="sequence" class="space-y-6">
           <header class="space-y-3">
             <h2 class="text-3xl font-bold text-foreground">Request sequence</h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Success and fallback flows for the session endpoint rendered with terminal-native annotations.
+              Success and fallback flows for the session endpoint rendered with
+              terminal-native annotations.
             </p>
           </header>
 
@@ -246,14 +212,33 @@ const sparkline = buildSparkline(sparklinePoints);
               <Participant name="Auth API" color="accent" position="right" />
             </Participants>
             <Messages>
-              <Message label="POST /sessions" type="request" direction="right" />
+              <Message
+                label="POST /sessions"
+                type="request"
+                direction="right"
+              />
               <ActivationBox position="right">
-                <Message label="Verify credentials" type="async" direction="left" />
-                <Message label="Persist session" type="async" direction="left" />
+                <Message
+                  label="Verify credentials"
+                  type="async"
+                  direction="left"
+                />
+                <Message
+                  label="Persist session"
+                  type="async"
+                  direction="left"
+                />
               </ActivationBox>
-              <Message label="200 OK + token" type="response" direction="left" />
+              <Message
+                label="200 OK + token"
+                type="response"
+                direction="left"
+              />
             </Messages>
-            <Note text="Emit audit event to the security stream." position="right" />
+            <Note
+              text="Emit audit event to the security stream."
+              position="right"
+            />
           </SequenceDiagram>
 
           <SequenceDiagram class="space-y-6">
@@ -262,12 +247,22 @@ const sparkline = buildSparkline(sparklinePoints);
               <Participant name="Auth API" color="accent" position="right" />
             </Participants>
             <Messages>
-              <Message label="POST /sessions" type="request" direction="right" />
+              <Message
+                label="POST /sessions"
+                type="request"
+                direction="right"
+              />
               <Message label="401 Unauthorized" type="error" direction="left" />
               <SelfCall label="Retry after 2s" position="left" />
             </Messages>
-            <Note text="Fallback retries the API every 2s up to 4 attempts." position="center" />
-            <Note text="Escalate to security and email reset link after the final retry." position="right" />
+            <Note
+              text="Fallback retries the API every 2s up to 4 attempts."
+              position="center"
+            />
+            <Note
+              text="Escalate to security and email reset link after the final retry."
+              position="right"
+            />
           </SequenceDiagram>
         </section>
       </div>

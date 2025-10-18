@@ -1,0 +1,125 @@
+---
+interface Segment {
+  label: string;
+  value: number;
+  color: string;
+}
+
+interface Props {
+  segments: Segment[];
+  width?: number;
+  class?: string;
+  legendClass?: string;
+}
+
+const {
+  segments = [],
+  width = 36,
+  class: className = "",
+  legendClass = "",
+} = Astro.props as Props;
+
+const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+
+function normaliseSegments(length: number) {
+  if (total === 0) {
+    return segments.map(() => 0);
+  }
+  const raw = segments.map((segment) => (segment.value / total) * length);
+  const base = raw.map((value) => Math.max(1, Math.floor(value)));
+  let allocated = base.reduce((sum, value) => sum + value, 0);
+
+  const remainderOrder = raw
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  if (allocated < length) {
+    let remaining = length - allocated;
+    let pointer = 0;
+    while (remaining > 0) {
+      const entry = remainderOrder[pointer % remainderOrder.length];
+      base[entry.index] += 1;
+      remaining -= 1;
+      pointer += 1;
+    }
+  } else if (allocated > length) {
+    let excess = allocated - length;
+    let pointer = 0;
+    while (excess > 0) {
+      const entry =
+        remainderOrder[
+          remainderOrder.length - 1 - (pointer % remainderOrder.length)
+        ];
+      if (base[entry.index] > 1) {
+        base[entry.index] -= 1;
+        excess -= 1;
+      }
+      pointer += 1;
+    }
+  }
+
+  return base;
+}
+
+function buildStackedBar(length: number) {
+  if (!segments.length) {
+    const empty = " ".repeat(length);
+    const top = `┌${"─".repeat(length)}┐`;
+    const middle = `│${empty}│`;
+    const bottom = `└${"─".repeat(length)}┘`;
+    return [top, middle, bottom].join("<br />");
+  }
+
+  const lengths = normaliseSegments(length);
+
+  const bar = segments
+    .map((segment, index) => {
+      const glyphs = "█".repeat(lengths[index]);
+      return `<span class="${segment.color}">${glyphs}</span>`;
+    })
+    .join("");
+
+  const top = `┌${"─".repeat(length)}┐`;
+  const middle = `│${bar}│`;
+  const bottom = `└${"─".repeat(length)}┘`;
+
+  return [top, middle, bottom].join("<br />");
+}
+
+const stackedBarHtml = buildStackedBar(width);
+const legendEntries = segments.map((segment) => ({
+  ...segment,
+  percent: total === 0 ? 0 : Math.round((segment.value / total) * 100),
+}));
+---
+
+<div class={["space-y-2", className].filter(Boolean).join(" ")}>
+  <div
+    class="font-mono text-sm leading-tight tracking-[0.22em]"
+    set:html={stackedBarHtml}
+  />
+
+  {
+    legendEntries.length ? (
+      <ul
+        class={[
+          "flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground",
+          legendClass,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {legendEntries.map(({ label, color, percent }) => (
+          <li class="flex items-center gap-1">
+            <span
+              class={`inline-flex h-2.5 w-2.5 rounded ${color} bg-current`}
+              aria-hidden="true"
+            />
+            <span class="text-foreground">{label}</span>
+            <span>{percent}%</span>
+          </li>
+        ))}
+      </ul>
+    ) : null
+  }
+</div>
