@@ -2,8 +2,80 @@
 const { class: className = "" } = Astro.props;
 ---
 
-<div class={`border border-border rounded-lg p-6 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}>
-  <div class="relative">
+<div
+  class={`relative border border-border rounded-lg p-6 pb-10 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}
+>
+  <div class="relative space-y-4">
     <slot />
   </div>
 </div>
+
+<style is:global>
+  /*
+    Inside CombinedFragments (.sd-frag) the content area is narrower due to
+    padding + border.  Elements that must stay aligned with the lifelines
+    (.sd-row) use negative margins to extend back to the outer width.
+    Each nesting level adds 1rem padding + 1px border = 17px per side.
+  */
+  .sd-frag .sd-row {
+    margin-left: calc(-1rem - 1px);
+    margin-right: calc(-1rem - 1px);
+  }
+  .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-2rem - 2px);
+    margin-right: calc(-2rem - 2px);
+  }
+  .sd-frag .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-3rem - 3px);
+    margin-right: calc(-3rem - 3px);
+  }
+  .sd-frag .sd-frag .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-4rem - 4px);
+    margin-right: calc(-4rem - 4px);
+  }
+  .sd-frag .sd-frag .sd-frag .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-5rem - 5px);
+    margin-right: calc(-5rem - 5px);
+  }
+
+  /*
+    When an .sd-row sits between .sd-frag ancestors (e.g. ActivationBox inside
+    a fragment containing another fragment), the .sd-row already stretches to
+    the outermost width.  Fragments inside it start a new nesting context, so
+    the margin correction must restart from 1.  These selectors are more
+    specific (extra .sd-row ancestor) and override the rules above.
+  */
+  .sd-row .sd-frag .sd-row {
+    margin-left: calc(-1rem - 1px);
+    margin-right: calc(-1rem - 1px);
+  }
+  .sd-row .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-2rem - 2px);
+    margin-right: calc(-2rem - 2px);
+  }
+  .sd-row .sd-frag .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-3rem - 3px);
+    margin-right: calc(-3rem - 3px);
+  }
+  .sd-row .sd-frag .sd-frag .sd-frag .sd-frag .sd-row {
+    margin-left: calc(-4rem - 4px);
+    margin-right: calc(-4rem - 4px);
+  }
+
+  /*
+    Fragment label badges use absolute -top-3 (~12px above the border).
+    Ensure enough margin so badges don't overlap previous content.
+    Use !important to override space-y-* utilities which have higher specificity.
+  */
+  .sd-frag + .sd-frag {
+    margin-top: 1.25rem !important;
+  }
+  .sd-row + .sd-frag {
+    margin-top: 1.25rem !important;
+  }
+
+  /* Notes directly after fragments need breathing room too */
+  .sd-frag + .sd-row {
+    margin-top: 0.75rem !important;
+  }
+</style>

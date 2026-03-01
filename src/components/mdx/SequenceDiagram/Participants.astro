@@ -2,6 +2,6 @@
 const { class: className = "" } = Astro.props;
 ---
 
-<div class={`relative h-16 ${className}`.trim()}>
+<div class={`h-16 ${className}`.trim()}>
   <slot />
 </div>

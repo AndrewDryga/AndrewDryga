@@ -7,3 +7,5 @@ export { default as Message } from "./Message.astro";
 export { default as Note } from "./Note.astro";
 export { default as SelfCall } from "./SelfCall.astro";
 export { default as ActivationBox } from "./ActivationBox.astro";
+export { default as CombinedFragment } from "./CombinedFragment.astro";
+export { default as CombinedOperand } from "./CombinedOperand.astro";

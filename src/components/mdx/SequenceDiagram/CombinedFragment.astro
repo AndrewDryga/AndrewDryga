@@ -1,0 +1,37 @@
+---
+interface Props {
+  type?: string;
+  label?: string;
+  guard?: string;
+  class?: string;
+}
+
+const {
+  type = "fragment",
+  label,
+  guard,
+  class: className = "",
+} = Astro.props as Props;
+
+const heading = [type.toUpperCase(), guard ? `[${guard}]` : "", label]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div
+  class={[
+    "sd-frag relative border border-border/70 rounded-md bg-terminal-surface/10 py-5 px-4",
+    className ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ")}
+>
+  <span
+    class="absolute -top-3 left-4 inline-flex items-center rounded border border-terminal-cyan/40 bg-terminal-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-cyan"
+  >
+    {heading}
+  </span>
+  <div class="space-y-4">
+    <slot />
+  </div>
+</div>

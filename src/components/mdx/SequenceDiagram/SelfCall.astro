@@ -2,35 +2,45 @@
 interface Props {
   label: string;
   position?: "left" | "right";
+  offset?: number;
   class?: string;
 }
 
 const {
   label,
   position = "left",
+  offset,
   class: className = "",
 } = Astro.props as Props;
 
-const railPosition =
-  position === "left" ? "left-[15%]" : "left-[85%] -translate-x-full";
-const boxShape =
-  position === "left"
-    ? "rounded-l-none border-l-0"
-    : "rounded-r-none border-r-0";
-const labelPosition =
-  position === "left"
-    ? "left-[15%] ml-20"
-    : "left-[85%] -translate-x-full mr-20";
+const resolvedOffset =
+  typeof offset === "number" ? offset : position === "left" ? 15 : 85;
+
+const railStyle = `left:${resolvedOffset}%`;
+
+const isRight = resolvedOffset >= 50;
+
+const callTranslation = isRight ? "-translate-x-full" : "";
+
+const boxShape = isRight
+  ? "rounded-r-none border-r-0"
+  : "rounded-l-none border-l-0";
+
+const labelStyle = `left:${resolvedOffset}%`;
 ---
 
-<div class={`relative h-20 flex items-center ${className}`.trim()}>
-  <div class={`absolute w-16 ${railPosition}`.trim()}>
-    <div class={`border-2 border-accent rounded-lg h-12 ${boxShape}`.trim()}></div>
+<div class={`sd-row relative h-20 flex items-center ${className}`.trim()}>
+  <div class={`absolute w-16 ${callTranslation}`.trim()} style={railStyle}>
+    <div class={`border-2 border-accent rounded-lg h-12 ${boxShape}`.trim()}>
+    </div>
   </div>
   <div
-    class={`absolute top-1/2 -translate-y-1/2 ${labelPosition}`.trim()}
+    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+    style={labelStyle}
   >
-    <div class="inline-block bg-terminal-surface px-2 py-1 text-accent text-[10px] border border-accent rounded whitespace-nowrap">
+    <div
+      class="inline-block bg-terminal-surface px-2 py-1 text-accent text-[10px] border border-accent rounded whitespace-nowrap"
+    >
       {label}
     </div>
   </div>

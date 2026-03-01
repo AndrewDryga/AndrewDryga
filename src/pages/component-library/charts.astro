@@ -11,6 +11,8 @@ import {
   Note,
   SelfCall,
   ActivationBox,
+  CombinedFragment,
+  CombinedOperand,
 } from "@/components/mdx/SequenceDiagram";
 import AsciiStackedBar from "@/components/ascii/StackedBar.astro";
 import AsciiVerticalBar from "@/components/ascii/VerticalBar.astro";
@@ -192,8 +194,8 @@ const sparkline = buildSparkline(sparklinePoints);
           <header class="space-y-3">
             <h2 class="text-3xl font-bold text-foreground">Request sequence</h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Success and fallback flows for the session endpoint rendered with
-              terminal-native annotations.
+              Loop, alt, opt, break, and negative fragments mapped to terminal-native
+              sequence notation for the session endpoint.
             </p>
           </header>
 
@@ -202,34 +204,61 @@ const sparkline = buildSparkline(sparklinePoints);
               <Participant name="Client" color="primary" position="left" />
               <Participant name="Auth API" color="accent" position="right" />
             </Participants>
-            <Messages>
-              <Message
-                label="POST /sessions"
-                type="request"
-                direction="right"
-              />
-              <ActivationBox position="right">
-                <Message
-                  label="Verify credentials"
-                  type="async"
-                  direction="left"
-                />
-                <Message
-                  label="Persist session"
-                  type="async"
-                  direction="left"
-                />
-              </ActivationBox>
-              <Message
-                label="200 OK + token"
-                type="response"
-                direction="left"
-              />
+            <Messages class="space-y-4">
+              <CombinedFragment type="loop" guard="max 3 attempts" label="Retry window">
+                <CombinedOperand first label="[attempt i]">
+                  <Message
+                    label="POST /sessions (i)"
+                    type="request"
+                    direction="right"
+                  />
+                  <ActivationBox position="right">
+                    <CombinedFragment type="alt" label="Credentials valid?">
+                      <CombinedOperand first label="[yes]">
+                        <Message
+                          label="Verify credentials"
+                          type="async"
+                          direction="left"
+                        />
+                        <Message
+                          label="Persist session"
+                          type="async"
+                          direction="left"
+                        />
+                        <Message
+                          label="Commit audit log"
+                          type="async"
+                          direction="left"
+                        />
+                        <Message
+                          label="200 OK + token"
+                          type="response"
+                          direction="left"
+                        />
+                      </CombinedOperand>
+                      <CombinedOperand label="[no]">
+                        <Message
+                          label="401 Unauthorized"
+                          type="error"
+                          direction="left"
+                        />
+                        <SelfCall label="Increment attempt counter" position="left" />
+                        <Note text="State invariant: attempts ≤ 3" position="left" />
+                      </CombinedOperand>
+                    </CombinedFragment>
+                  </ActivationBox>
+                </CombinedOperand>
+                <CombinedOperand label="[timeout]">
+                  <Message
+                    label="No response within 30s"
+                    type="error"
+                    direction="left"
+                  />
+                  <Note text="Client aborts pending promise and surfaces error." position="center" />
+                </CombinedOperand>
+              </CombinedFragment>
             </Messages>
-            <Note
-              text="Emit audit event to the security stream."
-              position="right"
-            />
+            <Note text="State {session == issued}" position="right" />
           </SequenceDiagram>
 
           <SequenceDiagram class="space-y-6">
@@ -237,23 +266,35 @@ const sparkline = buildSparkline(sparklinePoints);
               <Participant name="Client" color="primary" position="left" />
               <Participant name="Auth API" color="accent" position="right" />
             </Participants>
-            <Messages>
-              <Message
-                label="POST /sessions"
-                type="request"
-                direction="right"
-              />
-              <Message label="401 Unauthorized" type="error" direction="left" />
-              <SelfCall label="Retry after 2s" position="left" />
+            <Messages class="space-y-4">
+              <CombinedFragment type="alt" guard="account locked?">
+                <CombinedOperand first label="[locked]">
+                  <Message label="Reject immediately" type="error" direction="left" />
+                  <Note text="State {status == locked}" position="right" />
+                </CombinedOperand>
+                <CombinedOperand label="[open]">
+                  <CombinedFragment type="opt" guard="user enrolled" label="MFA challenge">
+                    <CombinedOperand first>
+                      <Message label="Challenge MFA" type="async" direction="left" />
+                      <Message label="MFA verified" type="response" direction="left" />
+                    </CombinedOperand>
+                  </CombinedFragment>
+                  <CombinedFragment type="break" guard="count ≥ 4" label="Lock account">
+                    <CombinedOperand first>
+                      <Message label="Flag account" type="async" direction="left" />
+                      <Note text="Break aborts remaining flow" position="right" />
+                    </CombinedOperand>
+                  </CombinedFragment>
+                  <Message label="401 Unauthorized" type="error" direction="left" />
+                </CombinedOperand>
+              </CombinedFragment>
+              <CombinedFragment type="neg" label="Invalid signature">
+                <CombinedOperand first>
+                  <Message label="Alert security bridge" type="async" direction="left" />
+                </CombinedOperand>
+              </CombinedFragment>
             </Messages>
-            <Note
-              text="Fallback retries the API every 2s up to 4 attempts."
-              position="center"
-            />
-            <Note
-              text="Escalate to security and email reset link after the final retry."
-              position="right"
-            />
+            <Note text="Fragments demonstrate alt/opt/break/neg semantics." position="center" />
           </SequenceDiagram>
         </section>
       </div>

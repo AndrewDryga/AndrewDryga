@@ -1,20 +1,31 @@
 ---
 interface Props {
   position?: "left" | "right";
+  offset?: number;
   class?: string;
 }
 
-const { position = "left", class: className = "" } = Astro.props as Props;
+const {
+  position = "left",
+  offset,
+  class: className = "",
+} = Astro.props as Props;
 
-const indicatorPosition =
-  position === "left"
-    ? "left-[15%] -translate-x-1/2"
-    : "left-[85%] -translate-x-1/2";
+const computedOffset =
+  typeof offset === "number" ? offset : position === "left" ? 15 : 85;
+
+const style = `left:${computedOffset}%`;
 ---
 
 <div class={`relative ${className}`.trim()}>
-  <div
-    class={`absolute w-3 bg-primary/10 border border-primary top-0 bottom-0 ${indicatorPosition}`.trim()}
-  ></div>
-  <slot />
+  <div class="sd-row absolute inset-0 pointer-events-none">
+    <div
+      class={`absolute w-3 bg-primary/10 border border-primary top-2 bottom-2 -translate-x-1/2`.trim()}
+      style={style}
+    >
+    </div>
+  </div>
+  <div class="relative">
+    <slot />
+  </div>
 </div>

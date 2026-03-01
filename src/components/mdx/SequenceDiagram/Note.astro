@@ -2,21 +2,40 @@
 interface Props {
   text: string;
   position?: "left" | "right" | "center";
+  offset?: number;
   class?: string;
 }
 
-const { text, position = "center", class: className = "" } = Astro.props as Props;
+const {
+  text,
+  position = "center",
+  offset,
+  class: className = "",
+} = Astro.props as Props;
 
-const alignment =
-  position === "left"
-    ? "justify-start"
-    : position === "right"
-      ? "justify-end"
-      : "justify-center";
+const positionOffsets: Record<NonNullable<Props["position"]>, number> = {
+  left: 15,
+  center: 50,
+  right: 85,
+};
+
+const resolvedOffset =
+  typeof offset === "number" ? offset : positionOffsets[position];
+
+const anchorClass = "-translate-x-1/2";
+
+const positionStyle = `left:${resolvedOffset}%`;
 ---
 
-<div class={`relative h-12 flex items-center ${alignment} ${className}`.trim()}>
-  <div class="inline-block bg-secondary/10 px-3 py-2 text-secondary text-[10px] border border-secondary rounded italic">
-    {text}
+<div class={`sd-row relative h-12 ${className}`.trim()}>
+  <div
+    class={`absolute top-1/2 -translate-y-1/2 ${anchorClass}`.trim()}
+    style={positionStyle}
+  >
+    <div
+      class="inline-block bg-secondary/10 px-3 py-2 text-secondary text-[10px] border border-secondary rounded italic"
+    >
+      {text}
+    </div>
   </div>
 </div>
