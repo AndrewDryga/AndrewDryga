@@ -24,25 +24,25 @@ const canonical = new URL("/component-library/tui/", site).toString();
 const commandPaletteItems = [
   {
     label: "Open projects",
-    shortcut: "⌘P",
+    shortcut: "⌘+P",
     href: "/projects",
     description:
       "Jump to the latest case studies without leaving the keyboard.",
   },
   {
     label: "Create draft blog post",
-    shortcut: "⌘B",
+    shortcut: "⌘+B",
     href: "/blog",
     description: "Spin up a new MDX entry in the content collection.",
   },
   {
     label: "Run build",
-    shortcut: "⌘⇧B",
+    shortcut: "⌘+⇧+B",
     description: "Trigger the Astro build and tail the output in the terminal.",
   },
   {
     label: "Focus contact section",
-    shortcut: "⌘/",
+    shortcut: "⌘+/",
     href: "/#contact",
     description:
       "Scroll to the contact form with focus placed in the first field.",
@@ -69,9 +69,9 @@ const toastExamples = [
 
 const contextMenuItems = [
   { label: "Open file", shortcut: "↵" },
-  { label: "Reveal in Finder", shortcut: "⇧⌘R" },
-  { label: "Copy path", shortcut: "⌘C" },
-  { label: "Delete permanently", shortcut: "⌘⌫", disabled: true },
+  { label: "Reveal in Finder", shortcut: "⇧+⌘+R" },
+  { label: "Copy path", shortcut: "⌘+C" },
+  { label: "Delete permanently", shortcut: "⌘+⌫", disabled: true },
 ];
 
 const boxDrawingArt = [
@@ -130,7 +130,7 @@ const asciiHeading = [
                   <span class="flex items-center gap-1">
                     <span
                       class="w-2 h-2 bg-terminal-green rounded-full animate-pulse"
-                    ></span>
+                      aria-hidden="true"></span>
                     <span class="text-foreground">Connected</span>
                   </span>
                   <span class="text-muted-foreground">|</span>
@@ -315,12 +315,19 @@ const asciiHeading = [
                 <input
                   type="text"
                   placeholder="grep -r 'search term' ."
+                  aria-label="Search"
                   class="flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
                 />
-                <kbd
-                  class="px-2 py-1 bg-muted border border-border rounded text-xs"
-                  >⌘K</kbd
-                >
+                <span class="inline-flex items-center gap-1 text-xs">
+                  <kbd
+                    class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
+                    >⌘</kbd
+                  >
+                  <kbd
+                    class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
+                    >K</kbd
+                  >
+                </span>
               </div>
             </div>
 

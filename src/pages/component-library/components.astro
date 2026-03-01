@@ -175,9 +175,27 @@ const tabItems = [
 
             <div>
               <div class="flex flex-wrap gap-4 mb-2">
-                <Button size="icon" variant="outline-primary"> → </Button>
-                <Button size="icon" variant="outline-secondary"> ✓ </Button>
-                <Button size="icon" variant="outline-accent"> ✗ </Button>
+                <Button
+                  size="icon"
+                  variant="outline-primary"
+                  aria-label="Navigate forward"
+                >
+                  →
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline-secondary"
+                  aria-label="Confirm"
+                >
+                  ✓
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline-accent"
+                  aria-label="Dismiss"
+                >
+                  ✗
+                </Button>
               </div>
               <p class="text-xs text-muted-foreground font-mono">
                 Icon buttons
@@ -574,15 +592,17 @@ import { formatPublishDate } from "@/lib/blog";
               <Button variant="outline">Ghost</Button>
             </div>
             <p class="text-sm text-muted-foreground mt-4 font-mono">
-              Press <kbd class="px-2 py-1 bg-muted border border-border rounded"
+              Press <kbd
+                class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
                 >Tab</kbd
               > to move, <kbd
-                class="px-2 py-1 bg-muted border border-border rounded"
+                class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
                 >Shift</kbd
-              > + <kbd class="px-2 py-1 bg-muted border border-border rounded"
+              > + <kbd
+                class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
                 >Tab</kbd
               > to reverse, and <kbd
-                class="px-2 py-1 bg-muted border border-border rounded"
+                class="px-1.5 py-0.5 bg-muted border border-border rounded leading-tight"
                 >Enter</kbd
               > to activate.
             </p>

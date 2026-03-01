@@ -97,7 +97,7 @@ const sparkline = buildSparkline(sparklinePoints);
             </p>
           </header>
 
-          <div class="rounded-lg border border-border bg-card p-5">
+          <div class="rounded-lg border border-border bg-card p-6">
             <AsciiStackedBar segments={pieSegments} width={32} />
             <p class="mt-6 font-mono text-xs text-muted-foreground">
               Each block represents roughly 3% of the weekly pipeline — tweak
@@ -144,7 +144,7 @@ const sparkline = buildSparkline(sparklinePoints);
             </p>
           </header>
 
-          <div class="rounded-lg border border-border bg-card p-5">
+          <div class="rounded-lg border border-border bg-card p-6">
             <AsciiVerticalBar bars={barSeries} maxHeight={9} />
             <p class="mt-4 font-mono text-xs text-muted-foreground">
               Each block equals roughly one release per day — tweak <code
@@ -167,7 +167,9 @@ const sparkline = buildSparkline(sparklinePoints);
             class="rounded-lg border border-border bg-card p-6 font-mono text-sm leading-relaxed"
           >
             <pre
-              class="whitespace-pre text-terminal-cyan">
+              role="img"
+              aria-label="Deployment flow diagram showing stage build, quality gate, deploy, rollback path, and observe metrics"
+              class="whitespace-pre text-terminal-cyan overflow-x-auto">
 ┌─────────────┐    ┌──────────────┐    ┌────────────┐
 │ Stage build │───▶│ Quality gate │───▶│   Deploy   │
 │    ci/cd    │    │    checks    │    │   fly.io   │
@@ -194,8 +196,8 @@ const sparkline = buildSparkline(sparklinePoints);
           <header class="space-y-3">
             <h2 class="text-3xl font-bold text-foreground">Request sequence</h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Loop, alt, opt, break, and negative fragments mapped to terminal-native
-              sequence notation for the session endpoint.
+              Loop, alt, opt, break, and negative fragments mapped to
+              terminal-native sequence notation for the session endpoint.
             </p>
           </header>
 
@@ -205,7 +207,11 @@ const sparkline = buildSparkline(sparklinePoints);
               <Participant name="Auth API" color="accent" position="right" />
             </Participants>
             <Messages class="space-y-4">
-              <CombinedFragment type="loop" guard="max 3 attempts" label="Retry window">
+              <CombinedFragment
+                type="loop"
+                guard="max 3 attempts"
+                label="Retry window"
+              >
                 <CombinedOperand first label="[attempt i]">
                   <Message
                     label="POST /sessions (i)"
@@ -242,8 +248,14 @@ const sparkline = buildSparkline(sparklinePoints);
                           type="error"
                           direction="left"
                         />
-                        <SelfCall label="Increment attempt counter" position="left" />
-                        <Note text="State invariant: attempts ≤ 3" position="left" />
+                        <SelfCall
+                          label="Increment attempt counter"
+                          position="left"
+                        />
+                        <Note
+                          text="State invariant: attempts ≤ 3"
+                          position="left"
+                        />
                       </CombinedOperand>
                     </CombinedFragment>
                   </ActivationBox>
@@ -254,7 +266,10 @@ const sparkline = buildSparkline(sparklinePoints);
                     type="error"
                     direction="left"
                   />
-                  <Note text="Client aborts pending promise and surfaces error." position="center" />
+                  <Note
+                    text="Client aborts pending promise and surfaces error."
+                    position="center"
+                  />
                 </CombinedOperand>
               </CombinedFragment>
             </Messages>
@@ -269,32 +284,70 @@ const sparkline = buildSparkline(sparklinePoints);
             <Messages class="space-y-4">
               <CombinedFragment type="alt" guard="account locked?">
                 <CombinedOperand first label="[locked]">
-                  <Message label="Reject immediately" type="error" direction="left" />
+                  <Message
+                    label="Reject immediately"
+                    type="error"
+                    direction="left"
+                  />
                   <Note text="State {status == locked}" position="right" />
                 </CombinedOperand>
                 <CombinedOperand label="[open]">
-                  <CombinedFragment type="opt" guard="user enrolled" label="MFA challenge">
+                  <CombinedFragment
+                    type="opt"
+                    guard="user enrolled"
+                    label="MFA challenge"
+                  >
                     <CombinedOperand first>
-                      <Message label="Challenge MFA" type="async" direction="left" />
-                      <Message label="MFA verified" type="response" direction="left" />
+                      <Message
+                        label="Challenge MFA"
+                        type="async"
+                        direction="left"
+                      />
+                      <Message
+                        label="MFA verified"
+                        type="response"
+                        direction="left"
+                      />
                     </CombinedOperand>
                   </CombinedFragment>
-                  <CombinedFragment type="break" guard="count ≥ 4" label="Lock account">
+                  <CombinedFragment
+                    type="break"
+                    guard="count ≥ 4"
+                    label="Lock account"
+                  >
                     <CombinedOperand first>
-                      <Message label="Flag account" type="async" direction="left" />
-                      <Note text="Break aborts remaining flow" position="right" />
+                      <Message
+                        label="Flag account"
+                        type="async"
+                        direction="left"
+                      />
+                      <Note
+                        text="Break aborts remaining flow"
+                        position="right"
+                      />
                     </CombinedOperand>
                   </CombinedFragment>
-                  <Message label="401 Unauthorized" type="error" direction="left" />
+                  <Message
+                    label="401 Unauthorized"
+                    type="error"
+                    direction="left"
+                  />
                 </CombinedOperand>
               </CombinedFragment>
               <CombinedFragment type="neg" label="Invalid signature">
                 <CombinedOperand first>
-                  <Message label="Alert security bridge" type="async" direction="left" />
+                  <Message
+                    label="Alert security bridge"
+                    type="async"
+                    direction="left"
+                  />
                 </CombinedOperand>
               </CombinedFragment>
             </Messages>
-            <Note text="Fragments demonstrate alt/opt/break/neg semantics." position="center" />
+            <Note
+              text="Fragments demonstrate alt/opt/break/neg semantics."
+              position="center"
+            />
           </SequenceDiagram>
         </section>
       </div>

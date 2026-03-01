@@ -33,12 +33,10 @@ const positionClass = {
     if (!(container instanceof HTMLElement)) return;
 
     const variantClasses = {
-      default: "border-terminal-cyan/40 bg-terminal-cyan/10 text-terminal-cyan",
-      success:
-        "border-terminal-green/40 bg-terminal-green/10 text-terminal-green",
-      warning:
-        "border-terminal-yellow/40 bg-terminal-yellow/10 text-terminal-yellow",
-      destructive: "border-destructive/40 bg-destructive/10 text-destructive",
+      default: "border-terminal-cyan/60 bg-terminal-bg text-terminal-cyan",
+      success: "border-terminal-green/60 bg-terminal-bg text-terminal-green",
+      warning: "border-terminal-yellow/60 bg-terminal-bg text-terminal-yellow",
+      destructive: "border-destructive/60 bg-terminal-bg text-destructive",
     };
 
     window.addEventListener("toast", (event) => {

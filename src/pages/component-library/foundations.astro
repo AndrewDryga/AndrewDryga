@@ -5,7 +5,6 @@ import SectionHeader from "@/components/SectionHeader.astro";
 import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
 import Button from "@/components/ui/Button.astro";
 import BreakpointCard from "@/components/ui/BreakpointCard.astro";
-import BreakpointCard from "@/components/ui/BreakpointCard.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -696,6 +695,8 @@ const surfacePalette = [
                 primaryColors.map((color) => (
                   <div class="rounded-lg border border-border bg-card p-5">
                     <div
+                      role="img"
+                      aria-label={`${color.name} color swatch`}
                       class={`w-full h-20 rounded ${color.swatch} mb-2 border border-border/40`}
                     />
                     <div class="font-mono text-sm text-foreground">
@@ -719,7 +720,11 @@ const surfacePalette = [
               {
                 terminalPalette.map((color) => (
                   <div class="rounded-lg border border-border bg-card p-5">
-                    <div class={`w-full h-20 rounded ${color.swatch} mb-2`} />
+                    <div
+                      role="img"
+                      aria-label={`${color.name} color swatch`}
+                      class={`w-full h-20 rounded ${color.swatch} mb-2`}
+                    />
                     <div class="font-mono text-sm text-foreground">
                       {color.name}
                     </div>
@@ -742,6 +747,8 @@ const surfacePalette = [
                 surfacePalette.map((color) => (
                   <div class="rounded-lg border border-border bg-card p-5">
                     <div
+                      role="img"
+                      aria-label={`${color.name} color swatch`}
                       class={`w-full h-20 rounded mb-2 ${color.swatch}`.trim()}
                     />
                     <div class="font-mono text-sm text-foreground">

@@ -147,22 +147,18 @@ const checklist = [
             data-component-form
             class="bg-card border border-border rounded-lg p-6 space-y-6"
           >
-            <div>
-              <label
-                class="block text-sm font-mono text-foreground mb-2"
-                for="name-input"
-              >
+            <label class="block">
+              <span class="block text-sm font-mono text-foreground mb-2">
                 $ Name
-              </label>
+              </span>
               <input
-                id="name-input"
                 name="name"
                 type="text"
                 placeholder="Enter your name..."
                 class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors"
                 required
               />
-            </div>
+            </label>
 
             <div class="grid gap-6 md:grid-cols-2">
               <label class="block">
@@ -190,21 +186,17 @@ const checklist = [
               </label>
             </div>
 
-            <div>
-              <label
-                class="block text-sm font-mono text-foreground mb-2"
-                for="message-input"
-              >
+            <label class="block">
+              <span class="block text-sm font-mono text-foreground mb-2">
                 $ Message
-              </label>
+              </span>
               <textarea
-                id="message-input"
                 name="message"
                 rows={4}
                 placeholder="Your message here..."
                 class="w-full px-4 py-2 bg-input border border-border rounded text-foreground font-mono focus:outline-none focus:border-terminal-cyan focus:ring-1 focus:ring-terminal-cyan transition-colors resize-none"
               ></textarea>
-            </div>
+            </label>
 
             <fieldset class="space-y-2 rounded-lg border border-border p-4">
               <legend
@@ -470,4 +462,3 @@ const checklist = [
     });
   })();
 </script>
-

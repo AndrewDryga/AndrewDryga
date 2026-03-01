@@ -7,7 +7,6 @@ import Table from "@/components/ui/Table.astro";
 import Button from "@/components/ui/Button.astro";
 import CodeExample from "@/components/CodeExample.astro";
 import Pagination from "@/components/ui/Pagination.astro";
-import Pagination from "@/components/ui/Pagination.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -293,30 +292,6 @@ const opsColumns = [
                   <option value="attention">Needs attention</option>
                 </select>
               </label>
-              <div class="ml-auto flex items-center gap-2">
-                <span
-                  class="hidden sm:inline uppercase tracking-wide text-terminal-cyan"
-                  >Sort</span
-                >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  class="px-3 py-2 text-xs uppercase tracking-wide hover:bg-terminal-cyan/10"
-                  data-ops-sort="uptime"
-                >
-                  Uptime
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  class="px-3 py-2 text-xs uppercase tracking-wide hover:bg-terminal-cyan/10"
-                  data-ops-sort="errors"
-                >
-                  Errors
-                </Button>
-              </div>
             </div>
 
             <div
@@ -377,7 +352,25 @@ const opsColumns = [
             const next = root.querySelector("[data-ops-next]");
             const search = document.querySelector("[data-ops-search]");
             const status = document.querySelector("[data-ops-status]");
-            const sortButtons = document.querySelectorAll("[data-ops-sort]");
+
+            const sortableColumns = {
+              "Errors (24h)": "errors",
+              Uptime: "uptime",
+            };
+            const headers = Array.from(
+              table?.querySelectorAll("thead th") ?? [],
+            );
+            headers.forEach((th) => {
+              const key = sortableColumns[th.textContent?.trim()];
+              if (key) {
+                th.setAttribute("data-ops-sort", key);
+                th.style.cursor = "pointer";
+                th.style.userSelect = "none";
+              }
+            });
+            const sortHeaders = headers.filter((th) =>
+              th.hasAttribute("data-ops-sort"),
+            );
 
             const rowsAttr = root.getAttribute("data-ops-rows") ?? "[]";
             const pageSizeAttr = root.getAttribute("data-ops-page-size") ?? "3";
@@ -474,9 +467,31 @@ const opsColumns = [
               });
             }
 
-            sortButtons.forEach((button) => {
-              button.addEventListener("click", () => {
-                const key = button.getAttribute("data-ops-sort");
+            const updateSortIndicators = () => {
+              sortHeaders.forEach((th) => {
+                const key = th.getAttribute("data-ops-sort");
+                const arrow =
+                  key === state.sortKey
+                    ? state.sortDir === "asc"
+                      ? " ↑"
+                      : " ↓"
+                    : "";
+                const base =
+                  Object.keys(sortableColumns).find(
+                    (k) => sortableColumns[k] === key,
+                  ) ?? "";
+                th.textContent = base + arrow;
+                if (key === state.sortKey) {
+                  th.classList.add("text-terminal-cyan");
+                } else {
+                  th.classList.remove("text-terminal-cyan");
+                }
+              });
+            };
+
+            sortHeaders.forEach((th) => {
+              th.addEventListener("click", () => {
+                const key = th.getAttribute("data-ops-sort");
                 if (key !== "uptime" && key !== "errors") return;
                 if (state.sortKey === key) {
                   state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
@@ -485,19 +500,12 @@ const opsColumns = [
                   state.sortDir = key === "uptime" ? "desc" : "asc";
                 }
                 state.page = 1;
-                sortButtons.forEach((btn) =>
-                  btn.classList.remove(
-                    "border-terminal-cyan",
-                    "text-terminal-cyan",
-                  ),
-                );
-                button.classList.add(
-                  "border-terminal-cyan",
-                  "text-terminal-cyan",
-                );
+                updateSortIndicators();
                 apply();
               });
             });
+
+            updateSortIndicators();
 
             if (search instanceof HTMLInputElement) {
               search.addEventListener("input", () => {

@@ -50,9 +50,9 @@ const { items, class: className = "", menuClass = "" } = Astro.props as Props;
         >
           <span>{item.label}</span>
           {item.shortcut && (
-            <span class="ml-auto inline-flex items-center gap-1 text-[12px] font-mono text-muted-foreground">
+            <span class="ml-auto inline-flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
               {item.shortcut.split("+").map((part) => (
-                <kbd class="min-w-[1.75rem] px-2 py-1 border border-border/60 rounded bg-terminal-bg/80 text-center uppercase">
+                <kbd class="px-1.5 py-0.5 border border-border/60 rounded bg-terminal-bg/80 text-center uppercase leading-tight">
                   {part.trim()}
                 </kbd>
               ))}

@@ -120,7 +120,7 @@ By analyzing all requirements marketplace can be broken into a separate componen
 - **Asset Management System (AMS): ** moves money, keeps the ledger coherent, and feeds reports.
 - **CRM: ** centralises customer lifecycle management and product configuration.
 
-<SequenceDiagram className="my-6">
+<SequenceDiagram class="my-6">
   <Participants>
     <Participant name="Originator" position="left" color="accent" />
     <Participant name="Marketplace (Asset Processor)" position="right" color="primary" />
@@ -287,7 +287,7 @@ Instead of writing AMS by our own, we decided to buy a SaaS service that does wh
 
 Because marketplace works by running a frequent trading cycles and it becomes too expensive to run matching for each single asset purchase, so we delay balance change events by 30 seconds via simple GenServer, thus only accumulated data is sent to Trader.
 
-<SequenceDiagram className="my-6">
+<SequenceDiagram class="my-6">
   <Participants>
     <Participant name="Matcher" position="left" color="primary" />
     <Participant name="Asset Management System" position="right" color="secondary" />
