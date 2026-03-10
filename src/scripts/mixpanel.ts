@@ -36,6 +36,7 @@ async function initMixpanel() {
       debug: !!isDev,
       track_pageview: true,
       persistence: "localStorage",
+      api_host: "/mp",
     });
 
     mixpanel.track("Page View", {
