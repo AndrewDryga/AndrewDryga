@@ -13,7 +13,6 @@ export interface Testimonial {
   commitHash?: string;
   commitDateISO?: string;
   commitDateLabel?: string;
-  authorEmail?: string;
   branchName?: string;
 }
 
@@ -46,7 +45,6 @@ function mapEntry(entry: TestimonialEntry): Testimonial {
     commitHash: data.commitHash,
     commitDateISO,
     commitDateLabel,
-    authorEmail: data.authorEmail,
     branchName: data.branchName,
   };
 }

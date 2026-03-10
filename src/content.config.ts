@@ -35,7 +35,6 @@ const testimonials = defineCollection({
       order: z.number().int().nonnegative().default(0),
       commitHash: z.string().min(1).optional(),
       commitDate: z.date().optional(),
-      authorEmail: z.email().optional(),
       branchName: z.string().min(1).optional(),
     }),
 });

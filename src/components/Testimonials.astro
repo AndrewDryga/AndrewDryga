@@ -8,6 +8,7 @@ interface Props {
 const { testimonials } = Astro.props;
 
 const totalTestimonials = testimonials.length;
+
 const commandText = "$ testimonials --list --format=detailed";
 const footerHref = "https://www.linkedin.com/in/andrew-dryga-bb382557/";
 
@@ -137,17 +138,6 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
                         </span>
                       )}
                     </div>
-
-                    {testimonial.authorEmail && (
-                      <div class="text-muted-foreground flex items-start md:items-center gap-1.5 md:gap-2 flex-wrap text-xs md:text-sm">
-                        <span class="text-foreground/80 whitespace-nowrap">
-                          Author:
-                        </span>
-                        <span class="break-all">
-                          {testimonial.name} &lt;{testimonial.authorEmail}&gt;
-                        </span>
-                      </div>
-                    )}
 
                     {commitDate && (
                       <div class="text-muted-foreground flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
