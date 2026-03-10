@@ -10,7 +10,7 @@ export interface Props {
 }
 
 const {
-  title = "Andrew Dryga - Founding Engineer",
+  title = "Andrew Dryga - Making things work",
   description = "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms - shipping what matters, measuring results, and cutting waste without slowing teams.",
   canonical,
   ogImage,
@@ -21,7 +21,9 @@ const {
 const site = Astro.site ?? new URL("https://dryga.com/");
 const url = canonical ?? new URL(Astro.url.pathname ?? "/", site).toString();
 const ogImageUrl = ogImage
-  ? (ogImage.startsWith("http") ? ogImage : new URL(ogImage, site).toString())
+  ? ogImage.startsWith("http")
+    ? ogImage
+    : new URL(ogImage, site).toString()
   : new URL("/og-default.jpg", site).toString();
 
 // Public env var for Mixpanel; set in deployment as PUBLIC_MIXPANEL_TOKEN
@@ -41,18 +43,29 @@ const websiteLd = JSON.stringify({
 });
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="h-full">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>{title}</title>
 
     <meta name="description" content={description} />
     <link rel="canonical" href={url} />
 
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="hsl(220 15% 8%)" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="hsl(220 15% 8%)" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="hsl(220 15% 8%)"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="hsl(220 15% 8%)"
+    />
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="dryga.com" />
@@ -80,8 +93,20 @@ const websiteLd = JSON.stringify({
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Preload critical fonts (self-hosted WOFF2). Ensure files exist in /public/fonts -->
-    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/inter-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/jetbrains-mono.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <script src="../scripts/mixpanel.ts"></script>
   </head>
