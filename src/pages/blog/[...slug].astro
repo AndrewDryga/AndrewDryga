@@ -203,7 +203,7 @@ void breadcrumbLd;
           a.classList.toggle('text-terminal-cyan', isActive);
           a.classList.toggle('text-muted-foreground', !isActive);
           a.setAttribute('aria-current', isActive ? 'true' : 'false');
-          if (isActive) {
+          if (isActive && a.offsetParent !== null) {
             a.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
           }
         });
