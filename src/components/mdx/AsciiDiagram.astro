@@ -22,29 +22,43 @@ const diagramContent = content || (await Astro.slots.render("default"));
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    const cleanups: (() => void)[] = [];
+
     document.querySelectorAll(".ascii-diagram-wrapper").forEach((wrapper) => {
       const pre = wrapper.querySelector(".ascii-diagram") as HTMLElement;
       if (!pre) return;
 
+      let rafId = 0;
       const fit = () => {
-        // Reset scale to measure natural width
-        pre.style.transform = "";
-        pre.style.marginBottom = "";
-        const contentW = pre.scrollWidth;
-        const containerW = (wrapper as HTMLElement).clientWidth;
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          // Reset scale to measure natural width
+          pre.style.transform = "";
+          pre.style.marginBottom = "";
+          const contentW = pre.scrollWidth;
+          const containerW = (wrapper as HTMLElement).clientWidth;
 
-        if (contentW > containerW && containerW > 0) {
-          const scale = containerW / contentW;
-          pre.style.transform = `scale(${scale})`;
-          // Compensate for the scaled height so no extra space
-          const naturalH = pre.offsetHeight;
-          const scaledH = naturalH * scale;
-          pre.style.marginBottom = `${scaledH - naturalH}px`;
-        }
+          if (contentW > containerW && containerW > 0) {
+            const scale = containerW / contentW;
+            pre.style.transform = `scale(${scale})`;
+            // Compensate for the scaled height so no extra space
+            const naturalH = pre.offsetHeight;
+            const scaledH = naturalH * scale;
+            pre.style.marginBottom = `${scaledH - naturalH}px`;
+          }
+        });
       };
 
       fit();
       window.addEventListener("resize", fit);
+      cleanups.push(() => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("resize", fit);
+      });
     });
+
+    document.addEventListener("astro:before-swap", () => {
+      cleanups.forEach((fn) => fn());
+    }, { once: true });
   });
 </script>

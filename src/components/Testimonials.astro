@@ -187,8 +187,8 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
           class="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 text-muted-foreground text-xs md:text-sm py-4 animate-pulse bg-gradient-to-t from-terminal-surface via-terminal-surface to-transparent pointer-events-none"
           data-testimonials-hint
         >
-          <span class="hidden md:inline">Press</span>
-          <span class="inline-flex items-center gap-1">
+          <span class="hidden md:inline-flex items-center gap-1">
+            <span>Press</span>
             <kbd
               class="px-1.5 py-0.5 border border-border/60 rounded bg-terminal-bg/80 text-center leading-tight"
             >
@@ -199,9 +199,20 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
             >
               ↓
             </kbd>
+            <span>to navigate</span>
           </span>
-          <span class="hidden md:inline">to navigate</span>
-          <span class="md:hidden">Swipe to navigate</span>
+          <span class="md:hidden inline-flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 13V4.5a1.5 1.5 0 0 1 3 0V12" />
+              <path d="M11 11.5v-2a1.5 1.5 0 0 1 3 0V12" />
+              <path d="M14 10.5a1.5 1.5 0 0 1 3 0V12" />
+              <path d="M17 11.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2 .208a6 6 0 0 1-5.012-2.7L7 19c-.312-.479-1.407-2.388-3.286-5.728a1.5 1.5 0 0 1 .536-2.022 1.867 1.867 0 0 1 2.28.28L8 13" />
+              <path d="M12 2v2" />
+              <path d="m15.4 4.6-1.4 1.4" />
+              <path d="M8.6 4.6 10 6" />
+            </svg>
+            <span>Swipe to navigate</span>
+          </span>
         </div>
       </div>
 
@@ -441,14 +452,18 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
     // Touch swipe support for mobile
     let touchStartY = 0;
     let touchStartX = 0;
-    let isSwiping = false;
+    // Whether this gesture is a vertical swipe (blocks page scroll)
+    let isVerticalSwipe = false;
+    // Small threshold to detect vertical intent and block scroll early
+    const DETECT_THRESHOLD = 10;
+    // Larger threshold to actually trigger navigation
     const SWIPE_THRESHOLD = 40;
 
     const onTouchStart = (event) => {
       const touch = event.touches[0];
       touchStartY = touch.clientY;
       touchStartX = touch.clientX;
-      isSwiping = false;
+      isVerticalSwipe = false;
     };
 
     const onTouchMove = (event) => {
@@ -456,15 +471,21 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       const deltaY = Math.abs(touchStartY - touch.clientY);
       const deltaX = Math.abs(touchStartX - touch.clientX);
 
-      // If vertical movement dominates, prevent page scroll
-      if (deltaY > 10 && deltaY > deltaX) {
-        isSwiping = true;
+      // Once locked as vertical, keep blocking scroll
+      if (isVerticalSwipe) {
+        event.preventDefault();
+        return;
+      }
+
+      // Detect vertical intent early to block scroll before browser commits
+      if (deltaY > DETECT_THRESHOLD && deltaY > deltaX) {
+        isVerticalSwipe = true;
         event.preventDefault();
       }
     };
 
     const onTouchEnd = (event) => {
-      if (!isSwiping) return;
+      if (!isVerticalSwipe) return;
 
       const touch = event.changedTouches[0];
       const deltaY = touchStartY - touch.clientY;
@@ -472,10 +493,8 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       if (Math.abs(deltaY) < SWIPE_THRESHOLD) return;
 
       if (deltaY > 0) {
-        // Swipe up → next
         setActive(activeIndex + 1);
       } else {
-        // Swipe down → previous
         setActive(activeIndex - 1);
       }
     };
@@ -490,9 +509,8 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       container.removeEventListener("touchmove", onTouchMove);
       container.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("astro:before-swap", cleanup);
     };
 
-    document.addEventListener("astro:before-swap", cleanup);
+    document.addEventListener("astro:before-swap", cleanup, { once: true });
   })();
 </script>
