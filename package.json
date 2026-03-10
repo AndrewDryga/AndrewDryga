@@ -25,6 +25,11 @@
     "mixpanel-browser": "^2.50.0",
     "sharp": "^0.34.5"
   },
+  "overrides": {
+    "@astrojs/check": {
+      "lodash": ">=4.17.21"
+    }
+  },
   "devDependencies": {
     "@astrojs/check": "^0.9.7",
     "@tailwindcss/typography": "^0.5.16",
