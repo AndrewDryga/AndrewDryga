@@ -282,15 +282,20 @@ const opsColumns = [
                 <span class="uppercase tracking-wide text-terminal-cyan"
                   >Status</span
                 >
-                <select
-                  class="rounded border border-border bg-terminal-bg/90 px-3 py-2 text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
-                  data-ops-status
-                >
-                  <option value="all">All</option>
-                  <option value="healthy">Healthy</option>
-                  <option value="deploying">Deploying</option>
-                  <option value="attention">Needs attention</option>
-                </select>
+                <div class="relative">
+                  <select
+                    class="w-full appearance-none rounded border border-border bg-terminal-bg/90 px-3 py-2 pr-8 text-sm text-foreground font-mono focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
+                    data-ops-status
+                  >
+                    <option value="all">All</option>
+                    <option value="healthy">Healthy</option>
+                    <option value="deploying">Deploying</option>
+                    <option value="attention">Needs attention</option>
+                  </select>
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-terminal-cyan">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                  </span>
+                </div>
               </label>
             </div>
 

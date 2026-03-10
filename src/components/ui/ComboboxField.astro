@@ -1,6 +1,4 @@
 ---
-import Button from "./Button.astro";
-
 interface Option {
   value: string;
   label: string;
@@ -43,24 +41,22 @@ const id = `combobox-${crypto.randomUUID()}`;
       <span class="block text-sm font-mono text-foreground mb-2">{label}</span>
     )
   }
-  <Button
+  <button
     type="button"
-    variant="outline"
-    size="sm"
-    class="flex w-full items-center justify-between px-4 py-2 text-sm"
+    class="flex w-full items-center justify-between rounded border border-border bg-terminal-surface px-4 py-2 text-left text-sm text-foreground font-mono focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
     data-combobox-trigger
     aria-haspopup="listbox"
     aria-expanded="false"
   >
     <span data-combobox-label>{selected.label}</span>
-    <span class="text-terminal-cyan">▾</span>
-  </Button>
+    <svg class="h-4 w-4 text-terminal-cyan shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+  </button>
   <div
     class="absolute left-0 right-0 z-20 mt-2 hidden rounded-lg border border-border bg-terminal-bg/95 p-3 shadow-[0_0_30px_rgba(34,211,238,0.25)]"
     data-combobox-panel
   >
     <input
-      type="search"
+      type="text"
       class="mb-2 w-full rounded border border-border bg-terminal-surface px-3 py-2 text-sm text-foreground focus:border-terminal-cyan focus:outline-none focus:ring-1 focus:ring-terminal-cyan"
       placeholder={searchPlaceholder}
       data-combobox-input
