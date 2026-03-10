@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ site }) => {
     .map((post: CollectionEntry<"blog">) => {
       const title = xmlEscape(post.data.title);
       const description = post.data.description ?? "";
-      const link = new URL(`/blog/${post.slug}/`, siteUrl).toString();
+      const link = new URL(`/blog/${post.id}/`, siteUrl).toString();
       const guid = link;
       const pubDate = (
         post.data.publishDate ??

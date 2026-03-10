@@ -1,23 +1,8 @@
 import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
-/**
- * Content Collections configuration
- *
- * Blog schema fields (Plan-aligned):
- * - title: string
- * - description: string
- * - publishDate: date
- * - updatedDate?: date
- * - tags?: string[]
- * - heroImage?: image
- * - draft?: boolean
- *
- * Notes:
- * - Slugs are derived from file names by default (permalink stability).
- * - Tags are normalized as strings; keep authoring simple and flexible.
- */
 const blog = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }),
   schema: ({ image }) =>
     z.object({
       title: z.string().min(1, "title is required"),
@@ -35,7 +20,7 @@ const blog = defineCollection({
 });
 
 const testimonials = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/testimonials" }),
   schema: () =>
     z.object({
       name: z.string().min(1),
@@ -54,7 +39,7 @@ const testimonials = defineCollection({
 });
 
 const projects = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }),
   schema: ({ image }) =>
     z.object({
       projectId: z

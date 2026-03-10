@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
@@ -39,7 +39,7 @@ try {
     (e) => e.data.projectId === projectId && !e.data.draft,
   );
   if (entry) {
-    const rendered = await entry.render();
+    const rendered = await render(entry);
     Content = rendered.Content;
   }
 } catch (e) {
@@ -248,7 +248,7 @@ const projectLd = {
               return (
                 <article class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow relative">
                   <a
-                    href={`/blog/${post.slug}/`}
+                    href={`/blog/${post.id}/`}
                     class="absolute inset-0 rounded-lg"
                     aria-label={`Read more: ${post.data.title}`}
                   />

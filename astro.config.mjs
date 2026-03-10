@@ -1,5 +1,4 @@
 import { defineConfig } from "astro/config";
-import tailwind from "@astrojs/tailwind";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
@@ -20,7 +19,7 @@ try {
 export default defineConfig({
   site: "https://dryga.com/",
   prefetch: true,
-  integrations: [tailwind(), mdx(), sitemap()],
+  integrations: [mdx(), sitemap()],
 
   markdown: {
     shikiConfig: {

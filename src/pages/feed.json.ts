@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ site }) => {
   const feedUrl = new URL("/feed.json", siteUrl).toString();
 
   const items = sorted.map((post: CollectionEntry<"blog">) => {
-    const url = new URL(`/blog/${post.slug}/`, siteUrl).toString();
+    const url = new URL(`/blog/${post.id}/`, siteUrl).toString();
     const image = post.data.heroImage
       ? new URL(post.data.heroImage.src, siteUrl).toString()
       : undefined;

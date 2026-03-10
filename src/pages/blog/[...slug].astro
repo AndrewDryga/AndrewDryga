@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../components/BaseLayout.astro";
-import { getCollection, getEntry } from "astro:content";
+import { getCollection, getEntry, render } from "astro:content";
 import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
@@ -12,8 +12,8 @@ export async function getStaticPaths() {
     import.meta.env.PROD ? !data.draft : true
   );
   return posts.map((post: any) => ({
-    params: { slug: post.slug },
-    props: { postSlug: post.slug },
+    params: { slug: post.id },
+    props: { postSlug: post.id },
   }));
 }
 
@@ -24,10 +24,10 @@ if (!post) {
   return Astro.redirect("/404");
 }
 
-const { Content, headings } = await post.render();
+const { Content, headings } = await render(post);
 
 const site = Astro.site ?? new URL("https://dryga.com/");
-const canonical = new URL(`/blog/${post.slug}/`, site).toString();
+const canonical = new URL(`/blog/${post.id}/`, site).toString();
 const title = `${post.data.title} — Andrew Dryga`;
 const description = post.data.description;
 
@@ -105,7 +105,7 @@ void breadcrumbLd;
             ]}
             class="mb-2"
           />
-          <div class="font-mono text-terminal-yellow text-sm mb-2">$ cat ./blog/{post.slug}</div>
+          <div class="font-mono text-terminal-yellow text-sm mb-2">$ cat ./blog/{post.id}</div>
           <h1 class="text-4xl md:text-5xl font-bold font-sans leading-relaxed">
             <span class="text-foreground leading-snug">{post.data.title}</span><span class="text-terminal-yellow">.</span>
           </h1>
@@ -255,10 +255,6 @@ void breadcrumbLd;
     })();
   </script>
 
-  <script type="application/ld+json" is:inline>
-    {JSON.stringify(articleLd)}
-  </script>
-  <script type="application/ld+json" is:inline>
-    {JSON.stringify(breadcrumbLd)}
-  </script>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(articleLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbLd)} />
 </BaseLayout>

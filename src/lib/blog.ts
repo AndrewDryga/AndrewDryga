@@ -20,9 +20,9 @@ export interface BlogPostSummary {
 }
 
 function mapEntryToSummary(entry: BlogEntry): BlogPostSummary {
-  const { data, slug } = entry;
+  const { data, id } = entry;
   return {
-    slug,
+    slug: id,
     title: data.title,
     description: data.description,
     category: data.category,
@@ -33,7 +33,7 @@ function mapEntryToSummary(entry: BlogEntry): BlogPostSummary {
     tags: data.tags ?? [],
     relatedProjects: data.relatedProjects ?? [],
     draft: data.draft ?? false,
-    url: `/blog/${slug}/`,
+    url: `/blog/${id}/`,
   };
 }
 

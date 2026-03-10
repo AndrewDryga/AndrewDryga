@@ -20,7 +20,7 @@ export interface Testimonial {
 type TestimonialEntry = CollectionEntry<"testimonials">;
 
 function mapEntry(entry: TestimonialEntry): Testimonial {
-  const { data, id, slug } = entry;
+  const { data, id } = entry;
   const commitDateISO = data.commitDate?.toISOString();
   const commitDateLabel = data.commitDate
     ? data.commitDate.toLocaleString("en-US", {
@@ -34,7 +34,7 @@ function mapEntry(entry: TestimonialEntry): Testimonial {
     : undefined;
 
   return {
-    id: slug ?? id,
+    id,
     name: data.name,
     title: data.title,
     company: data.company,

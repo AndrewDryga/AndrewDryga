@@ -27,6 +27,18 @@ const ogImageUrl = ogImage
 // Public env var for Mixpanel; set in deployment as PUBLIC_MIXPANEL_TOKEN
 const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
 const IS_DEV = import.meta.env.DEV;
+
+const websiteLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "dryga.com",
+  url: site.toString(),
+  potentialAction: {
+    "@type": "SearchAction",
+    target: new URL("/blog/?q={search_term_string}", site).toString(),
+    "query-input": "required name=search_term_string",
+  },
+});
 ---
 
 <!DOCTYPE html>
@@ -58,19 +70,7 @@ const IS_DEV = import.meta.env.DEV;
     <meta name="mixpanel-token" content={MIXPANEL_TOKEN ?? ""} />
     <meta name="astro-dev" content={IS_DEV ? "true" : "false"} />
 
-    <script type="application/ld+json" is:inline>
-      {JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: "dryga.com",
-        url: site.toString(),
-        potentialAction: {
-          "@type": "SearchAction",
-          target: new URL("/blog/?q={search_term_string}", site).toString(),
-          "query-input": "required name=search_term_string",
-        },
-      })}
-    </script>
+    <script type="application/ld+json" is:inline set:html={websiteLd} />
 
     {noIndex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 
