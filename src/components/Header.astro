@@ -1,6 +1,5 @@
 ---
 import MobileNav from "./MobileNav.astro";
-import headerNavScript from "../scripts/header-nav.ts?url";
 
 export interface Props {
   /**
@@ -72,7 +71,9 @@ const navLinks = [
       </div>
     </div>
   </header>
-  <script type="module" src={headerNavScript}></script>
+  <script>
+    import "../scripts/header-nav.ts";
+  </script>
 )}
 
 {(variant === "footer" || variant === "both") && (
