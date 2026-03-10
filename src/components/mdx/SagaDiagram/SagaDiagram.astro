@@ -5,20 +5,79 @@ export interface Props {
 const { title } = Astro.props;
 ---
 
-<div
-  class="saga-diagram border border-border rounded-lg bg-terminal-surface p-4 md:p-6 overflow-x-auto font-mono text-xs"
->
-  {
-    title && (
-      <div class="text-muted-foreground text-[11px] uppercase tracking-wider mb-4">
-        {title}
-      </div>
-    )
-  }
+<div class="saga-diagram-wrapper not-prose w-full overflow-hidden">
   <div
-    class="inline-grid items-center"
-    style="grid-template-rows: auto auto auto; grid-auto-flow: column; grid-auto-columns: auto;"
+    class="saga-diagram border border-border rounded-lg bg-terminal-surface p-4 md:p-6 font-mono text-xs origin-top-left"
   >
-    <slot />
+    {
+      title && (
+        <div class="text-muted-foreground text-[11px] uppercase tracking-wider mb-4">
+          {title}
+        </div>
+      )
+    }
+    <div
+      class="inline-grid items-center"
+      style="grid-template-rows: auto auto auto; grid-auto-flow: column; grid-auto-columns: auto;"
+    >
+      <slot />
+    </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const cleanups: (() => void)[] = [];
+
+    document.querySelectorAll(".saga-diagram-wrapper").forEach((wrapper) => {
+      const diagram = wrapper.querySelector(".saga-diagram") as HTMLElement;
+      if (!diagram) return;
+
+      const grid = diagram.querySelector(".inline-grid") as HTMLElement;
+      if (!grid) return;
+
+      let rafId = 0;
+      const fit = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          diagram.style.transform = "";
+          diagram.style.marginBottom = "";
+          diagram.style.width = "";
+          diagram.style.overflowX = "";
+
+          // Temporarily let the diagram expand to its natural width
+          diagram.style.width = "max-content";
+          const naturalW = diagram.offsetWidth;
+          diagram.style.width = "";
+
+          const containerW = (wrapper as HTMLElement).clientWidth;
+
+          if (naturalW > containerW && containerW > 0) {
+            const scale = containerW / naturalW;
+            // Only scale if the text stays readable; otherwise scroll
+            if (scale >= 0.65) {
+              diagram.style.width = `${naturalW}px`;
+              diagram.style.transform = `scale(${scale})`;
+              const naturalH = diagram.offsetHeight;
+              const scaledH = naturalH * scale;
+              diagram.style.marginBottom = `${scaledH - naturalH}px`;
+            } else {
+              diagram.style.overflowX = "auto";
+            }
+          }
+        });
+      };
+
+      fit();
+      window.addEventListener("resize", fit);
+      cleanups.push(() => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("resize", fit);
+      });
+    });
+
+    document.addEventListener("astro:before-swap", () => {
+      cleanups.forEach((fn) => fn());
+    }, { once: true });
+  });
+</script>
