@@ -71,7 +71,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       </div>
 
       <div
-        class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-hidden select-none touch-none"
+        class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-hidden select-none"
         data-testimonials-container
       >
         <div class="space-y-8" data-testimonials-list>
@@ -441,23 +441,35 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
     // Touch swipe support for mobile
     let touchStartY = 0;
     let touchStartX = 0;
+    let isSwiping = false;
     const SWIPE_THRESHOLD = 40;
 
     const onTouchStart = (event) => {
       const touch = event.touches[0];
       touchStartY = touch.clientY;
       touchStartX = touch.clientX;
+      isSwiping = false;
+    };
+
+    const onTouchMove = (event) => {
+      const touch = event.touches[0];
+      const deltaY = Math.abs(touchStartY - touch.clientY);
+      const deltaX = Math.abs(touchStartX - touch.clientX);
+
+      // If vertical movement dominates, prevent page scroll
+      if (deltaY > 10 && deltaY > deltaX) {
+        isSwiping = true;
+        event.preventDefault();
+      }
     };
 
     const onTouchEnd = (event) => {
+      if (!isSwiping) return;
+
       const touch = event.changedTouches[0];
       const deltaY = touchStartY - touch.clientY;
-      const deltaX = Math.abs(touchStartX - touch.clientX);
 
-      // Only act on vertical swipes (ignore horizontal)
-      if (Math.abs(deltaY) < SWIPE_THRESHOLD || deltaX > Math.abs(deltaY)) {
-        return;
-      }
+      if (Math.abs(deltaY) < SWIPE_THRESHOLD) return;
 
       if (deltaY > 0) {
         // Swipe up → next
@@ -469,11 +481,13 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
     };
 
     container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
     container.addEventListener("touchend", onTouchEnd);
 
     const cleanup = () => {
       container.removeEventListener("keydown", preventArrowScroll);
       container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
       container.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("astro:before-swap", cleanup);
