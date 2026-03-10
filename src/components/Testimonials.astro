@@ -71,7 +71,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       </div>
 
       <div
-        class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-y-auto md:overflow-hidden select-none"
+        class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-hidden select-none touch-none"
         data-testimonials-container
       >
         <div class="space-y-8" data-testimonials-list>
@@ -201,7 +201,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
             </kbd>
           </span>
           <span class="hidden md:inline">to navigate</span>
-          <span class="md:hidden">Scroll for more</span>
+          <span class="md:hidden">Swipe to navigate</span>
         </div>
       </div>
 
@@ -222,7 +222,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
             <span class="text-terminal-cyan hidden md:inline">
               ↑↓ navigate • g/G jump • j/k vim
             </span>
-            <span class="text-terminal-cyan md:hidden">scroll</span>
+            <span class="text-terminal-cyan md:hidden">swipe ↑↓</span>
             <span class="text-terminal-green text-[10px] md:text-xs">
               ● <span data-testimonials-footer-indicator>MORE</span>
             </span>
@@ -438,8 +438,43 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
 
     window.addEventListener("keydown", onKeyDown);
 
+    // Touch swipe support for mobile
+    let touchStartY = 0;
+    let touchStartX = 0;
+    const SWIPE_THRESHOLD = 40;
+
+    const onTouchStart = (event) => {
+      const touch = event.touches[0];
+      touchStartY = touch.clientY;
+      touchStartX = touch.clientX;
+    };
+
+    const onTouchEnd = (event) => {
+      const touch = event.changedTouches[0];
+      const deltaY = touchStartY - touch.clientY;
+      const deltaX = Math.abs(touchStartX - touch.clientX);
+
+      // Only act on vertical swipes (ignore horizontal)
+      if (Math.abs(deltaY) < SWIPE_THRESHOLD || deltaX > Math.abs(deltaY)) {
+        return;
+      }
+
+      if (deltaY > 0) {
+        // Swipe up → next
+        setActive(activeIndex + 1);
+      } else {
+        // Swipe down → previous
+        setActive(activeIndex - 1);
+      }
+    };
+
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchend", onTouchEnd);
+
     const cleanup = () => {
       container.removeEventListener("keydown", preventArrowScroll);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("astro:before-swap", cleanup);
     };
