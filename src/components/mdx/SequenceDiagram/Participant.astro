@@ -20,7 +20,7 @@ const colorMap: Record<NonNullable<Props["color"]>, string> = {
   class={`sd-participant absolute top-0 bottom-0 -translate-x-1/2 z-10 flex flex-col ${className}`.trim()}
 >
   <div
-    class={`inline-block px-3 py-2 border-2 rounded font-bold flex-shrink-0 ${colorMap[color]}`}
+    class={`inline-block px-2 py-1.5 sm:px-3 sm:py-2 border-2 rounded font-bold flex-shrink-0 text-[10px] sm:text-xs ${colorMap[color]}`}
   >
     {name}
   </div>

@@ -77,7 +77,7 @@ const isSelfCall = fromIndex === toIndex;
 {isSelfCall ? (
   <!-- Self-call / loop -->
   <div
-    class={`sd-row sd-message sd-self-call relative h-20 ${className}`.trim()}
+    class={`sd-row sd-message sd-self-call relative min-h-[5rem] ${className}`.trim()}
     data-from={fromIndex}
     data-to={toIndex}
   >
@@ -89,7 +89,7 @@ const isSelfCall = fromIndex === toIndex;
       </div>
     </div>
     <div class="sd-message-label absolute top-1/2 -translate-y-1/2 pointer-events-none z-10">
-      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}>
+      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded sd-label-text ${style.text}`}>
         {label}
       </div>
     </div>
@@ -97,7 +97,7 @@ const isSelfCall = fromIndex === toIndex;
 ) : (
   <!-- Regular message between participants -->
   <div
-    class={`sd-row sd-message relative h-16 ${className}`.trim()}
+    class={`sd-row sd-message relative min-h-[4rem] ${className}`.trim()}
     data-from={fromIndex}
     data-to={toIndex}
   >
@@ -106,8 +106,8 @@ const isSelfCall = fromIndex === toIndex;
         <div class={`sd-arrow-head ${style.arrowRight} ${style.arrowLeft}`}></div>
       </div>
     </div>
-    <div class="sd-message-label absolute -top-1 z-10 pointer-events-none">
-      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}>
+    <div class="sd-message-label absolute z-10 pointer-events-none" style="bottom:calc(50% + 8px)">
+      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded sd-label-text ${style.text}`}>
         {label}
       </div>
     </div>

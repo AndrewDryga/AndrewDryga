@@ -27,13 +27,13 @@ const anchorClass = "-translate-x-1/2";
 const positionStyle = `left:${resolvedOffset}%`;
 ---
 
-<div class={`sd-row relative h-12 ${className}`.trim()}>
+<div class={`sd-row relative min-h-[3rem] ${className}`.trim()}>
   <div
     class={`absolute top-1/2 -translate-y-1/2 ${anchorClass}`.trim()}
     style={positionStyle}
   >
     <div
-      class="inline-block bg-secondary/10 px-3 py-2 text-secondary text-[10px] border border-secondary rounded italic"
+      class="sd-label-text inline-block bg-secondary/10 px-3 py-2 text-secondary text-[10px] border border-secondary rounded italic"
     >
       {text}
     </div>

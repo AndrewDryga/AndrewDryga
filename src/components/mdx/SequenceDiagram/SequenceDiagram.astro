@@ -3,7 +3,7 @@ const { class: className = "" } = Astro.props;
 ---
 
 <div
-  class={`sequence-diagram relative border border-border rounded-lg p-6 pb-10 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}
+  class={`sequence-diagram relative border border-border rounded-lg p-3 pb-8 sm:p-6 sm:pb-10 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}
 >
   <div class="relative space-y-4">
     <slot />
@@ -77,6 +77,11 @@ const { class: className = "" } = Astro.props;
   /* Notes directly after fragments need breathing room too */
   .sd-frag + .sd-row {
     margin-top: 0.75rem !important;
+  }
+
+  /* Label text: allow wrapping when JS sets max-width */
+  .sd-label-text {
+    word-break: break-word;
   }
 </style>
 
@@ -248,6 +253,71 @@ const { class: className = "" } = Astro.props;
           }
         }
       });
+
+      // Constrain label widths so they don't overflow the diagram,
+      // then resize rows to fit any wrapped text.
+      const diagramEl = diagram as HTMLElement;
+
+      const constrainAndResize = () => {
+        const diagramW = diagramEl.clientWidth;
+
+        // Reset previous constraints
+        diagram.querySelectorAll(".sd-label-text").forEach((label) => {
+          (label as HTMLElement).style.maxWidth = "";
+        });
+        diagram.querySelectorAll(".sd-row").forEach((row) => {
+          (row as HTMLElement).style.minHeight = "";
+        });
+
+        // Set max-width on message labels based on arrow span
+        diagram.querySelectorAll(".sd-message").forEach((msg) => {
+          const label = msg.querySelector(".sd-label-text") as HTMLElement;
+          if (!label) return;
+
+          const fromIdx = parseInt((msg as HTMLElement).getAttribute("data-from") || "0");
+          const toIdx = parseInt((msg as HTMLElement).getAttribute("data-to") || "1");
+
+          if (fromIdx === toIdx) {
+            label.style.maxWidth = `${Math.max(80, diagramW * 0.4)}px`;
+          } else {
+            const fromP = participants[fromIdx] as HTMLElement | undefined;
+            const toP = participants[toIdx] as HTMLElement | undefined;
+            if (fromP && toP) {
+              const span = Math.abs(
+                parseFloat(fromP.getAttribute("data-position") || "0") -
+                parseFloat(toP.getAttribute("data-position") || "0")
+              );
+              const maxPx = Math.max(80, (span / 100) * diagramW * 0.9);
+              label.style.maxWidth = `${maxPx}px`;
+            }
+          }
+        });
+
+        // Set max-width on note labels
+        diagram.querySelectorAll(".sd-row:not(.sd-message) .sd-label-text").forEach((label) => {
+          (label as HTMLElement).style.maxWidth = `${Math.max(120, diagramW * 0.8)}px`;
+        });
+
+        // Resize rows to fit wrapped labels
+        diagram.querySelectorAll(".sd-row").forEach((row) => {
+          const el = row as HTMLElement;
+          const labels = el.querySelectorAll(".sd-message-label, .sd-label-text");
+          let maxH = 0;
+          labels.forEach((lbl) => {
+            const h = (lbl as HTMLElement).offsetHeight;
+            if (h > maxH) maxH = h;
+          });
+          if (maxH > 0) {
+            const needed = maxH + 32;
+            if (needed > el.offsetHeight) {
+              el.style.minHeight = `${needed}px`;
+            }
+          }
+        });
+      };
+
+      constrainAndResize();
+      window.addEventListener("resize", constrainAndResize);
     });
   });
 </script>
