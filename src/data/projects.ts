@@ -36,6 +36,7 @@ export const featuredProjects: Project[] = [
       "Cassandra",
       "TypeSense",
       "Riak",
+      "HAProxy",
     ],
     categories: ["AdTech"],
     links: [
