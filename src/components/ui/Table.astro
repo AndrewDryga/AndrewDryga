@@ -6,11 +6,17 @@ interface Column {
   render?: (row: Record<string, unknown>) => unknown;
 }
 
-interface Props extends astroHTML.JSX.HTMLAttributes<HTMLTableElement> {
+interface CellResult {
+  className?: string;
+  content?: unknown;
+}
+
+interface Props {
   columns: Column[];
   data: Record<string, unknown>[];
   class?: string;
   caption?: string;
+  [key: string]: unknown;
 }
 
 const props = Astro.props as Props;
@@ -56,14 +62,10 @@ const { columns, data, class: className = "", caption, ...rest } = props;
               : column.accessor
                 ? (row[column.accessor] ?? "")
                 : "";
-            const extraClass =
-              result && typeof result === "object" && !Array.isArray(result)
-                ? (result.className ?? "")
-                : "";
-            const content =
-              result && typeof result === "object" && !Array.isArray(result)
-                ? (result.content ?? "")
-                : result;
+            const isObj = result && typeof result === "object" && !Array.isArray(result);
+            const cellResult = isObj ? (result as CellResult) : null;
+            const extraClass = cellResult?.className ?? "";
+            const content = cellResult ? (cellResult.content ?? "") : result;
             return (
               <td
                 class={[

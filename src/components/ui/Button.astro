@@ -24,6 +24,10 @@ interface Props {
   size?: "default" | "sm" | "lg" | "icon";
   href?: string;
   shortcut?: ShortcutValue;
+  class?: string;
+  type?: string;
+  disabled?: boolean;
+  [key: string]: unknown;
 }
 
 const {
@@ -36,7 +40,7 @@ const {
 } = Astro.props as Props & Record<string, unknown>;
 
 const attributes = { ...rest } as Record<string, unknown>;
-const buttonType = (attributes.type as string | undefined) ?? "button";
+const buttonType = ((attributes.type as string | undefined) ?? "button") as "button" | "submit" | "reset";
 delete attributes.type;
 
 const baseClass =

@@ -1,6 +1,6 @@
 ---
 type TabContent =
-  | AstroComponentFactory
+  | ((...args: unknown[]) => unknown)
   | string
   | number
   | boolean

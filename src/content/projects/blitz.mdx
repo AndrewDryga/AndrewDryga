@@ -107,7 +107,7 @@ This wasn't a language problem, a framework problem, or even really a scale prob
 The biggest wins came from:
 1. **Measuring first** - You can't optimize what you don't measure;
 2. **Removing before adding** - Dead code and unused infra cost money and mental overhead;
-3. **Fixing root causes** - Upscaling databases is easy, but designing with database in mind or at least fixing bad queries is what actually works;
+3. **Fixing root causes** - Upscaling databases is easy, but designing with database in mind or at least doing `EXPLAIN`'s and fixing bad queries is what actually works;
 4. **Boring infrastructure** - Terraform, Compute VMs (no k8s or anything like that for a small team), proper CI/CD, and reliable monitoring aren't sexy, but they're worth their weight in gold;
 5. **Focusing on what matters** - Error budgets, SLOs, observable systems and simply caring during the day let you sleep at night.
 

@@ -22,8 +22,7 @@ const {
   ]
     .filter(Boolean)
     .join(" ")}
-  open={open}
-  {...(defaultOpen !== undefined ? { open: undefined, ...(defaultOpen ? { open: true } : {}) } : {})}
+  open={defaultOpen !== undefined ? defaultOpen : open}
   {...rest}
 >
   <summary class="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 font-mono text-sm text-foreground transition-colors hover:text-terminal-cyan">

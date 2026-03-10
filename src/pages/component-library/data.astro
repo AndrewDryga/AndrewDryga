@@ -125,7 +125,7 @@ const opsColumns = [
     header: "Status",
     accessor: "statusLabel",
     class: "px-4 py-3",
-    render: (row) => ({
+    render: (row: Record<string, unknown>) => ({
       content: row.statusLabel,
       className: ["block", row.statusClass].filter(Boolean).join(" "),
     }),

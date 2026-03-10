@@ -1,5 +1,6 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import { z } from "astro:schema";
 
 const blog = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }),
@@ -28,12 +29,12 @@ const testimonials = defineCollection({
       company: z.string().min(1),
       relationship: z.string().min(1),
       quote: z.string().min(1),
-      linkedinUrl: z.string().url().optional(),
+      linkedinUrl: z.url().optional(),
       featured: z.boolean().default(true),
       order: z.number().int().nonnegative().default(0),
       commitHash: z.string().min(1).optional(),
       commitDate: z.date().optional(),
-      authorEmail: z.string().email().optional(),
+      authorEmail: z.email().optional(),
       branchName: z.string().min(1).optional(),
     }),
 });

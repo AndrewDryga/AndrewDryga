@@ -26,7 +26,7 @@ const canonical = new URL("/component-library/components/", site).toString();
 const sampleProjects = featuredProjects.slice(0, 2);
 const blogSamples = (await loadBlogSummaries()).slice(0, 3);
 
-const dropdownMenuItems = [
+const dropdownMenuItems: { label: string; shortcut?: string; combo?: { ctrl?: boolean; alt?: boolean; key: string }; href?: string; action?: "copy-command" | "toggle-nav"; disabled?: boolean }[] = [
   {
     label: "Open docs",
     shortcut: "Ctrl+Alt+D",
