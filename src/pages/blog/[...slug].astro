@@ -101,7 +101,7 @@ void breadcrumbLd;
             items={[
               { label: "Home", href: "/" },
               { label: "Blog", href: "/blog/" },
-              { label: post.data.title }
+              { label: post.data.shortTitle ?? post.data.title }
             ]}
             class="mb-2"
           />
