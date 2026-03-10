@@ -7,6 +7,7 @@ const blog = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string().min(1, "title is required"),
+      shortTitle: z.string().min(1).optional(),
       description: z.string().min(1, "description is required"),
       publishDate: z.date(),
       updatedDate: z.date().optional(),
