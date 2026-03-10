@@ -27,7 +27,6 @@ const ogImageUrl = ogImage
 // Public env var for Mixpanel; set in deployment as PUBLIC_MIXPANEL_TOKEN
 const MIXPANEL_TOKEN = import.meta.env.PUBLIC_MIXPANEL_TOKEN;
 const IS_DEV = import.meta.env.DEV;
-const mixpanelScript = new URL("../scripts/mixpanel.ts", import.meta.url).toString();
 ---
 
 <!DOCTYPE html>
@@ -85,7 +84,7 @@ const mixpanelScript = new URL("../scripts/mixpanel.ts", import.meta.url).toStri
     <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin />
 
-    <script type="module" src={mixpanelScript}></script>
+    <script src="../scripts/mixpanel.ts"></script>
   </head>
   <body class="h-full bg-background text-foreground antialiased">
     <a
