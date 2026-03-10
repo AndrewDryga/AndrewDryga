@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ site }) => {
   const lastDate =
     sorted[0]?.data.publishDate ?? sorted[0]?.data.updatedDate ?? new Date();
 
-  const channelTitle = "Andrew Dryga — Blog";
+  const channelTitle = "Andrew Dryga - Blog";
   const channelDescription =
     "Articles on engineering leadership, reliability, and building cost-sane, observable platforms.";
   const channelLink = new URL("/blog/", siteUrl).toString();

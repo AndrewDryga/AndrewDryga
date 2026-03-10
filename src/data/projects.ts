@@ -135,7 +135,7 @@ export const allProjects: Project[] = [
     id: "bullpen",
     name: "Bullpen - Virtual Sales Floor + CRM",
     description:
-      "When COVID hit, our sales team lost the buzz of the office. We built a platform that brought it all back — a CRM with virtual space where reps could collaborate, learn from each other in real time, and keep the same drive. Then we turned it into a product, enhanced by AI.",
+      "When COVID hit, our sales team lost the buzz of the office. We built a platform that brought it all back - a CRM with virtual space where reps could collaborate, learn from each other in real time, and keep the same drive. Then we turned it into a product, enhanced by AI.",
     impact: [
       "Remote-first virtual sales floor with real-time collaboration",
       "AI-enhanced CRM with shared context",
@@ -528,7 +528,7 @@ export const allProjects: Project[] = [
     id: "onedayofmine",
     name: "OneDayOfMine",
     description:
-      "Storytelling social network that helps see other people's lives through their eyes. Capture moments through the day and share them with descriptions — from special forces in Belarus to a family visit to a film museum in South Korea.",
+      "Storytelling social network that helps see other people's lives through their eyes. Capture moments through the day and share them with descriptions - from special forces in Belarus to a family visit to a film museum in South Korea.",
     impact: [
       "Invented and build Instagram before it existed but failed at marketing",
     ],

@@ -2,7 +2,7 @@
 import BaseLayout from "../components/BaseLayout.astro";
 import Header from "../components/Header.astro";
 
-const title = "404 — Page Not Found";
+const title = "404 - Page Not Found";
 const description =
   "The page you’re looking for doesn’t exist. Try the home page or blog.";
 const canonical = undefined; // Let BaseLayout derive canonical from current URL
@@ -52,26 +52,26 @@ const noIndex = true;
           const el = document.getElementById("hint-text");
           if (!el) return;
           const messages = [
-            "Check the path—it currently resolves to /dev/null. Great sink, terrible page.",
+            "Check the path - it currently resolves to /dev/null. Great sink, terrible page.",
             "Smash Tab like a pro; autocomplete is the real senior engineer here.",
             "Use an absolute path; your relatives keep wandering off.",
-            "Count your slashes—you’ve got a classic off-by-one fencepost bug.",
+            "Count your slashes - you’ve got a classic off-by-one fencepost bug.",
             "Respect the casing; our server is case-sensitive and emotionally unavailable.",
             "Try /v2; /v1 retired to “write a tech blog.”",
             "Purge zero-width spaces; invisible Unicode, visible chaos.",
-            "DNS also shrugged—double-check the hostname before it ghosts you.",
+            "DNS also shrugged - double-check the hostname before it ghosts you.",
             "This route isn’t in $PATH; export better life choices.",
-            "Don’t sudo the URL—just fix the spelling.",
+            "Don’t sudo the URL - just fix the spelling.",
             "We containerized this page and forgot the port mapping; try a different path.",
-            "YAML ate the indent that used to point here—unmix your spaces and tabs.",
+            "YAML ate the indent that used to point here - unmix your spaces and tabs.",
             "Your query string looks base64’d twice; maybe decode your enthusiasm.",
             "Try https; http got rate-limited by time.",
             "The endpoint is behind a feature flag named NOT_READY_YET; choose a path that exists.",
-            "Symlink detected—to disappointment. Point it somewhere real.",
+            "Symlink detected - to disappointment. Point it somewhere real.",
             "Git blames you (gently). Rename that kebab/camelCase to match the route.",
             "Router says ¯\\_(ツ)_/¯; fewer emojis, more path.",
             "Run ls in your brain and pick something that actually shows up.",
-            "Hit Ctrl+U and retype—fresh start, fresh path, fewer tears."
+            "Hit Ctrl+U and retype - fresh start, fresh path, fewer tears."
           ];
           let prev = null;
           const typeDelay = 45;           // slower typing (fast human)

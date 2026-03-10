@@ -1,4 +1,4 @@
-# dryga.com — Astro workspace
+# dryga.com - Astro workspace
 
 This directory contains the new Astro 4 site for dryga.com. It preserves the existing visual design while moving the stack to a fast, content‑first, SSG‑first architecture with minimal JS by default.
 
@@ -41,39 +41,39 @@ Linting: A lint script exists, but an ESLint config has not been added yet in th
 ## Project structure
 
 - astro/
-  - astro.config.mjs — Integrations: Tailwind, React (for small islands), MDX, Sitemap, Image
-  - package.json — Scripts: dev, build, preview, check, typecheck, format
-  - postcss.config.cjs — Tailwind + Autoprefixer
-  - tailwind.config.ts — Tokens, animations, typography plugin
-  - tsconfig.json — Strict TS + path aliases
-  - env.d.ts — Env var typing
+  - astro.config.mjs - Integrations: Tailwind, React (for small islands), MDX, Sitemap, Image
+  - package.json - Scripts: dev, build, preview, check, typecheck, format
+  - postcss.config.cjs - Tailwind + Autoprefixer
+  - tailwind.config.ts - Tokens, animations, typography plugin
+  - tsconfig.json - Strict TS + path aliases
+  - env.d.ts - Env var typing
   - public/
-    - fonts/ — Place self-hosted WOFF2 fonts here
-    - og-default.jpg — Placeholder; replace with the real OG image (1200x630)
-    - favicon.ico, icon.svg, apple-touch-icon.png, manifest.webmanifest — add as needed
+    - fonts/ - Place self-hosted WOFF2 fonts here
+    - og-default.jpg - Placeholder; replace with the real OG image (1200x630)
+    - favicon.ico, icon.svg, apple-touch-icon.png, manifest.webmanifest - add as needed
   - src/
     - components/
-      - BaseLayout.astro — Global layout, meta, icons, fonts, Mixpanel (respects Do Not Track)
+      - BaseLayout.astro - Global layout, meta, icons, fonts, Mixpanel (respects Do Not Track)
     - content/
-      - config.ts — Content Collections schema (blog)
+      - config.ts - Content Collections schema (blog)
       - blog/
-        - foundations-observability-cost-reliability.mdx — One complete post
-        - scaling-teams-without-slowing.mdx — Draft scaffold
-        - ship-what-matters-measure-results.mdx — Draft scaffold
-        - boring-tech-high-leverage.mdx — Draft scaffold
+        - foundations-observability-cost-reliability.mdx - One complete post
+        - scaling-teams-without-slowing.mdx - Draft scaffold
+        - ship-what-matters-measure-results.mdx - Draft scaffold
+        - boring-tech-high-leverage.mdx - Draft scaffold
     - pages/
-      - index.astro — Home hero with design parity
-      - about.astro — About page with Person JSON-LD
-      - 404.astro — Not found
+      - index.astro - Home hero with design parity
+      - about.astro - About page with Person JSON-LD
+      - 404.astro - Not found
       - blog/
-        - index.astro — Blog index with pagination and tag filtering
-        - [...slug].astro — Blog post with ToC, Article + Breadcrumb JSON-LD
-      - rss.xml.ts — RSS 2.0 feed
-      - feed.json.ts — JSON Feed 1.1
-      - robots.txt.ts — Robots with sitemap reference
-      - sitemap-index.xml — Placeholder note (delete to enable integration output)
+        - index.astro - Blog index with pagination and tag filtering
+        - [...slug].astro - Blog post with ToC, Article + Breadcrumb JSON-LD
+      - rss.xml.ts - RSS 2.0 feed
+      - feed.json.ts - JSON Feed 1.1
+      - robots.txt.ts - Robots with sitemap reference
+      - sitemap-index.xml - Placeholder note (delete to enable integration output)
     - styles/
-      - global.css — Tailwind entry + design tokens and base styles
+      - global.css - Tailwind entry + design tokens and base styles
 
 ---
 
@@ -150,8 +150,8 @@ Planned: optional scaffold script to create a new post interactively.
   - About page: Person
   - Blog post: Article + BreadcrumbList
 - Feeds:
-  - /rss.xml — RSS 2.0
-  - /feed.json — JSON Feed 1.1
+  - /rss.xml - RSS 2.0
+  - /feed.json - JSON Feed 1.1
 - Sitemap:
   - Provided by @astrojs/sitemap based on astro.config.mjs site base.
   - Important: Delete src/pages/sitemap-index.xml to allow the integration to generate the sitemap automatically at build time.
@@ -245,4 +245,4 @@ Cleanup (post-cutover)
 
 ## License
 
-Proprietary — personal website. See repository root for details if present.
+Proprietary - personal website. See repository root for details if present.

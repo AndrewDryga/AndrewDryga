@@ -72,7 +72,7 @@ export const GET: APIRoute = async ({ site }) => {
 
   const feed = {
     version: "https://jsonfeed.org/version/1.1",
-    title: "Andrew Dryga — Blog",
+    title: "Andrew Dryga - Blog",
     home_page_url: homeUrl,
     feed_url: feedUrl,
     description:

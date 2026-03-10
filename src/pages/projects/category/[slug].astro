@@ -28,7 +28,7 @@ const computedUnique = Array.from(
 const CATEGORY_META = {
   AdTech: {
     description:
-      "Advertising platforms, lead generation, and sales automation — high-traffic systems that drive revenue.",
+      "Advertising platforms, lead generation, and sales automation - high-traffic systems that drive revenue.",
     accent: "cyan" as const,
   },
   FinTech: {
@@ -38,7 +38,7 @@ const CATEGORY_META = {
   },
   HealthTech: {
     description:
-      "National-scale healthcare systems — EMR, e-prescriptions, reimbursements, and patient data platforms.",
+      "National-scale healthcare systems - EMR, e-prescriptions, reimbursements, and patient data platforms.",
     accent: "green" as const,
   },
   LegalTech: {
@@ -107,7 +107,7 @@ const meta = CATEGORY_META[currentCategory as keyof typeof CATEGORY_META] ?? {
   accent: "green" as const,
 };
 
-const title = `Projects — ${currentCategory} — Andrew Dryga`;
+const title = `Projects - ${currentCategory} - Andrew Dryga`;
 const description = meta.description;
 const canonical = Astro.url.href;
 const consoleLine = `$ ls -la ~/projects/ | grep category:${currentCategory.toLowerCase()}`;

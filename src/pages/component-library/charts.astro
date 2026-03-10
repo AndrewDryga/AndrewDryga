@@ -64,7 +64,7 @@ const sparkline = buildSparkline(sparklinePoints);
 ---
 
 <BaseLayout
-  title="Component Library — Charts & Flows"
+  title="Component Library - Charts & Flows"
   description="Terminal-native charts, ASCII spark lines, vertical bars, and flow diagrams."
   canonical={canonical}
   noIndex
@@ -82,7 +82,7 @@ const sparkline = buildSparkline(sparklinePoints);
         </h1>
         <p class="max-w-3xl text-sm text-muted-foreground">
           Compose dashboard-friendly visuals without leaving the terminal
-          aesthetic — ASCII pies, spark lines, vertical bars, and annotated
+          aesthetic - ASCII pies, spark lines, vertical bars, and annotated
           flows.
         </p>
       </header>
@@ -102,7 +102,7 @@ const sparkline = buildSparkline(sparklinePoints);
           <div class="rounded-lg border border-border bg-card p-6">
             <AsciiStackedBar segments={pieSegments} width={32} />
             <p class="mt-6 font-mono text-xs text-muted-foreground">
-              Each block represents roughly 3% of the weekly pipeline — tweak
+              Each block represents roughly 3% of the weekly pipeline - tweak
               the weights to match your own mix.
             </p>
           </div>
@@ -141,7 +141,7 @@ const sparkline = buildSparkline(sparklinePoints);
               ASCII vertical bars
             </h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Deployment throughput rendered as stacked glyphs — five columns,
+              Deployment throughput rendered as stacked glyphs - five columns,
               left aligned, no filler.
             </p>
           </header>
@@ -149,7 +149,7 @@ const sparkline = buildSparkline(sparklinePoints);
           <div class="rounded-lg border border-border bg-card p-6">
             <AsciiVerticalBar bars={barSeries} maxHeight={9} />
             <p class="mt-4 font-mono text-xs text-muted-foreground">
-              Each block equals roughly one release per day — tweak <code
+              Each block equals roughly one release per day - tweak <code
                 >maxHeight</code
               > to match your scale.
             </p>
@@ -475,7 +475,7 @@ const sparkline = buildSparkline(sparklinePoints);
           <h3 class="text-xl font-semibold text-foreground">
             Linear saga with failure
           </h3>
-          <SagaDiagram title="Trip booking — flight fails at step 4">
+          <SagaDiagram title="Trip booking - flight fails at step 4">
             <SagaStep
               tx={"Fetch currency\nexchange rates"}
               txStatus="success"

@@ -27,43 +27,43 @@ const spacingScale = [
     token: "xs",
     label: "xs (4px)",
     width: "4px",
-    usage: "0.25rem — tight spacing, icon gaps",
+    usage: "0.25rem - tight spacing, icon gaps",
   },
   {
     token: "sm",
     label: "sm (8px)",
     width: "8px",
-    usage: "0.5rem — small gaps, inline elements",
+    usage: "0.5rem - small gaps, inline elements",
   },
   {
     token: "base",
     label: "base (16px)",
     width: "16px",
-    usage: "1rem — default spacing unit",
+    usage: "1rem - default spacing unit",
   },
   {
     token: "md",
     label: "md (24px)",
     width: "24px",
-    usage: "1.5rem — component spacing",
+    usage: "1.5rem - component spacing",
   },
   {
     token: "lg",
     label: "lg (32px)",
     width: "32px",
-    usage: "2rem — section internal spacing",
+    usage: "2rem - section internal spacing",
   },
   {
     token: "xl",
     label: "xl (48px)",
     width: "48px",
-    usage: "3rem — large component gaps",
+    usage: "3rem - large component gaps",
   },
   {
     token: "2xl",
     label: "2xl (64px)",
     width: "64px",
-    usage: "4rem — section dividers",
+    usage: "4rem - section dividers",
   },
 ];
 
@@ -74,12 +74,12 @@ const verticalRhythm = [
     items: [
       {
         token: "mb-16",
-        usage: "4rem — between major sections",
+        usage: "4rem - between major sections",
         height: "96px",
       },
       {
         token: "mb-24",
-        usage: "6rem — between content areas",
+        usage: "6rem - between content areas",
         height: "144px",
       },
     ],
@@ -90,10 +90,10 @@ const verticalRhythm = [
     items: [
       {
         token: "mb-6",
-        usage: "1.5rem — between related components",
+        usage: "1.5rem - between related components",
         height: "72px",
       },
-      { token: "mb-8", usage: "2rem — component groups", height: "96px" },
+      { token: "mb-8", usage: "2rem - component groups", height: "96px" },
     ],
   },
   {
@@ -102,12 +102,12 @@ const verticalRhythm = [
     items: [
       {
         token: "mb-2",
-        usage: "0.5rem — tight element spacing",
+        usage: "0.5rem - tight element spacing",
         height: "32px",
       },
       {
         token: "mb-4",
-        usage: "1rem — standard element spacing",
+        usage: "1rem - standard element spacing",
         height: "48px",
       },
     ],
@@ -191,7 +191,7 @@ const surfacePalette = [
 ---
 
 <BaseLayout
-  title="Component Library — Foundations"
+  title="Component Library - Foundations"
   description="Brand identity, spacing, typography, and color tokens that power the terminal aesthetic."
   canonical={canonical}
   noIndex
@@ -271,19 +271,19 @@ const surfacePalette = [
               <ul class="space-y-3 text-sm text-muted-foreground">
                 <li class="flex gap-3">
                   <span class="text-terminal-cyan font-mono">▸</span>
-                  Clarity through minimalism — every pixel serves a purpose.
+                  Clarity through minimalism - every pixel serves a purpose.
                 </li>
                 <li class="flex gap-3">
                   <span class="text-terminal-green font-mono">▸</span>
-                  Terminal authenticity — monospace fonts, prompts, and cursors.
+                  Terminal authenticity - monospace fonts, prompts, and cursors.
                 </li>
                 <li class="flex gap-3">
                   <span class="text-terminal-yellow font-mono">▸</span>
-                  Functional aesthetics — beautiful because it works.
+                  Functional aesthetics - beautiful because it works.
                 </li>
                 <li class="flex gap-3">
                   <span class="text-primary font-mono">▸</span>
-                  Consistent rhythm — predictable spacing and typography.
+                  Consistent rhythm - predictable spacing and typography.
                 </li>
               </ul>
             </div>
@@ -464,23 +464,23 @@ const surfacePalette = [
 
             <div class="grid gap-6 md:grid-cols-3">
               <BreakpointCard
-                label="sm — 640px"
+                label="sm - 640px"
                 description="Large phones & small tablets"
                 tone="cyan"
               />
               <BreakpointCard
-                label="md — 768px"
+                label="md - 768px"
                 description="Tablets & compact laptops"
                 tone="green"
               />
               <BreakpointCard
-                label="lg — 1024px"
+                label="lg - 1024px"
                 description="Desktops & wide layouts"
                 tone="yellow"
               />
             </div>
             <p class="text-xs text-muted-foreground font-mono">
-              xl (1280px) and 2xl (1440px) extend the same spacing rhythm—swap
+              xl (1280px) and 2xl (1440px) extend the same spacing rhythm - swap
               to `max-w-7xl` or custom grids when dashboards need extra width.
             </p>
           </section>
@@ -626,7 +626,7 @@ const surfacePalette = [
                   Display XL
                 </p>
                 <code class="text-xs text-muted-foreground"
-                  >text-6xl font-bold — hero headings</code
+                  >text-6xl font-bold - hero headings</code
                 >
               </div>
               <div class="border-b border-border pb-4">
@@ -634,7 +634,7 @@ const surfacePalette = [
                   Display Large
                 </h1>
                 <code class="text-xs text-muted-foreground"
-                  >text-5xl font-bold — page titles</code
+                  >text-5xl font-bold - page titles</code
                 >
               </div>
               <div class="border-b border-border pb-4">
@@ -642,7 +642,7 @@ const surfacePalette = [
                   Heading 1
                 </h2>
                 <code class="text-xs text-muted-foreground"
-                  >text-4xl font-bold — section headings</code
+                  >text-4xl font-bold - section headings</code
                 >
               </div>
               <div class="grid gap-4 md:grid-cols-2">
@@ -672,9 +672,9 @@ const surfacePalette = [
                 <div class="space-y-2">
                   <p class="font-semibold">Usage</p>
                   <ul class="space-y-1 text-sm text-muted-foreground">
-                    <li>Monospace — commands, code, metadata</li>
-                    <li>Inter sans-serif — headings, paragraphs</li>
-                    <li>Italic — quotes, emphasis</li>
+                    <li>Monospace - commands, code, metadata</li>
+                    <li>Inter sans-serif - headings, paragraphs</li>
+                    <li>Italic - quotes, emphasis</li>
                   </ul>
                 </div>
               </div>

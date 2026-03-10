@@ -28,7 +28,7 @@ const checklist = [
 ---
 
 <BaseLayout
-  title="Component Library — Form Patterns"
+  title="Component Library - Form Patterns"
   description="Terminal-themed forms, validation patterns, and inline scripting that work without React."
   canonical={canonical}
   noIndex
@@ -455,14 +455,14 @@ const checklist = [
 
       assign("name", read("name"));
       assign("email", read("email"));
-      assign("company", read("company", "—"));
-      assign("message", read("message", "—"));
+      assign("company", read("company", "-"));
+      assign("message", read("message", "-"));
       assign("framework", read("framework", "Astro"));
       assign("framework_search", read("framework_search", "astro"));
       assign("newsletter", formData.get("newsletter") === "on" ? "Yes" : "No");
       assign("beta", formData.get("beta") === "on" ? "Enabled" : "Disabled");
       assign("experience", read("experience", "intermediate"));
-      assign("budget", read("budget", "—"));
+      assign("budget", read("budget", "-"));
 
       result.removeAttribute("hidden");
       result.scrollIntoView({ behavior: "smooth", block: "center" });

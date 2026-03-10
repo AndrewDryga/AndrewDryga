@@ -27,7 +27,7 @@ import {
 } from "@/components/mdx/SequenceDiagram";
 import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
-By this post, I want to share a second awesome project that we built on Elixir, React.js+Redux.js and Kubernetes  -  eHealth for the National Health Service of Ukraine. It was born as one of the major steps in reforms occurring in our healthcare and would affect every single person in the country.
+By this post, I want to share a second awesome project that we built on Elixir, React.js+Redux.js and Kubernetes - eHealth for the National Health Service of Ukraine. It was born as one of the major steps in reforms occurring in our healthcare and would affect every single person in the country.
 
 **Edit, August 2018:** it is in production for more than a year, more than 22 million people (50% of the population) are signed up. Last time I went to a private clinic I was offered to use this system to get services for free, instead of paying pretty expensive bills. It works, grows and I’m proud of it.
 
@@ -39,9 +39,9 @@ The goals section reveals things how I see them; this is not an official positio
 
 ## Project goals
 
-Ukraine is moving in the direction of digitalization of all its services. We are trying to rely on technology and transparency, which should make corruption hard. All other options are constantly failing  -  our country is struggling with it.
+Ukraine is moving in the direction of digitalization of all its services. We are trying to rely on technology and transparency, which should make corruption hard. All other options are constantly failing - our country is struggling with it.
 
-One of the steps in this area is a medical reform that is starting in our country. In my opinion, we really need a better way to manage taxpayers’ money  -  the legacy process that we acquired from the USSR is not efficient and does not oppose corruption.
+One of the steps in this area is a medical reform that is starting in our country. In my opinion, we really need a better way to manage taxpayers’ money - the legacy process that we acquired from the USSR is not efficient and does not oppose corruption.
 
 ### How it works right now?
 
@@ -55,17 +55,17 @@ Some clinics would even refuse to accept residents from other country regions, e
 
 Patient data is another painful part for most of the people, it is stored in paper form with handwritten notes within the clinic of residence.
 
-Paper receipts are creating large space for corruption for pharmaceutical companies and drug stores  -  they can bribe doctors to give prescriptions with a certain brand and suggest buying them in a specific drug store. After the drug purchase the receipt can be thrown away, leaving no evidence of a crime.
+Paper receipts are creating large space for corruption for pharmaceutical companies and drug stores - they can bribe doctors to give prescriptions with a certain brand and suggest buying them in a specific drug store. After the drug purchase the receipt can be thrown away, leaving no evidence of a crime.
 
 ### How is it going to work?
 
-Each patient can see a list of all doctors and clinics in the country on an official website, come to the chosen place, and sign a digital declaration  -  a three-party agreement between doctor, patient, and the National Health Service of Ukraine. An OTP code which is sent to a patient’s phone or a full scan copy of all his documents is required to authorize a signature from the patient side.
+Each patient can see a list of all doctors and clinics in the country on an official website, come to the chosen place, and sign a digital declaration - a three-party agreement between doctor, patient, and the National Health Service of Ukraine. An OTP code which is sent to a patient’s phone or a full scan copy of all his documents is required to authorize a signature from the patient side.
 
-After signing the declaration a medical service provider (MSP) can take care of his patient and receive medical reimbursement on a monthly basis. If a patient is not happy with the quality of service  -  he is free to sign a new declaration with any other MSP; the old one would terminate so money will “follow the patient.”
+After signing the declaration a medical service provider (MSP) can take care of his patient and receive medical reimbursement on a monthly basis. If a patient is not happy with the quality of service - he is free to sign a new declaration with any other MSP; the old one would terminate so money will “follow the patient.”
 
 In theory, it will create true market conditions between medical service providers and increase the quality of service. Doctors would try to have many patients under their care. They would know each other for longer periods of time, which creates an additional positive impact on a patient’s health.
 
-Private clinics with higher costs are also free to enter reform and reduce their prices by receiving part of the money from the government. All they need  -  sign an agreement and use software that is integrated with NHS API.
+Private clinics with higher costs are also free to enter reform and reduce their prices by receiving part of the money from the government. All they need - sign an agreement and use software that is integrated with NHS API.
 
 Patient data must be securely stored in a centralized database and available only for authorized by a patient medical personnel.
 
@@ -79,7 +79,7 @@ Prescriptions should be digitalized so that it would be easy to apply data scien
 - From 2018 must be used by all doctors that are part of reform, by law
 - Provide space for innovation and open market relations for third-party medical information system providers. API for them should be easy to use and must not dictate what system to build on top of it
 - Resource limits for the first release: 4 months, ~10 developers, few analysts, and a few business people. Also, the project office (which was a customer for us) helped us during all development
-- Aim on security  -  sensitive data must be encrypted, fake‑prone and accessible only for authorized users
+- Aim on security - sensitive data must be encrypted, fake‑prone and accessible only for authorized users
 - High regulations. Eventually, all data must be stored in certified data centers on the territory of Ukraine. And we will need to pass extremely complicated compliance process
 
 ## Breaking up the requirements
@@ -109,7 +109,7 @@ Drone® view of the architecture
 
 This is one of our architecture patterns that was extracted during P2P marketplace development. It’s nice to have a single component that is responsible for all business logic and uses all other microservices and SaaS APIs to achieve its goals.
 
-It stores temporary data for create/update requests. Eg. when you want to change password  -  we will send you an email and the reset code would be stored in the database that belongs to IL. But since the data has an explicit TTL, it could be truncated on a daily basis.
+It stores temporary data for create/update requests. Eg. when you want to change password - we will send you an email and the reset code would be stored in the database that belongs to IL. But since the data has an explicit TTL, it could be truncated on a daily basis.
 
 ### Master Patient Index (MPI)
 
@@ -189,7 +189,7 @@ Reports are sent to a public Google Cloud Storage bucket.
 
 All this runs on Google Container Engine (a hosted Kubernetes cluster) with plans to migrate to a Ukrainian DC that provides cloud on top of OpenStack.
 
-For production we are using two clusters  -  back‑end and front‑end. This allows us to apply a hard constraint on communication patterns between them. Front‑end should not be able to access private APIs directly, without authentication. Kubernetes has a NetworkPolicy to solve it.
+For production we are using two clusters - back‑end and front‑end. This allows us to apply a hard constraint on communication patterns between them. Front‑end should not be able to access private APIs directly, without authentication. Kubernetes has a NetworkPolicy to solve it.
 
 ### Configuration
 
@@ -197,9 +197,9 @@ Deployment configuration is stored in a private repo, each branch corresponds to
 
 kubectl apply -f my_pod.yaml
 
-I’ve built several bash helpers to simplify routine operations  -  connecting to the pod or a database, creating and restoring backups or even connecting to the Erlang node with Observer.
+I’ve built several bash helpers to simplify routine operations - connecting to the pod or a database, creating and restoring backups or even connecting to the Erlang node with Observer.
 
-Eventually, the team started to complain that this seems too complicated  -  there were issues when you simply forget to change some environment variables. And pod descriptions started to vary from environment to environment, so automatic merging does not work anymore.
+Eventually, the team started to complain that this seems too complicated - there were issues when you simply forget to change some environment variables. And pod descriptions started to vary from environment to environment, so automatic merging does not work anymore.
 
 To address this issue our DevOps is working on replacing YAML configuration with Helm charts so that we can store everything in a single branch and review files side‑by‑side.
 
@@ -231,7 +231,7 @@ We use pghoard that creates a base‑backup every 6 hours and WAL logs archives 
 
 We had an issue where all data in a database were lost on a pod restart even though a persistent volume was attached to it.
 
-By double checking pod and the rest of configuration, I wasn’t able to find anything that looked suspicious. Even more  -  all files in a folder where PV is attached were persisted, only the PGDATA directory was erased on each start.
+By double checking pod and the rest of configuration, I wasn’t able to find anything that looked suspicious. Even more - all files in a folder where PV is attached were persisted, only the PGDATA directory was erased on each start.
 
 This made me think that there are some bugs in our docker entrypoint script, but it exactly matched a similar script from an official image, except the part that is responsible for backups and does not delete anything.
 
@@ -243,21 +243,21 @@ When a Docker container starts it looks for volumes that must be mounted. When t
 
 ### Handling upstream errors in the integration layer
 
-There is a simple approach that would allow you to reply to most requests without side‑effects  -  use HTTP PUT verb and make sure it is idempotent (creates or updates entities completely) on the upstream services.
+There is a simple approach that would allow you to reply to most requests without side‑effects - use HTTP PUT verb and make sure it is idempotent (creates or updates entities completely) on the upstream services.
 
 ### How to sell Elixir?
 
-In my opinion, the first things the customer is looking for  -  trust, which is derived from the expertise of the team members, proven track record, and ability to take right decisions. On the technology side of sale expect that a customer may worry about vendor lock on technologies that are planned to be used in a project.
+In my opinion, the first things the customer is looking for - trust, which is derived from the expertise of the team members, proven track record, and ability to take right decisions. On the technology side of sale expect that a customer may worry about vendor lock on technologies that are planned to be used in a project.
 
-Elixir is not a silver bullet and it does not fit any project, but when you are sure it really fits the customer’s needs  -  tell them why it is so great and what would be the main benefits of using it in this particular project.
+Elixir is not a silver bullet and it does not fit any project, but when you are sure it really fits the customer’s needs - tell them why it is so great and what would be the main benefits of using it in this particular project.
 
 Avoid doing so by listing language properties from the official web site. Eg. availability is one of the core properties that are required by most of the people that are looking for development teams irrespective of the technology stack.
 
-It is a great idea to provide references on the projects that already use Elixir. When they are in the same domain  -  it’s even better. That’s why I’m writing these articles  -  now you have a few additional references.
+It is a great idea to provide references on the projects that already use Elixir. When they are in the same domain - it’s even better. That’s why I’m writing these articles - now you have a few additional references.
 
 Tell about development velocity that it allows to achieve, which reduces both cost and the time to market.
 
-And add some emotional context  -  do you really enjoy Elixir? Be passionate, in a good way.
+And add some emotional context - do you really enjoy Elixir? Be passionate, in a good way.
 
 I was extremely happy to hear from the project office technology lead these words:
 
@@ -265,4 +265,4 @@ I was extremely happy to hear from the project office technology lead these word
 
 ## Thanks
 
-I want to thank everybody who participated in this development  -  our team, project office, sponsors and people from the Government that are supporting reforms. All this would be definitely not possible without you. I wish all of us a good journey and even more interesting accomplishments in the future.
+I want to thank everybody who participated in this development - our team, project office, sponsors and people from the Government that are supporting reforms. All this would be definitely not possible without you. I wish all of us a good journey and even more interesting accomplishments in the future.

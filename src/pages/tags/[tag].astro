@@ -82,7 +82,7 @@ const TAG_INTROS: Record<string, string> = {
 };
 
 const totalCount = posts.length + projects.length;
-const title = `#${displayTag} — Andrew Dryga`;
+const title = `#${displayTag} - Andrew Dryga`;
 const description =
   TAG_INTROS[displayTag.toLowerCase()] ??
   `Notes on ${displayTag.toLowerCase()} from shipping real systems.`;
@@ -107,7 +107,7 @@ const description =
         </h1>
         <p class="text-muted-foreground max-w-2xl text-sm">
           {totalCount}
-          {totalCount === 1 ? "result" : "results"} — {posts.length}
+          {totalCount === 1 ? "result" : "results"} - {posts.length}
           {posts.length === 1 ? "post" : "posts"}, {projects.length}
           {projects.length === 1 ? "project" : "projects"}
         </p>

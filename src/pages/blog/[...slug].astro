@@ -28,7 +28,7 @@ const { Content, headings } = await render(post);
 
 const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL(`/blog/${post.id}/`, site).toString();
-const title = `${post.data.title} — Andrew Dryga`;
+const title = `${post.data.title} - Andrew Dryga`;
 const description = post.data.description;
 
 const publishISO = post.data.publishDate?.toISOString?.();

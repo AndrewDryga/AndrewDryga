@@ -1,7 +1,7 @@
 ---
-title: "Introducing Sage  -  a Sagas pattern implementation in Elixir"
+title: "Introducing Sage - a Sagas pattern implementation in Elixir"
 shortTitle: "Introducing Sage"
-description: "Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project -  this article is for you."
+description: "Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project - this article is for you."
 publishDate: 2018-05-31
 updatedDate: 2018-05-31
 category: "Architecture"
@@ -19,7 +19,7 @@ relatedProjects:
 
 import { SagaDiagram, SagaStep, SagaArrow } from "../../components/mdx/SagaDiagram";
 
-<SagaDiagram title="Diagram 1  -  Linear Saga with Compensations">
+<SagaDiagram title="Diagram 1 - Linear Saga with Compensations">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
   <SagaArrow showTx txLabel="1" />
   <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="warning" />
@@ -37,7 +37,7 @@ import { SagaDiagram, SagaStep, SagaArrow } from "../../components/mdx/SagaDiagr
 
 ## What problem are we trying to solve?
 
-Most products integrate with external systems  -  payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
+Most products integrate with external systems - payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
 
 Example: creating a user in your DB, provisioning a customer in Stripe, sending a welcome email, and writing an audit log. If any of those fail, you can’t magically roll back the rest with a single ACID transaction.
 
@@ -76,7 +76,7 @@ Without structure, this logic becomes brittle and hard to evolve.
 
 ## What is a Saga?
 
-<SagaDiagram title="Diagram 2  -  Saga successful flow visualization">
+<SagaDiagram title="Diagram 2 - Saga successful flow visualization">
     <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
     <SagaArrow showTx txLabel="1" />
     <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="inactive" />
@@ -116,7 +116,7 @@ Key goals:
 
 > “It’s like Ecto.Multi but across business logic and third-party APIs.”
 
-<SagaDiagram title="Diagram 3  -  Parallel Bookings">
+<SagaDiagram title="Diagram 3 - Parallel Bookings">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
   <SagaArrow showTx txLabel="1" />
   <SagaStep tx={"Pre-authorize card"} txStatus="success" comp={"Cancel pre- authorization"} compStatus="warning" />
@@ -130,7 +130,7 @@ Key goals:
 
 <br />
 
-<SagaDiagram title="Diagram 3  -  Retries">
+<SagaDiagram title="Diagram 3 - Retries">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
   <SagaArrow showTx txLabel="1" />
   <SagaStep tx={"Pre-authorize card"} txStatus="success" comp={"Cancel pre- authorization"} compStatus="inactive" />
@@ -187,7 +187,7 @@ Sage.new()
 
 ## Tradeoffs and mental model
 
-- You’re not doing a single ACID transaction  -  you’re modeling a distributed, multi-step business process.
+- You’re not doing a single ACID transaction - you’re modeling a distributed, multi-step business process.
 - Compensations are business semantics, not magical inverse operations.
 - Embrace idempotency everywhere: steps and compensations should be safe to retry.
 - Build for partial failure as a first-class reality.
@@ -206,4 +206,4 @@ Sage.new()
 - Paper (Sagas, 1987): A key conceptual reference for long-running transactions
 - Start small: wrap one gnarly multi-step flow and add compensations where you already perform manual cleanups
 
-By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be  -  while still shipping what matters.
+By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be - while still shipping what matters.
