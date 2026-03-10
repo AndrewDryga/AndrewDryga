@@ -212,7 +212,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
               <path d="m15.4 4.6-1.4 1.4"></path>
               <path d="M8.6 4.6 10 6"></path>
             </svg>
-            <span>Swipe to navigate</span>
+            <span>Swipe down to navigate</span>
           </span>
         </div>
       </div>
@@ -480,6 +480,13 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
 
       // Detect vertical intent early to block scroll before browser commits
       if (deltaY > DETECT_THRESHOLD && deltaY > deltaX) {
+        const swipingDown = touch.clientY < touchStartY;
+        const swipingUp = touch.clientY > touchStartY;
+
+        // Allow normal scroll at boundaries
+        if (swipingUp && activeIndex === 0) return;
+        if (swipingDown && activeIndex >= items.length - 1) return;
+
         isVerticalSwipe = true;
         event.preventDefault();
       }
