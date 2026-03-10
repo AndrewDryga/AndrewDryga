@@ -313,8 +313,8 @@ const sparkline = buildSparkline(sparklinePoints);
 
           <SequenceDiagram class="space-y-6">
             <Participants>
-              <Participant name="Client" color="primary" position="left" />
-              <Participant name="Auth API" color="accent" position="right" />
+              <Participant name="Client" color="primary" />
+              <Participant name="Auth API" color="accent" />
             </Participants>
             <Messages class="space-y-4">
               <CombinedFragment
@@ -326,37 +326,37 @@ const sparkline = buildSparkline(sparklinePoints);
                   <Message
                     label="POST /sessions (i)"
                     type="request"
-                    direction="right"
+                    from={0} to={1}
                   />
-                  <ActivationBox position="right">
+                  <ActivationBox participant={1}>
                     <CombinedFragment type="alt" label="Credentials valid?">
                       <CombinedOperand first label="[yes]">
                         <Message
                           label="Verify credentials"
                           type="async"
-                          direction="left"
+                          from={1} to={0}
                         />
                         <Message
                           label="Persist session"
                           type="async"
-                          direction="left"
+                          from={1} to={0}
                         />
                         <Message
                           label="Commit audit log"
                           type="async"
-                          direction="left"
+                          from={1} to={0}
                         />
                         <Message
                           label="200 OK + token"
                           type="response"
-                          direction="left"
+                          from={1} to={0}
                         />
                       </CombinedOperand>
                       <CombinedOperand label="[no]">
                         <Message
                           label="401 Unauthorized"
                           type="error"
-                          direction="left"
+                          from={1} to={0}
                         />
                         <SelfCall
                           label="Increment attempt counter"
@@ -374,7 +374,7 @@ const sparkline = buildSparkline(sparklinePoints);
                   <Message
                     label="No response within 30s"
                     type="error"
-                    direction="left"
+                    from={1} to={0}
                   />
                   <Note
                     text="Client aborts pending promise and surfaces error."
@@ -388,8 +388,8 @@ const sparkline = buildSparkline(sparklinePoints);
 
           <SequenceDiagram class="space-y-6">
             <Participants>
-              <Participant name="Client" color="primary" position="left" />
-              <Participant name="Auth API" color="accent" position="right" />
+              <Participant name="Client" color="primary" />
+              <Participant name="Auth API" color="accent" />
             </Participants>
             <Messages class="space-y-4">
               <CombinedFragment type="alt" guard="account locked?">
@@ -397,7 +397,7 @@ const sparkline = buildSparkline(sparklinePoints);
                   <Message
                     label="Reject immediately"
                     type="error"
-                    direction="left"
+                    from={1} to={0}
                   />
                   <Note text="State {status == locked}" position="right" />
                 </CombinedOperand>
@@ -411,12 +411,12 @@ const sparkline = buildSparkline(sparklinePoints);
                       <Message
                         label="Challenge MFA"
                         type="async"
-                        direction="left"
+                        from={1} to={0}
                       />
                       <Message
                         label="MFA verified"
                         type="response"
-                        direction="left"
+                        from={1} to={0}
                       />
                     </CombinedOperand>
                   </CombinedFragment>
@@ -429,7 +429,7 @@ const sparkline = buildSparkline(sparklinePoints);
                       <Message
                         label="Flag account"
                         type="async"
-                        direction="left"
+                        from={1} to={0}
                       />
                       <Note
                         text="Break aborts remaining flow"
@@ -440,7 +440,7 @@ const sparkline = buildSparkline(sparklinePoints);
                   <Message
                     label="401 Unauthorized"
                     type="error"
-                    direction="left"
+                    from={1} to={0}
                   />
                 </CombinedOperand>
               </CombinedFragment>
@@ -449,7 +449,7 @@ const sparkline = buildSparkline(sparklinePoints);
                   <Message
                     label="Alert security bridge"
                     type="async"
-                    direction="left"
+                    from={1} to={0}
                   />
                 </CombinedOperand>
               </CombinedFragment>
