@@ -1,0 +1,84 @@
+---
+import { techHighlights, techCategories } from "../data/techStack";
+
+const MAX_YEARS = 16;
+const BAR_WIDTH = 16;
+
+function renderBar(years: number): string {
+  const filled = Math.round((years / MAX_YEARS) * BAR_WIDTH);
+  const empty = BAR_WIDTH - filled;
+  return "█".repeat(filled) + "░".repeat(empty);
+}
+
+const colorMap: Record<string, string> = {
+  cyan: "text-terminal-cyan",
+  green: "text-terminal-green",
+  yellow: "text-terminal-yellow",
+};
+---
+
+<div
+  class="bg-terminal-surface border-2 border-terminal-cyan/30 rounded p-4 md:p-6 motion-safe:animate-fade-in shadow-[0_0_40px_hsl(var(--terminal-cyan)/0.15)]"
+>
+  <div class="font-mono text-xs md:text-sm space-y-0.5">
+    <!-- Highlights -->
+    {
+      techHighlights.map((h) => (
+        <div class="flex gap-2">
+          <span class="text-terminal-cyan w-20 shrink-0">{h.label}</span>
+          <span class="text-foreground/90">{h.value}</span>
+        </div>
+      ))
+    }
+
+    <div class="text-terminal-green/40 select-none" aria-hidden="true">
+      ────────────────────────────────
+    </div>
+
+    <!-- Tech categories -->
+    {
+      techCategories.map((cat) => (
+        <div class="space-y-0.5">
+          {cat.items.map((item, i) => (
+            <div class="flex items-baseline">
+              {/* Category label on first item, empty spacer on sub-items */}
+              {i === 0 ? (
+                <span class={`${colorMap[cat.color]} w-20 shrink-0 self-start`}>
+                  {cat.label}
+                </span>
+              ) : (
+                <span class="w-20 shrink-0" />
+              )}
+              <span class="text-foreground/90 w-48 md:w-56 shrink-0 whitespace-pre-line">
+                {item.name}
+              </span>
+              {item.years ? (
+                <>
+                  <span
+                    class={`${item.barColor ? colorMap[item.barColor] : "text-terminal-green"} text-[10px] md:text-xs tracking-tight hidden sm:inline shrink-0 ml-4`}
+                  >
+                    {renderBar(item.years)}
+                  </span>
+                  <span class="text-muted-foreground text-[10px] md:text-xs ml-2 shrink-0">
+                    {item.years}yr
+                  </span>
+                  {item.note && (
+                    <span class="text-muted-foreground text-[10px] md:text-xs ml-2 hidden md:inline">
+                      · {item.note}
+                    </span>
+                  )}
+                </>
+              ) : (
+                item.note && (
+                  <span class="text-muted-foreground text-[10px] md:text-xs shrink-0 ml-4">
+                    ({item.note})
+                  </span>
+                )
+              )}
+            </div>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+</div>

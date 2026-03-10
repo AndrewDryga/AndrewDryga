@@ -4,16 +4,23 @@ import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { formatPublishDate } from "../../lib/blog";
+import { allProjects } from "../../data/projects";
 
 export async function getStaticPaths() {
-  // Collect all unique tags from blog posts (exclude drafts in production)
   const posts = await getCollection("blog", (entry: CollectionEntry<"blog">) =>
     import.meta.env.PROD ? !entry.data.draft : true,
   );
 
+  // Collect tags from both blog posts and project tech arrays
   const tagMap = new Map<string, string>();
   for (const p of posts) {
     for (const t of p.data.tags ?? []) {
+      const key = t.toLowerCase();
+      if (!tagMap.has(key)) tagMap.set(key, t);
+    }
+  }
+  for (const proj of allProjects) {
+    for (const t of proj.tech) {
       const key = t.toLowerCase();
       if (!tagMap.has(key)) tagMap.set(key, t);
     }
@@ -26,10 +33,9 @@ export async function getStaticPaths() {
 }
 
 const { displayTag } = Astro.props as { displayTag: string };
-
 const lowerTag = (Astro.params.tag ?? "").toLowerCase();
 
-// Load and filter posts by tag (case-insensitive), newest first
+// Blog posts matching tag
 const allPosts = await getCollection(
   "blog",
   (entry: CollectionEntry<"blog">) =>
@@ -45,10 +51,10 @@ const posts = allPosts
     return bt - at;
   });
 
-type BlogEntry = CollectionEntry<"blog">;
-const postPairs: Array<{ post: BlogEntry; index: number }> = (
-  posts as BlogEntry[]
-).map((p, i) => ({ post: p, index: i }));
+// Projects matching tech (case-insensitive)
+const projects = allProjects.filter((p) =>
+  p.tech.some((t) => t.toLowerCase() === lowerTag),
+);
 
 const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL(
@@ -60,7 +66,7 @@ const TAG_INTROS: Record<string, string> = {
   architecture:
     "Practical architecture notes from systems that shipped. Trade-offs, diagrams, and patterns that stayed simple under real load.",
   engineering:
-    "Hands-on product engineering from idea to production. Thin slices, fast feedback, and code that’s easy to change.",
+    "Hands-on product engineering from idea to production. Thin slices, fast feedback, and code that's easy to change.",
   security:
     "Pragmatic security in production: access, auth, and data safeguards that reduce risk without slowing delivery.",
   database:
@@ -70,11 +76,12 @@ const TAG_INTROS: Record<string, string> = {
   elixir:
     "Real-world Elixir work: OTP patterns, deployment tactics, and simple designs that scale with the team.",
   reliability:
-    "SLOs, incident reviews, and the boring habits that keep uptime predictable. What actually helped and what didn’t.",
+    "SLOs, incident reviews, and the boring habits that keep uptime predictable. What actually helped and what didn't.",
   testing:
     "Testing that supports change instead of blocking it. From flaky specs to contracts and fast feedback loops.",
 };
 
+const totalCount = posts.length + projects.length;
 const title = `#${displayTag} — Andrew Dryga`;
 const description =
   TAG_INTROS[displayTag.toLowerCase()] ??
@@ -87,106 +94,139 @@ const description =
   <section class="px-4 py-10 md:py-14">
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
-      <header class="mb-8 md:mb-10">
+      <header class="mb-8">
         <Breadcrumbs
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Blog", href: "/blog/" },
-            { label: `#${displayTag}` },
-          ]}
+          items={[{ label: "Home", href: "/" }, { label: `#${displayTag}` }]}
           class="mb-2"
         />
-        <div
-          class="font-mono text-sm text-terminal-green mb-2 flex items-center gap-2"
-        >
-          <span class="text-terminal-yellow"
-            >grep -Ril "tag:{lowerTag}" ./blogs</span
-          >
-        </div>
-        <h1 class="text-4xl md:text-5xl font-bold font-sans">
-          <span class="text-foreground">Tag:</span>
-          <span> #{displayTag}</span>
-        </h1>
-        <p class="text-muted-foreground max-w-2xl mt-3">
-          {posts.length}
-          {posts.length === 1 ? "post" : "posts"} tagged with <span
-            class="text-terminal-yellow">#{displayTag}</span
-          >.
-          <a
-            href="/blog/"
-            class="ml-2 underline decoration-terminal-yellow/60 hover:text-terminal-yellow transition-colors"
-            >View all posts →</a
-          >
+        <p class="font-mono text-sm text-terminal-green mb-3">
+          grep -Ril "{lowerTag}" ./projects ./blog
         </p>
+        <h1 class="text-3xl md:text-4xl font-bold font-sans mb-1">
+          #{displayTag}
+        </h1>
+        <p class="text-muted-foreground max-w-2xl text-sm">
+          {totalCount}
+          {totalCount === 1 ? "result" : "results"} — {posts.length}
+          {posts.length === 1 ? "post" : "posts"}, {projects.length}
+          {projects.length === 1 ? "project" : "projects"}
+        </p>
+        {
+          TAG_INTROS[lowerTag] && (
+            <p class="text-sm text-muted-foreground max-w-2xl mt-2">
+              {TAG_INTROS[lowerTag]}
+            </p>
+          )
+        }
       </header>
 
-      <p class="text-sm text-muted-foreground max-w-3xl mb-10">
-        {description}
-      </p>
-
-      <!-- Posts list -->
-      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {
-          posts.length === 0 ? (
-            <div class="rounded-lg border border-border bg-card/40 p-6 text-muted-foreground">
-              No posts found for{" "}
-              <span class="text-terminal-cyan font-mono">#{displayTag}</span>.{" "}
-              <a
-                href="/blog/"
-                class="underline decoration-terminal-cyan/60 hover:text-terminal-green transition-colors"
-              >
-                Back to blog
-              </a>
-              .
+      <!-- Blog Posts -->
+      {
+        posts.length > 0 && (
+          <div class="mb-8 md:mb-10">
+            <div class="font-mono text-sm text-terminal-yellow/60 mb-3">
+              Posts
             </div>
-          ) : (
-            postPairs.map((pair) => {
-              const { post, index } = pair;
-              const {
-                title: postTitle,
-                description: desc,
-                publishDate,
-              } = post.data;
-              const postHref = `/blog/${post.slug}/`;
-              const topLabel = post.data.category ?? displayTag;
-              const excerpt = desc ?? "";
-              return (
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {posts.map((post, index) => {
+                const {
+                  title: postTitle,
+                  description: desc,
+                  publishDate,
+                  category,
+                } = post.data;
+                const postHref = `/blog/${post.slug}/`;
+                const excerpt = desc ?? "";
+                return (
+                  <article
+                    class="group relative h-full rounded-lg border border-border bg-card/40 p-5 transition-all hover:border-terminal-yellow hover:shadow-glow"
+                    style={`animation-delay: ${index * 80}ms`}
+                  >
+                    <a
+                      href={postHref}
+                      class="absolute inset-0 rounded-lg"
+                      aria-label={`Read more: ${postTitle}`}
+                    />
+                    <div class="flex h-full flex-col gap-3">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-0.5 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+                          {category ?? displayTag}
+                        </span>
+                        <span class="font-mono text-xs text-muted-foreground">
+                          {publishDate ? formatPublishDate(publishDate) : ""}
+                        </span>
+                      </div>
+                      <h2 class="text-lg font-bold transition-colors group-hover:text-terminal-yellow">
+                        {postTitle}
+                      </h2>
+                      {excerpt && (
+                        <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                          {excerpt}
+                        </p>
+                      )}
+                      <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                        Read post →
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        )
+      }
+
+      <!-- Projects -->
+      {
+        projects.length > 0 && (
+          <div class="mb-8 md:mb-10">
+            <div class="font-mono text-sm text-terminal-cyan/60 mb-3">
+              Projects
+            </div>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {projects.map((proj, index) => (
                 <article
-                  class="group relative h-full rounded-lg border border-border bg-card/40 shadow-card transition-all hover:border-terminal-yellow hover:shadow-glow"
+                  class="group relative rounded-lg border border-border bg-card/40 p-5 transition-all hover:border-terminal-green hover:shadow-glow"
                   style={`animation-delay: ${index * 80}ms`}
                 >
                   <a
-                    href={postHref}
+                    href={`/projects/${proj.id}/`}
                     class="absolute inset-0 rounded-lg"
-                    aria-label={`Read more: ${postTitle}`}
+                    aria-label={`View project: ${proj.name}`}
                   />
-                  <div class="relative flex h-full flex-col gap-4 p-5 md:p-6">
-                    <div class="flex items-center justify-between">
-                      <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
-                        {topLabel}
-                      </span>
-                      <span class="font-mono text-xs text-muted-foreground">
-                        {publishDate ? formatPublishDate(publishDate) : ""}
-                      </span>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-baseline justify-between gap-4">
+                      <h2 class="text-lg font-bold transition-colors group-hover:text-terminal-green">
+                        {proj.name}
+                      </h2>
+                      {proj.period && (
+                        <span class="font-mono text-xs text-muted-foreground shrink-0">
+                          {proj.period}
+                        </span>
+                      )}
                     </div>
-                    <h2 class="text-2xl font-semibold tracking-tight transition-colors group-hover:text-terminal-cyan md:text-3xl">
-                      {postTitle}
-                    </h2>
-                    {excerpt && (
-                      <p class="text-sm text-muted-foreground leading-relaxed">
-                        {excerpt}
-                      </p>
-                    )}
-                    <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
-                      Read post →
+                    <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                      {proj.description}
+                    </p>
+                    <span class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm transition-all group-hover:gap-3 mt-1">
+                      View project →
                     </span>
                   </div>
                 </article>
-              );
-            })
-          )
-        }
-      </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {
+        totalCount === 0 && (
+          <div class="rounded-lg border border-border bg-card/40 p-6 text-muted-foreground">
+            No results found for{" "}
+            <span class="text-terminal-cyan font-mono">#{displayTag}</span>.
+          </div>
+        )
+      }
     </div>
   </section>
 

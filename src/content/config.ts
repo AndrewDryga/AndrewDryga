@@ -53,7 +53,21 @@ const testimonials = defineCollection({
     }),
 });
 
+const projects = defineCollection({
+  type: "content",
+  schema: ({ image }) =>
+    z.object({
+      projectId: z
+        .string()
+        .min(1, "projectId is required - must match the id in projects.ts"),
+      title: z.string().min(1).optional(),
+      heroImage: image().optional(),
+      draft: z.boolean().default(false),
+    }),
+});
+
 export const collections = {
   blog,
   testimonials,
+  projects,
 };

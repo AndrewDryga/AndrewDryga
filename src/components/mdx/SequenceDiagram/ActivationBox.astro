@@ -1,27 +1,19 @@
 ---
 interface Props {
-  position?: "left" | "right";
-  offset?: number;
+  participant?: number;
   class?: string;
 }
 
-const {
-  position = "left",
-  offset,
-  class: className = "",
-} = Astro.props as Props;
-
-const computedOffset =
-  typeof offset === "number" ? offset : position === "left" ? 15 : 85;
-
-const style = `left:${computedOffset}%`;
+const { participant = 0, class: className = "" } = Astro.props as Props;
 ---
 
-<div class={`relative ${className}`.trim()}>
+<div
+  class={`sd-activation-box relative ${className}`.trim()}
+  data-participant={participant}
+>
   <div class="sd-row absolute inset-0 pointer-events-none">
     <div
-      class={`absolute w-3 bg-primary/10 border border-primary top-2 bottom-2 -translate-x-1/2`.trim()}
-      style={style}
+      class="sd-activation-bar absolute w-3 bg-primary/10 border border-primary top-2 bottom-2 -translate-x-1/2"
     >
     </div>
   </div>

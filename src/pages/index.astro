@@ -5,17 +5,13 @@ import ProjectCard from "../components/ProjectCard.astro";
 import { featuredProjects } from "../data/projects";
 import Testimonials from "../components/Testimonials.astro";
 import { getFeaturedTestimonials } from "../data/testimonials";
-import { techStack } from "../data/techStack";
+import TechStack from "../components/TechStack.astro";
 import Button from "../components/ui/Button.astro";
 
 const title = "Andrew Dryga — Founding Engineer";
 const description =
   "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms—shipping what matters, measuring results, and cutting waste without slowing teams.";
 const testimonials = await getFeaturedTestimonials();
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
-}
 ---
 
 <BaseLayout {title} {description}>
@@ -176,7 +172,7 @@ function formatNumber(value: number): string {
                 </h3>
                 <p class="text-muted-foreground text-sm leading-relaxed">
                   Grew revenue 3× to mid-seven figures; slashed infrastructure
-                  costs by $1M+/yr — both in year one.
+                  costs by $2M+/yr — both in year one.
                 </p>
               </div>
             </div>
@@ -254,95 +250,15 @@ function formatNumber(value: number): string {
   </section>
 
   <!-- Tech Stack -->
-  <section id="tech-stack" class="py-16 md:py-24 px-4">
+  <section id="tech-stack" class="py-14 md:py-20 px-4">
     <div class="max-w-6xl mx-auto">
-      <div class="mb-12 motion-safe:animate-fade-in animate-delay-0">
-        <p class="font-mono text-terminal-green mb-2">
-          $ mindscan --by-file-by-tech
-        </p>
+      <div class="mb-8 motion-safe:animate-fade-in animate-delay-0">
+        <p class="font-mono text-terminal-green mb-2">$ neofetch</p>
         <h2 class="text-3xl md:text-4xl font-bold">
           Tech <span class="text-terminal-green">Stack</span>
         </h2>
       </div>
-
-      <div
-        class="bg-terminal-surface border-2 border-terminal-cyan/30 rounded p-4 md:p-6 motion-safe:animate-fade-in shadow-[0_0_40px_hsl(var(--terminal-cyan)/0.15)] backdrop-blur-sm"
-      >
-        <div class="font-mono text-xs md:text-sm">
-          <!-- Column headers -->
-          <div
-            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/30"
-          >
-            <div
-              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs"
-            >
-              technology
-            </div>
-            <div
-              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs text-right hidden md:block w-20"
-            >
-              files
-            </div>
-            <div
-              class="text-terminal-green/70 uppercase tracking-wider text-[10px] md:text-xs text-right w-24 md:w-32"
-            >
-              lines
-            </div>
-          </div>
-
-          <!-- Data rows -->
-          {
-            techStack.map((item, index) => (
-              <div
-                class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
-                style={`animation-delay: ${index * 60}ms`}
-              >
-                <div class="text-terminal-cyan/90 truncate">
-                  {item.language}
-                </div>
-                <div class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums">
-                  {formatNumber(item.files)}
-                </div>
-                <div class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm">
-                  {formatNumber(item.code)}
-                </div>
-              </div>
-            ))
-          }
-          <div
-            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 py-2 border-b border-terminal-green/10 hover:bg-terminal-green/5 transition-all duration-150"
-          >
-            <div class="text-terminal-cyan/90 truncate">BI dashboards</div>
-            <div
-              class="text-terminal-yellow/90 text-right hidden md:block w-20 tabular-nums"
-            >
-              83
-            </div>
-            <div
-              class="text-terminal-yellow text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
-            >
-              27,891
-            </div>
-          </div>
-
-          <!-- SUM row -->
-          <div
-            class="grid grid-cols-[1fr_auto_auto] gap-4 md:gap-8 pt-3 mt-2 border-t-2 border-terminal-green/30 font-bold"
-          >
-            <div class="text-terminal-green">TOTAL:</div>
-            <div
-              class="text-terminal-green text-right hidden md:block w-20 tabular-nums"
-            >
-              2,377
-            </div>
-            <div
-              class="text-terminal-green text-right w-24 md:w-32 tabular-nums text-xs md:text-sm"
-            >
-              1,911,355
-            </div>
-          </div>
-        </div>
-      </div>
+      <TechStack />
     </div>
   </section>
 

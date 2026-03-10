@@ -3,7 +3,7 @@ const { class: className = "" } = Astro.props;
 ---
 
 <div
-  class={`relative border border-border rounded-lg p-6 pb-10 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}
+  class={`sequence-diagram relative border border-border rounded-lg p-6 pb-10 bg-terminal-surface font-mono text-xs overflow-x-auto ${className}`.trim()}
 >
   <div class="relative space-y-4">
     <slot />
@@ -79,3 +79,175 @@ const { class: className = "" } = Astro.props;
     margin-top: 0.75rem !important;
   }
 </style>
+
+<script>
+  // Set up participant tracking on the client side
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".sequence-diagram").forEach((diagram) => {
+      const participants = Array.from(
+        diagram.querySelectorAll(".sd-participant"),
+      );
+      const count = participants.length;
+
+      if (count === 0) return;
+
+      // Calculate positions automatically
+      const margin = 10; // 10% margin on each side
+      const availableSpace = 100 - 2 * margin;
+      const spacing = count > 1 ? availableSpace / (count - 1) : 0;
+
+      participants.forEach((participant, index) => {
+        const position = count === 1 ? 50 : margin + spacing * index;
+        (participant as HTMLElement).style.left = `${position}%`;
+        (participant as HTMLElement).setAttribute(
+          "data-position",
+          position.toString(),
+        );
+        (participant as HTMLElement).setAttribute(
+          "data-index",
+          index.toString(),
+        );
+      });
+
+      // Update activation boxes based on participant positions
+      const activationBoxes = diagram.querySelectorAll(".sd-activation-box");
+      activationBoxes.forEach((box) => {
+        const participantIndex = parseInt(
+          (box as HTMLElement).getAttribute("data-participant") || "0",
+        );
+
+        if (participantIndex < 0 || participantIndex >= count) return;
+
+        const participant = participants[participantIndex] as HTMLElement;
+        const position = parseFloat(
+          participant.getAttribute("data-position") || "0",
+        );
+
+        const bar = box.querySelector(".sd-activation-bar") as HTMLElement;
+        if (bar) {
+          bar.style.left = `${position}%`;
+        }
+      });
+
+      // Update standalone self-calls based on participant positions
+      const standaloneSelfCalls = diagram.querySelectorAll(
+        ".sd-self-call-standalone",
+      );
+      standaloneSelfCalls.forEach((selfCall) => {
+        const participantIndex = parseInt(
+          (selfCall as HTMLElement).getAttribute("data-participant") || "0",
+        );
+
+        if (participantIndex < 0 || participantIndex >= count) return;
+
+        const participant = participants[participantIndex] as HTMLElement;
+        const position = parseFloat(
+          participant.getAttribute("data-position") || "0",
+        );
+
+        const container = selfCall.querySelector(
+          ".sd-self-call-box-container",
+        ) as HTMLElement;
+        if (container) {
+          container.style.left = `${position}%`;
+        }
+
+        const label = selfCall.querySelector(
+          ".sd-self-call-label",
+        ) as HTMLElement;
+        if (label) {
+          label.style.left = `${position}%`;
+          label.style.paddingLeft = "2rem";
+        }
+      });
+
+      // Update message arrows and labels based on participant positions
+      const messages = diagram.querySelectorAll(".sd-message");
+      messages.forEach((message) => {
+        const fromIndex = parseInt(
+          (message as HTMLElement).getAttribute("data-from") || "0",
+        );
+        const toIndex = parseInt(
+          (message as HTMLElement).getAttribute("data-to") || "1",
+        );
+
+        if (
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= count ||
+          toIndex >= count
+        )
+          return;
+
+        const fromParticipant = participants[fromIndex] as HTMLElement;
+        const toParticipant = participants[toIndex] as HTMLElement;
+
+        const fromPos = parseFloat(
+          fromParticipant.getAttribute("data-position") || "0",
+        );
+        const toPos = parseFloat(
+          toParticipant.getAttribute("data-position") || "0",
+        );
+
+        // Handle self-calls
+        if (fromIndex === toIndex) {
+          const arrow = message.querySelector(
+            ".sd-message-arrow",
+          ) as HTMLElement;
+          const label = message.querySelector(
+            ".sd-message-label",
+          ) as HTMLElement;
+
+          if (arrow) {
+            // Position the loop box starting at the lifeline
+            arrow.style.left = `${fromPos}%`;
+          }
+
+          if (label) {
+            // Position label centered over the loop box
+            label.style.left = `${fromPos}%`;
+            label.style.paddingLeft = "2rem"; // Offset to center over the box
+          }
+        } else {
+          // Regular message between different participants
+          const start = Math.min(fromPos, toPos);
+          const width = Math.abs(toPos - fromPos);
+          const midpoint = start + width / 2;
+
+          const arrow = message.querySelector(
+            ".sd-message-arrow",
+          ) as HTMLElement;
+          if (arrow) {
+            arrow.style.left = `${start}%`;
+            arrow.style.width = `${width}%`;
+
+            // Update arrow direction - preserve color classes
+            const arrowHead = arrow.querySelector(".sd-arrow-head");
+            if (arrowHead) {
+              const existingClasses = arrowHead.className
+                .split(" ")
+                .filter(
+                  (c) => c.startsWith("border-l-") || c.startsWith("border-r-"),
+                )
+                .join(" ");
+
+              arrowHead.className =
+                toPos > fromPos
+                  ? `sd-arrow-head sd-arrow-right absolute right-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] -translate-y-[calc(50%+1px)] ${existingClasses}`
+                  : `sd-arrow-head sd-arrow-left absolute left-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] -translate-y-[calc(50%+1px)] ${existingClasses}`;
+            }
+          }
+
+          // Position label at midpoint between participants
+          const label = message.querySelector(
+            ".sd-message-label",
+          ) as HTMLElement;
+          if (label) {
+            label.style.left = `${midpoint}%`;
+            label.style.transform = "translateX(-50%)";
+          }
+        }
+      });
+    });
+  });
+</script>

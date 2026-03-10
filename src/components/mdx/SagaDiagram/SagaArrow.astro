@@ -1,0 +1,87 @@
+---
+type Status = "default" | "success" | "fail" | "warning" | "info" | "inactive";
+export interface Props {
+  showTx?: boolean;
+  showComp?: boolean;
+  txLabel?: string;
+  compLabel?: string;
+  txStatus?: Status;
+  compStatus?: Status;
+}
+const {
+  showTx = false,
+  showComp = false,
+  txLabel,
+  compLabel,
+  txStatus = "default",
+  compStatus = "warning",
+} = Astro.props;
+
+const colorMap: Record<Status, { line: string; text: string }> = {
+  default: { line: "border-terminal-cyan/40", text: "text-terminal-cyan/60" },
+  success: { line: "border-terminal-green/40", text: "text-terminal-green/60" },
+  fail: { line: "border-red-500/40", text: "text-red-400/60" },
+  warning: {
+    line: "border-terminal-yellow/40",
+    text: "text-terminal-yellow/60",
+  },
+  info: { line: "border-blue-400/40", text: "text-blue-400/60" },
+  inactive: {
+    line: "border-muted-foreground/30",
+    text: "text-muted-foreground/60",
+  },
+};
+const txC = colorMap[txStatus] || colorMap.default;
+const compC = colorMap[compStatus] || colorMap.default;
+---
+
+<div class="contents">
+  {/* Row 1: TX arrow */}
+  <div
+    class="flex items-center justify-center relative px-1 min-w-[2rem] min-h-7"
+  >
+    {
+      showTx && (
+        <Fragment>
+          {txLabel && (
+            <span
+              class={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] leading-none ${txC.text}`}
+            >
+              {txLabel}
+            </span>
+          )}
+          <div class="flex items-center w-full">
+            <span class={`flex-1 border-t ${txC.line}`} />
+            <span class={`text-[8px] leading-none ${txC.text}`}>▶</span>
+          </div>
+        </Fragment>
+      )
+    }
+  </div>
+
+  {/* Row 2: Spacer */}
+  <div class="h-4"></div>
+
+  {/* Row 3: Comp arrow */}
+  <div
+    class="flex items-center justify-center relative px-1 min-w-[2rem] min-h-7"
+  >
+    {
+      showComp && (
+        <Fragment>
+          {compLabel && (
+            <span
+              class={`absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] leading-none ${compC.text}`}
+            >
+              {compLabel}
+            </span>
+          )}
+          <div class="flex items-center w-full">
+            <span class={`text-[8px] leading-none ${compC.text}`}>◀</span>
+            <span class={`flex-1 border-t ${compC.line}`} />
+          </div>
+        </Fragment>
+      )
+    }
+  </div>
+</div>

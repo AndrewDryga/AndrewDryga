@@ -3,11 +3,13 @@ interface Segment {
   label: string;
   value: number;
   color: string;
+  blank?: boolean;
 }
 
 interface Props {
   segments: Segment[];
   width?: number;
+  unit?: string;
   class?: string;
   legendClass?: string;
 }
@@ -15,6 +17,7 @@ interface Props {
 const {
   segments = [],
   width = 36,
+  unit = "%",
   class: className = "",
   legendClass = "",
 } = Astro.props as Props;
@@ -26,7 +29,9 @@ function normaliseSegments(length: number) {
     return segments.map(() => 0);
   }
   const raw = segments.map((segment) => (segment.value / total) * length);
-  const base = raw.map((value) => Math.max(1, Math.floor(value)));
+  const base = raw.map((value, index) =>
+    segments[index].value === 0 ? 0 : Math.max(1, Math.floor(value))
+  );
   let allocated = base.reduce((sum, value) => sum + value, 0);
 
   const remainderOrder = raw
@@ -74,10 +79,14 @@ function buildStackedBar(length: number) {
 
   const bar = segments
     .map((segment, index) => {
+      if (segment.blank) {
+        return " ".repeat(lengths[index]);
+      }
       const glyphs = "█".repeat(lengths[index]);
       return `<span class="${segment.color}">${glyphs}</span>`;
     })
-    .join("");
+    .join("")
+    .replace(/\s+$/, "");
 
   const top = `┌${"─".repeat(length)}┐`;
   const middle = `│${bar}│`;
@@ -87,10 +96,15 @@ function buildStackedBar(length: number) {
 }
 
 const stackedBarHtml = buildStackedBar(width);
-const legendEntries = segments.map((segment) => ({
-  ...segment,
-  percent: total === 0 ? 0 : Math.round((segment.value / total) * 100),
-}));
+const isPercent = unit === "%";
+const legendEntries = segments
+  .filter((segment) => !segment.blank && segment.value > 0)
+  .map((segment) => ({
+    ...segment,
+    displayValue: isPercent
+      ? `${total === 0 ? 0 : Math.round((segment.value / total) * 100)}%`
+      : `${segment.value}${unit}`,
+  }));
 ---
 
 <div class={["space-y-2", className].filter(Boolean).join(" ")}>
@@ -109,14 +123,14 @@ const legendEntries = segments.map((segment) => ({
           .filter(Boolean)
           .join(" ")}
       >
-        {legendEntries.map(({ label, color, percent }) => (
+        {legendEntries.map(({ label, color, displayValue }) => (
           <li class="flex items-center gap-1">
             <span
               class={`inline-flex h-2.5 w-2.5 rounded ${color} bg-current`}
               aria-hidden="true"
             />
             <span class="text-foreground">{label}</span>
-            <span>{percent}%</span>
+            <span>{displayValue}</span>
           </li>
         ))}
       </ul>

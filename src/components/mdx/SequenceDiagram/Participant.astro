@@ -2,18 +2,10 @@
 interface Props {
   name: string;
   color?: "primary" | "accent" | "secondary" | "terminal-green";
-  position?: "left" | "right";
-  offset?: number;
   class?: string;
 }
 
-const {
-  name,
-  color = "primary",
-  position = "left",
-  offset,
-  class: className = "",
-} = Astro.props as Props;
+const { name, color = "primary", class: className = "" } = Astro.props as Props;
 
 const colorMap: Record<NonNullable<Props["color"]>, string> = {
   primary: "bg-primary/20 text-primary border-primary",
@@ -22,16 +14,10 @@ const colorMap: Record<NonNullable<Props["color"]>, string> = {
   "terminal-green":
     "bg-terminal-green/20 text-terminal-green border-terminal-green",
 };
-
-const percentOffset =
-  typeof offset === "number" ? offset : position === "left" ? 15 : 85;
-
-const style = `left:${percentOffset}%;`;
 ---
 
 <div
-  class={`absolute top-0 bottom-0 -translate-x-1/2 z-10 flex flex-col ${className}`.trim()}
-  style={style}
+  class={`sd-participant absolute top-0 bottom-0 -translate-x-1/2 z-10 flex flex-col ${className}`.trim()}
 >
   <div
     class={`inline-block px-3 py-2 border-2 rounded font-bold flex-shrink-0 ${colorMap[color]}`}

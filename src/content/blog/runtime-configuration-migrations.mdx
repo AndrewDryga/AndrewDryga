@@ -1,6 +1,6 @@
 ---
 title: "Runtime configuration, migrations and deployment for Elixir applications"
-description: "Shortly after moving from PHP to Elixir I’ve faced a common issue: the way we deploy applications is totally different from what I used to work with."
+description: "Shortly after moving from PHP to Elixir I've faced a common issue, the way how do we deploy applications is totally different from the one I'm used to."
 publishDate: 2017-08-20
 updatedDate: 2017-08-20
 category: "DevOps"
@@ -13,232 +13,622 @@ tags:
   - Releases
   - Ecto
 draft: false
+relatedProjects:
+  - 4finance
+  - confex
 ---
 
-When you move from environments that interpolate config at build time to Elixir releases, you quickly realize two truths:
+Shortly after moving from PHP to Elixir I've faced a common issue, the way how do we deploy applications is totally different from the one I'm used to.
 
-1) Build once, run anywhere is the right default.
-2) That means most configuration must be resolved at runtime, not compile time.
+After running few production I want to share my experience and best practices with newcomers to reduce entry barrier for deploying our lovely Elixir code. This article is a little bit opinionated but I will try to list alternative approaches in case you want to explore them. And this is not step-by-step guide, you will need to figure out missing pieces.
 
-This post is a pragmatic guide for getting production-ready with:
-- Runtime configuration (env-driven, 12‑factor friendly)
-- Database migrations (safe, repeatable, automated)
-- Deployment flow (release build, migrate, boot)
+## Releasing your code
 
-The theme is simple: make deployments reliable, boring, and reversible.
+I saw few guides that recommend you to simply copy your code to the server and run something like `mix phx.server`, but it's really bad to do that.
 
-## Why runtime config?
+To run your application in production you need to create an OTP release. Currently, there are few ways that allow archive this goal but most common and community-tested tool is [Distillery](https://github.com/bitwalker/distillery).
 
-If you bake secrets and environment specifics at compile time, you will rebuild per environment and lose the "promote the same artifact" property. That leads to:
-- Drift between environments
-- Slow rollbacks
-- Accidental secret leaks in images/artifacts
+Distillery docs are comprehensive and include the view of it's developer on how you need to deal with runtime configuration. I recommend you to read it and pick whatever works best for you.
 
-Elixir offers first-class runtime configuration via `config/runtime.exs`, which executes when your application boots, not when it compiles.
+### What is an OTP release?
 
-## Runtime configuration in Elixir
+OTP release is a set of applications that should run together and their configuration. It may include Erlang Run-Time System (ERTS) in case you want to deploy to the server that does not have pre-installed ERTS or it's version mismatch from the one that you used to build the release.
 
-Use `config/runtime.exs` to read environment variables and configure your OTP apps. This file runs for every boot (release and mix).
+The first thing you need to keep in mind is that releases are platform-dependent, you can't build a release on you macOS laptop and use it on Ubuntu server. I will describe in the following sections possible ways to address this issue.
+
+The second one is that lot's of your code would be resolved at compile time, so you need to pick a configuration strategy which works for you.
+
+### Adding Distillery to the Elixir project
+
+It's very similar to adding any other Elixir dependency:
+
+1. Add `{:distillery, "~> 1.5", runtime: false}` to you `mix.exs`;
+2. Fetch dependencies by running `mix deps.get`;
+3. Add release configuration to the `rel/config.exs`, for most of my app it like this (simplified):
 
 ```elixir
-# config/runtime.exs
-import Config
+use Mix.Releases.Config,
+  # This sets the default release built by `mix release`
+  default_release: :default,
+  # This sets the default environment used by `mix release`
+  default_environment: :default
 
-# Example: Repo
-database_url =
-  System.get_env("DATABASE_URL") ||
-    raise "DATABASE_URL is missing. Example: ecto://USER:PASS@HOST:PORT/DB"
+environment :default do
+  # Copy files into release instead of creating symlink for them
+  set dev_mode: false
+  # Do not include ERTS
+  set include_erts: false
+  # Do not include source code
+  set include_src: false
+  # Set the Erlang distribution cookie
+  set cookie: :"this_is_a_secret"
+end
 
-pool_size =
-  System.get_env("POOL_SIZE", "10")
-  |> String.to_integer()
-
-config :my_app, MyApp.Repo,
-  url: database_url,
-  pool_size: pool_size,
-  ssl: System.get_env("DB_SSL", "false") == "true",
-  socket_options:
-    if(System.get_env("DB_IPV6", "false") == "true", do: [:inet6], else: [])
-
-# Example: Endpoint
-secret_key_base =
-  System.get_env("SECRET_KEY_BASE") ||
-    raise "SECRET_KEY_BASE is missing. Generate via: mix phx.gen.secret"
-
-host = System.get_env("PHX_HOST", "example.com")
-port = String.to_integer(System.get_env("PORT", "4000"))
-
-config :my_app, MyAppWeb.Endpoint,
-  url: [host: host, port: 443, scheme: "https"],
-  http: [ip: {0, 0, 0, 0}, port: port],
-  secret_key_base: secret_key_base,
-  server: true
-
-# Telemetry/Logging knobs are great to keep runtime-tunable
-config :logger, level: String.to_existing_atom(System.get_env("LOG_LEVEL", "info"))
+release :myapp do
+  set version: current_version(:myapp_api)
+  set applications: [
+    # shutdown the node if the application crashes permanently
+    myapp_api: :permanent 
+  ]
+end
 ```
 
-Guidelines:
-- Fail fast when required env is missing.
-- Make non-critical settings defaultable.
-- Keep secrets in env or a secret manager (never in git).
-- Avoid compile-time config for anything that changes per environment.
+There are few things that a require explanation:
 
-## Migrations strategy
+- There is only one release environment. I've never faced a need to build an OTP release with separate settings for a development environment, so they are always built in the same way.
+- I do not include ERTS since we deploy code via Docker containers or to Heroku, that have ERTS pre-installed. This reduces the tarball size.
+- Erlang distribution cookie should be strong random, anyone who knows that cookie and has a network access to the server would be able to run any commands on it. Do not use the same value for microservices that should not communicate via Erlang distribution protocol to ensure that would not connect to each other with defaults.
+- You can generate `rel/config.ex` with defaults by running `mix release.init`.
 
-Your database is a shared, long-lived system of record. Keep migrations:
-- Safe (backwards compatible for online deploys)
-- Automated (no hand-run steps)
-- Idempotent (re-runnable without harm)
+List of all available options is available at [Distillery docs](https://hexdocs.pm/distillery/).
 
-There are three common patterns to run migrations with releases:
+After completing this steps you can run `MIX_ENV=prod mix release` and use the release tarball which can be found at `_build/prod/rel/myapp/releases/0.1.0/my_app.tag.gz`, where `prod`, `myapp` and `0.1.0` should be replaced with you Mix environment, app name and version respectively.
 
-1) One-shot job/command before starting the app (recommended)
-2) On-boot migrator that runs, then starts the supervision tree
-3) A separate “migrate” process (K8s Job, CF Worker, CI step) between deploy and scale-up
+```
+$ ls -l _build/prod/rel/myapp/releases/0.1.0
+drwxr-xr-x   4 andrew  staff       136 Aug 18 17:28 commands
+-rwxrwxrwx   1 andrew  staff     16472 Aug 18 17:28 myapp.bat
+-rw-r--r--   1 andrew  staff    148764 Aug 18 17:28 myapp.boot
+-rw-r--r--   1 andrew  staff      2051 Aug 18 17:28 myapp.rel
+-rw-r--r--   1 andrew  staff    205330 Aug 18 17:28 myapp.script
+-rwxrwxrwx   1 andrew  staff      3714 Aug 18 17:28 myapp.sh
+-rw-r--r--   1 andrew  staff  18496269 Aug 18 17:28 myapp.tar.gz
+drwxr-xr-x  10 andrew  staff       340 Aug 18 17:28 hooks
+drwxr-xr-x   8 andrew  staff       272 Aug 18 17:28 libexec
+-rw-r--r--   1 andrew  staff     19921 Aug 18 17:28 start_clean.boot
+-rw-r--r--   1 andrew  staff      4358 Aug 18 17:28 sys.config
+-rw-r--r--   1 andrew  staff       549 Aug 18 17:28 vm.args
+```
 
-I generally pick #1 or #3. They keep app boot paths clean and explicit.
+## Configuration
 
-### Release task for migrations
+Since the by default configuration is resolved at compilation time, you need to take care of it or your DevOps would have a bad time trying to run your app.
 
-Add a small module to run migrations in a release:
+Why? It's hard to have exactly the same production configuration environment on the build server, configuration tends to change and it's bad when you need to recompile and deploy everything to change a database password. That's only a few of many other the reason because of which more and more people are trying to follow [12-factor app](https://12factor.net/) guidelines.
+
+Another issue is that you would have all your secrets compiled into release artifact and everybody who has access either to it or to the build environment would know actual production secrets.
+
+Phoenix suggests to use `config/prod.secret.exs` for storing production secrets, I don't like this approach since it makes configuration even more complicated and does not problems listed above. In all the projects we removed include for it in favor of fully configured `config/prod.exs` for all deployment environments. But I know people that avoid using environment variables entirely. Instead, they generate `prod.secrets.exs` via Ansible that is used to deploy an application to the standalone VM's.
+
+I want to start with few examples of things that would not work unless they are build on with actual production configuration:
+
+- `@my_attr System.get_env("FOO")`. Attributes are resolved at compile time, so the actual value would be `nil` if you don't have `FOO` environment variable on the build server or its value in case it's present there. Do not use attributes for configurable values.
+- `config :myapp_api, :key, System.get_env("FOO")`. The same here, `System.get_env("FOO")` would be evaluated at compile-time during `config.exs` conversion to `sys.config`. By the way, I recommend checking `sys.config` when something is not working after release due to configuration issues.
+- Your app is no longer a Mix project, so you won't be able to do any `Mix.*` calls. You can include `:mix` as application dependency, but don't expect it to work properly.
+- Project structure would be changed to match OTP styles, without taking care about `/priv` dir you won't be able to run migrations.
+
+Luckily there are plenty of options how to deal with these, from simple to the sophisticated ones.
+
+### Application.put_env/3 in start/2 callback
+
+This is probably the simples way which really works if you have very few configurable values. Whenever Elixir application is started, `Application.start/2` callback is triggered, we can leverage it and set configuration value resolved from system environment before supervisors are started:
 
 ```elixir
-# lib/my_app/release.ex
-defmodule MyApp.Release do
-  @moduledoc false
-  @app :my_app
+defmodule Sample.Application do
+  use Application
 
-  def migrate do
-    Application.load(@app)
+  # ...
+  def start(_type, _args) do
+    import Supervisor.Spec
+    # ...
+    
+    # Update application environment from system environment variable when application starts
+    Application.put_env(:sample_app, :configurable_env_var, System.get_env("CONFIGURABLE_ENV_VAR"))
 
-    repos = Application.fetch_env!(@app, :ecto_repos)
-
-    for repo <- repos do
-      # For Ecto 3.9+, use Ecto.Migrator.with_repo/2 for safety.
-      Ecto.Migrator.with_repo(repo, fn repo ->
-        Ecto.Migrator.run(repo, migrations_path(repo), :up, all: true)
-      end)
-    end
-  end
-
-  def rollback(version) do
-    Application.load(@app)
-
-    repos = Application.fetch_env!(@app, :ecto_repos)
-
-    for repo <- repos do
-      Ecto.Migrator.with_repo(repo, fn repo ->
-        Ecto.Migrator.run(repo, migrations_path(repo), :down, to: version)
-      end)
-    end
-  end
-
-  defp migrations_path(repo) do
-    app_dir = Application.app_dir(@app)
-    repo_otp =
-      repo
-      |> Module.split()
-      |> List.last()
-      |> Macro.underscore()
-
-    Path.join([app_dir, "priv", repo_otp, "migrations"])
+    # ...
+    Supervisor.start_link(children, opts)
   end
 end
 ```
 
-Then expose a shell entrypoint in the release to call it:
+Notice: Don't try to set those values for other applications (eg. to set it for `:sample_web` from `:sample_lib`). There is a chance that invalid value would be resolved because you won't know in which order they are started.
 
-```sh
-# rel/overlays/bin/migrate (mark executable)
-#!/bin/sh
-set -eu
+### REPLACE_OS_VARS env
 
-# Change "my_app" to your OTP release name (as in mix.exs :app)
-bin/my_app eval "MyApp.Release.migrate()"
+This is the simplest way to start using environment variables for configuration, simply set `REPLACE_OS_VARS=true` in your target environment and replace all actual values in `config/prod.exs` with `${VAR_NAME}`. Here is a little catch - you can't use it for non-string values, so it is not possible, for example, to set `pool_size` for Ecto.
+
+Here is an example:
+
+```elixir
+config :myapp_api, :third_party_lib,
+  cloud_name:    "${CLOUDINARY_CLOUD_NAME}",
+  bucket_name:   "${CLOUDINARY_BUCKET_NAME}",
+  bucket_region: "${CLOUDINARY_BUCKET_REGION}",
+  frontend_url:  "${FRONTEND_URL}"
 ```
 
-Now your deploy pipeline can do:
-1) Build release
-2) Provision infra/secrets
-3) Run `bin/migrate`
-4) Start app `bin/my_app start` (or scale deployment)
+Usually, you would fall to this method when you don't have control over the code that is using configuration, eg. when using some third party library that doesn't have init callback, support for `{:system, _}` tuples or passing all required options on function calls. There is a good article by [Michał Muskała](http://michal.muskala.eu/2017/07/30/configuring-elixir-libraries.html) for library developers on this topic.
 
-### Kubernetes
+### Init/2 callbacks
 
-- Use a `Job` to run `bin/my_app eval "MyApp.Release.migrate()"` against the same image and env as the deployment.
-- Gate the Deployment rollout on Job success (or at least alert on failure).
-- Avoid “migrate on every pod start” unless you constrain it via leader election; it can cause thundering herds.
+`init` callbacks for Ecto and Phoenix allows you to define a function that can use custom logic to resolve configuration at application start. For me, this is the most convenient and useful way to configure a library.
 
-### Fly.io/Heroku/Cloud Run
+Example for Ecto:
 
-- Add a pre-start hook or a separate release-phase command to run migrations out-of-band before your app begins accepting traffic.
+```elixir
+defmodule MyAppAPI.Repo do
+  use Ecto.Repo, otp_app: :myapp_api
+  
+  def init(_type, config) do
+    url = System.get_env("DATABASE_URL")
+    if url, do: {:ok, [url: url] ++ config}, else: {:ok, config}
+  end
+end
+```
 
-## Build and deploy flow
+You can notice that we use `DATABASE_URL` here. Passing a single environment variable is much easier and it's automatically set in some deployment environments, eg. on Heroku.
 
-A solid baseline:
+### :system tuples
 
-1) Compile a release (once)
-   ```sh
-   MIX_ENV=prod mix deps.get --only prod
-   MIX_ENV=prod mix compile
-   MIX_ENV=prod mix assets.deploy # if applicable
-   MIX_ENV=prod mix release
-   ```
+For some apps, we use [Confex](https://github.com/Nebo15/confex) library that allows resolving `{:system, _}` tuples in `init/2` callbacks. It has a nice property-you can set a default value when the environment variable is not set.
 
-2) Ship the artifact (Docker image or tarball) to your runtime target(s).
+When all your configuration can be covered with `:system` tuples you can have a single `config.exs` file without the need to worry about adding separate config macros in all per-env config files. Sometimes you would simply forget to set it and pay for it with debugging time.
 
-3) Set environment (DATABASE_URL, SECRET_KEY_BASE, PHX_HOST, PORT, LOG_LEVEL, etc).
+Example for Phoenix with Confex:
 
-4) Run migrations
-   ```sh
-   bin/my_app eval "MyApp.Release.migrate()"
-   ```
+```elixir
+defmodule MyAppAPI.Endpoint do
+  use Phoenix.Endpoint, otp_app: :myapp_api
+  
+  # ...
+  
+  @doc """
+  Callback invoked for dynamically configuring the endpoint.
+  It receives the endpoint configuration and checks if
+  configuration should be loaded from the system environment.
+  """
+  def init(_key, config), 
+    do: Confex.fetch_env(config)
+end
+```
 
-5) Start or roll out the app
-   ```sh
-   bin/my_app start
-   # or, in orchestrators, let the deployment controller start pods
-   ```
+Confex allows you to write a custom configuration adapter, which makes it possible to use third-party tools for configuration management, eg. Hashicorp Vault.
 
-6) Rollback procedure
-   - Re-deploy the previous artifact (no rebuild needed).
-   - If necessary, run `rollback(version)` for the problematic migration (prefer forward fixes when possible).
+### Using Module callbacks
 
-## Backwards-compatible migrations
+You can set an `@on_load` callback in any Elixir module, it will be invoked whenever the module is loaded. Although this is not a common way to configure your application, it's useful when refactoring code that reads configuration in the attribute, eg.:
 
-To support zero/low-downtime rollouts, use the “expand and contract” pattern:
-- Expand: additive changes (add new columns/tables with defaults, backfill separately, write dual‑write if needed)
-- Migrate code to use the new shape (read from new column, write both)
-- Contract: remove old columns/paths in a later release once fully migrated
+```elixir
+# changeset.ex
+defmodule MyAppAPI.Changeset do
+  import Ecto.Changeset
+  
+  @known_buckets Application.get_env(:myapp_api, :known_buckets)
+  
+  # ...
+  
+  def changeset(schema, attrs) do
+    schema
+    |> cast(attrs, @fields)
+    |> validate_inclusion(:bucket, @known_buckets)
+  end
+end
+```
 
-Avoid:
-- Blocking ALTERs that lock large tables
-- Destructive changes in the same deploy window as the code that still expects old schema
+Can be effectively rewritten to:
 
-When in doubt, split into small, safe steps.
+```elixir
+# changeset.ex
+defmodule MyAppAPI.Changeset do
+  import Ecto.Changeset
+  
+  @on_load :load_buckets
+  
+  # ...
+  
+  def load_buckets do
+    known_buckets = "KNOWN_BUCKETS" |> System.get_env() |> String.split(",", trim: true)
+    Application.put_env(:myapp_api, :known_buckets, known_buckets)
+  end  
 
-## Observability and alerts
+  # ...
 
-- Emit logs around migration start/finish and failures.
-- Add metrics for migration durations and outcomes.
-- Alert on migration failures; keep your DB state visible to operators.
+  def changeset(schema, attrs) do
+    known_buckets = Application.get_env(:myapp_api, :known_buckets)
+    
+    schema
+    |> cast(attrs, @fields)
+    |> validate_inclusion(:bucket, known_buckets)
+  end
+end
+```
 
-## Checklist
+Don't worry about `Application.get_env/2` for being a bottleneck, it uses an ETS table with read concurrency.
 
-- Runtime config
-  - [ ] All environment-specific settings moved to `config/runtime.exs`
-  - [ ] App fails fast when required env missing
-  - [ ] No secrets in source control or build artifacts
+Notice: Modules compiled with HiPE can not use this module callback.
 
-- Migrations
-  - [ ] Dedicated migration task (`MyApp.Release.migrate/0`)
-  - [ ] Automated in deploy flow (Job/hook/command)
-  - [ ] Backwards-compatible schema changes
+### Distillery Config Providers
 
-- Deployment
-  - [ ] Single artifact promoted across environments
-  - [ ] Clear rollback path (previous artifact ready)
-  - [ ] Health checks, logs, metrics verified post-deploy
+In version 2.0 (released on Aug 2018) Distillery introduces a new way to configure your application when it starts - Config Providers. They can be used to populate Application environment during boot process. I highly recommend read the [docs on this topic](https://hexdocs.pm/distillery/config/runtime.html) since it's one of the ways where Elixir community may go as a new defacto standard how to configure your applications in production.
 
-Get these pieces right once, and every future deploy becomes easier, safer, and faster—exactly how it should be.
+## Accessing priv directory
+
+You probably have some migrations and other stuff inside `/priv` directory, to access it use `:code.priv_dir(app)` in your Elixir code and OTP machinery would make sure you won't loose files inside of it.
+
+## Running migrations on production
+
+After making your release configurable, you would also need a way to run migrations. Even though there are few options how you can run them (eg. connecting to the node and issuing an RPC command), adding a release tasks seems most useful for me.
+
+First, you need to add a `ReleaseTasks` module to your app, here is an example that we use:
+
+```elixir
+# release_tasks.ex
+defmodule MyAppAPI.ReleaseTasks do
+  alias Ecto.Migrator
+
+  @otp_app :myapp_api
+  @start_apps [:logger, :ssl, :postgrex, :ecto]
+
+  def migrate do
+    init(@otp_app, @start_apps)
+
+    run_migrations_for(@otp_app)
+
+    stop()
+  end
+
+  def seed do
+    init(@otp_app, @start_apps)
+
+    "#{seed_path(@otp_app)}/*.exs"
+    |> Path.wildcard()
+    |> Enum.sort()
+    |> Enum.each(&run_seed_script/1)
+
+    stop()
+  end
+
+  defp init(app, start_apps) do
+    IO.puts "Loading app.."
+    :ok = Application.load(app)
+
+    IO.puts "Starting dependencies.."
+    Enum.each(start_apps, &Application.ensure_all_started/1)
+
+    IO.puts "Starting repos.."
+    app
+    |> Application.get_env(:ecto_repos, [])
+    |> Enum.each(&(&1.start_link(pool_size: 1)))
+  end
+
+  defp stop do
+    IO.puts "Success!"
+    :init.stop()
+  end
+
+  defp run_migrations_for(app) do
+    IO.puts "Running migrations for #{app}"
+    
+    app
+    |> Application.get_env(:ecto_repos, [])
+    |> Enum.each(&Migrator.run(&1, migrations_path(app), :up, all: true))
+  end
+
+  defp run_seed_script(seed_script) do
+    IO.puts "Running seed script #{seed_script}.."
+    Code.eval_file(seed_script)
+  end
+
+  defp migrations_path(app),
+    do: priv_dir(app, ["repo", "migrations"])
+  
+  defp seed_path(app),
+    do: priv_dir(app, ["repo", "seeds"])
+    
+  defp priv_dir(app, path) when is_list(path) do
+    case :code.priv_dir(app) do
+      priv_path when is_list(priv_path) or is_binary(priv_path) ->
+        Path.join([priv_path] ++ path)
+
+      {:error, :bad_name} ->
+        raise ArgumentError, "unknown application: #{inspect app}"
+    end
+  end
+end
+```
+
+You can call `migrate/0` and `seed/0` functions via Distillery commands `/path_to_release/bin/myapp command "Elixir.MyAppAPI.ReleaseTasks" migrate`. Notice that module name is prefixed with `Elixir.` because after releasing we need to use Erlang-style module names and all Elixir code lives within this namespace.
+
+Since this the command itself looks over-complicated, let's add two shell scripts to the `rel/commands/` as a shorthand to run them:
+
+migrate.sh:
+```elixir
+#!/usr/bin/env bash
+/app/bin/myapp command "Elixir.MyAppAPI.ReleaseTasks" migrate
+```
+
+seed.sh:
+```elixir
+#!/usr/bin/env bash
+/app/bin/myapp command "Elixir.MyAppAPI.ReleaseTasks" seed
+```
+
+Add these scripts to `rel/commands` and run `chmod +x rel/commands/*` in you shell. After that, we can add a Distillery commands to make everything simpler:
+
+```elixir
+# rel_config.exs
+use Mix.Releases.Config,
+  default_release: :default,
+  default_environment: :default
+
+environment :default do
+  set dev_mode: false
+  set include_erts: false
+  set include_src: false
+  set cookie: :"this_is_a_secret"
+  # Add release commands
+  set commands: [
+    seed: "rel/commands/seed.sh",
+    migrate: "rel/commands/migrate.sh"
+  ]
+end
+
+release :myapp do
+  set version: current_version(:myapp_api)
+  set applications: [
+    myapp_api: :permanent 
+  ]
+end
+```
+
+Now you can run migrations via `/path_to_release/bin/myapp migrate` command.
+
+## Deploying Elixir apps
+
+### Deploying to Heroku
+
+After finishing all preparation in sections above it's really easy to deploy your app to the Heroku.
+
+**1. Create an app with Elixir buildpack:**
+
+```
+$ heroku apps:create myappapi-staging --buildpack https://github.com/HashNuke/heroku-buildpack-elixir.git
+Creating ⬢ myappapi-staging... done
+Setting buildpack to https://github.com/HashNuke/heroku-buildpack-elixir.git... done
+https://myappapi-staging.herokuapp.com/ | https://git.heroku.com/myappapi-staging.git
+```
+
+Notice that this app would be our staging env, we will create production a little bit later.
+
+**2. Add a Procfile and elixir_buildpack.config to the application source:**
+
+elixir_buildpack.config:
+```
+# Erlang version
+erlang_version=19.3
+
+# Elixir version
+elixir_version=1.5.1
+
+# Always rebuild from scratch on every deploy?
+always_rebuild=true
+
+# Release Elixir App
+post_compile="rel/hooks/post_compile.sh"
+
+# Set the path the app is run from
+# runtime_path=/opt
+```
+
+Procfile:
+```
+release: /app/bin/myapp migrate
+web: /app/bin/myapp foreground
+```
+
+Procfile is used to declare process types that are required by your app. `web` is a special type that will receive HTTP traffic by listening on `PORT` which automatically is set by Heroku. You don't have control over which port it listens to and can't use more than one public port per app.
+
+The `release` is a release phase that is used to run migrations when an app is built, environment configuration is changed or application is promoted in a release pipeline.
+
+The application is started in foreground mode (`/app/bin/contractbook foreground`) to keep the Dyno running and to redirect logs to the STDOUT. Similarly to Docker containers, everything restarts when the main process exits or enters background mode.
+
+Also, notice that I am setting post-compile hook in `elixir_buildpack.config` that creates a release, removes all files that we don't need in production to keep the released artifact small.
+
+Post compile hook should be placed in `rel/hooks/post_compile.sh`:
+
+post_compile.sh:
+```
+#!/usr/bin/env bash
+set -xe
+
+# Create a release tarball
+mix release --verbose
+
+# Find tarball location
+APP_NAME="myapp"
+APP_TARBALL=$(find _build/${MIX_ENV}/rel/${APP_NAME}/releases -maxdepth 2 -name ${APP_NAME}.tar.gz)
+
+# Unarchive tarball to /tmp/app
+mkdir -p /tmp/app
+tar -xzf "${APP_TARBALL}" -C /tmp/app
+# Keep Procfile which is required by Heroku
+cp Procfile /tmp/app
+# Remove everything and copy released app back to the build directory
+rm -rf ./*
+cp -R /tmp/app/* ./
+rm -rf /tmp/app
+```
+
+**3.** Add GitHub integration to pull source code and optionally enable automatic deployments. You can connect master (main) branch straight to the staging app.
+
+**4.** Add environment variables that your app is using.
+
+**5.** Optionally enable Heroku Postgres.
+
+Now you can make sure everything works and create a production app by forking staging by running `heroku fork - from myappapi-staging - to myappapi` or manually with steps above. After doing that update environment to use production secrets.
+
+Add all apps to the Heroku pipeline, they should look like this:
+
+![Heroku pipeline](/blog/runtime-configuration-migrations/heroku-pipeline.png)
+
+You can also enable Review Apps, Heroku will automatically create a temporary application on each GitHub pull request, which is very useful to run tests versus changed code base. To do so add an `app.json` to your app source:
+
+```json
+{
+  "name": "myappapi",
+  "description": "MyApp Backend Application",
+  "scripts": {
+    "postdeploy": "/app/bin/myapp seed"
+  },
+  "env": {
+    "MY_ENV_VARIABLE": {
+      "required": true
+    }
+  },
+  "formation": {},
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/HashNuke/heroku-buildpack-elixir.git"
+    }
+  ]
+}
+```
+
+Heroku provides an `app.json` generator when you click on Enable Review Apps.
+
+Now each time code is changed your application is deployed automatically to the staging environment. Probably you want to do that after passing CI tests, don't forget to set this flag in auto-deployment configs in Heroku UI.
+
+When code in staging is tested you can deliver it to production by clicking "Promote to production" in Heroku UI, via CLI interface or Slack ChatOps bot. Production would use exactly the same release artifact (slug) which guarantees that you don't have build errors on the production release.
+
+If you want more examples of apps that can be one-click deployed to Heroku - check out [Man template rendering engine](https://github.com/Nebo15/man.api) source code.
+
+### Deploying to Kubernetes
+
+Kubernetes is a container orchestration tool used by many productions, including GitHub. From deployment side of view it is similar to the Heroku, but instead of Heroku slug, we need to build a Docker container.
+
+I won't describe Kubernetes setup, there are lots of great guides for it and I expect that you familiar with it. You can even go [the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way). Most of the production systems I've build are running in Google Container Engine (a managed Kubernetes cluster) because we didn't want to have operational costs to manage the cluster itself.
+
+To build a Docker container add a Dockerfile to your project. Here is an example from [Annon API Gateway](https://github.com/Nebo15/annon.api):
+
+```dockerfile
+FROM nebo15/alpine-elixir:1.5.1 as builder
+MAINTAINER Nebo#15 support@nebo15.com
+
+# Always build with production environment
+ENV MIX_ENV=prod
+
+# `/opt` is a common place for third-party provided packages that are not part of the OS itself
+WORKDIR /opt/app
+
+# Required in elixir_make
+RUN apk add --update --no-cache make
+
+# Install and compile project dependencies
+# We do this before all other files to make container build faster
+# when configuration and dependencies are not changed
+COPY mix.* ./
+COPY config ./config
+RUN mix deps.get --only prod
+RUN mix deps.compile
+
+# Copy rest of project files and build an OTP application
+COPY . .
+RUN mix compile
+RUN mix release --verbose
+
+# Release is packaged in a tarball that contains everything the application
+# needs to run. We remove all other build artifacts and unarchived tarball
+# to a well-known folder
+RUN set -xe; \
+    RELEASE_TARBALL_PATH=$(find _build/${MIX_ENV}/rel/*/releases -maxdepth 2 -name *.tar.gz) && \
+    RELEASE_TARBALL_FILENAME="${RELEASE_TARBALL_PATH##*/}" && \
+    RELEASE_APPLICATION_NAME="${RELEASE_TARBALL_FILENAME%%.*}" && \
+    cp ${RELEASE_TARBALL_PATH} /opt/${RELEASE_TARBALL_FILENAME} && \
+    cd /opt && \
+    rm -rf /otp/app/ && \
+    mkdir -p /opt/${RELEASE_APPLICATION_NAME} && \
+    tar -xzf ${RELEASE_TARBALL_FILENAME} -C ${RELEASE_APPLICATION_NAME} && \
+    rm ${RELEASE_TARBALL_FILENAME}
+
+# Build a container for runtime
+# We are using Linux Alpine image with pre-installed Erlang,
+# pure alpine with ERTS from tarball won't work because Erlang VM
+# has lots of native dependencies
+FROM nebo15/alpine-erlang:20.0.4
+MAINTAINER Nebo#15 support@nebo15.com
+
+ENV \
+    # Application name
+    APPLICATION_NAME=annon_api \
+    # Common that we want to expose from a container,
+    # make sure that you change this variables after updating
+    # them in config.exs
+    GATEWAY_PUBLIC_PORT=4000 \
+    GATEWAY_PUBLIC_HTTPS_PORT=4000 \
+    GATEWAY_MANAGEMENT_PORT=4001 \
+    GATEWAY_PRIVATE_PORT=4443 \
+    # Replace ${VAR_NAME} in sys.config (generated with your application configuration)
+    # at the start time with actual environment variables values
+    REPLACE_OS_VARS=true
+
+# Bash is required by Distillery
+RUN apk add --update --no-cache bash
+
+# Copy OTP release from a builder stage
+COPY --from=builder /opt/${APPLICATION_NAME} /opt/${APPLICATION_NAME}
+# Fix file permissions
+RUN set xe; \
+    chmod -R 777 /opt/${APPLICATION_NAME}
+
+WORKDIR /opt/${APPLICATION_NAME}
+
+# Change user to "default" to limit runtime privileges
+USER default
+
+# Exposes this port from the docker container to the host machine
+EXPOSE ${GATEWAY_PUBLIC_PORT} ${GATEWAY_PUBLIC_HTTPS_PORT} ${GATEWAY_MANAGEMENT_PORT} ${GATEWAY_PRIVATE_PORT}
+
+# The command to run when this image starts up
+# We start application in foreground mode to keep
+# the container running and to redirect logs to the `STDOUT`
+CMD bin/${APPLICATION_NAME} foreground
+```
+
+As you can see, I worry a lot about container size so we are using our own Apline Linux docker container. This example leverages multi-stage builds introduced in Docker 17.06 CE.
+
+I don't want to make this article even bigger, but you can find many samples in [Annon infrastructure repo](https://github.com/Nebo15/annon.infra), including yaml files for Kubernetes deployment.
+
+YAMLs can also be improved by rewriting them to [Helm Charts](https://helm.sh/).
+
+### Deploying to a standalone VM
+
+I've never gone this path since operational costs for us never outweighed the benefits of this approach. (See comparison table below.)
+
+The main benefit of it is that you can upgrade your code without downtime. You would definitely value it if your app has long-living connections (eg. WebSockets for IoT devices) that are expensive to restart.
+
+Checkout [edeliver](https://github.com/edeliver/edeliver) package. It has all information that you need to get started.
+
+## Want to know more?
+
+There is a really good book that I recommend you to read by Francesco Cesarini - ["Designing for Scalability with Erlang/OTP"](http://shop.oreilly.com/product/0636920024149.do). It has a section that covers OTP releases in-depth and provides much more useful details that would help you to archive proficiency in Elixir.
+
+Second recommended read is ["Learn You Some Erlang for great good"](http://learnyousomeerlang.com/) (free online version) by Fred Hebert.
+
+And ask you questions in comments. I am going to write more articles on topics that are requested by the community.
+
+## Thanks
+
+I want to thank Andrew Summers for proofreading this article and OvermindDL1 for pointing out the right way to get path to priv.

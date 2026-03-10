@@ -1,234 +1,195 @@
 ---
 title: "Alternative approach for sensitive file uploads"
-description: "Designing a secure, privacy‑preserving upload flow for documents like national IDs without proxying raw bytes through your app servers."
+description: "Using signed URLs for secure file uploads directly to cloud storage, bypassing your application servers entirely."
 publishDate: 2017-07-25
 updatedDate: 2017-07-25
-category: "Security"
-readTime: "5 min read"
-cardGradient: "from-terminal-green to-terminal-cyan"
+category: "Architecture"
+readTime: "4 min read"
+cardGradient: "from-terminal-cyan to-terminal-green"
 tags:
+  - Architecture
   - Security
-  - Privacy
-  - Uploads
-  - Encryption
-  - S3
-  - Pre-signed URLs
+  - Cloud
+  - Storage
+relatedProjects:
+  - ehealth
 draft: false
-relatedProjects: []
 ---
 
-> Stub note — this is a concise migration of the original idea.
-> The full post will be extended with diagrams and code samples.
+import {
+  SequenceDiagram,
+  Participants,
+  Participant,
+  Messages,
+  Message,
+  Note,
+} from "@/components/mdx/SequenceDiagram";
 
-Handling sensitive files (IDs, medical docs, financial statements) naively can expose you to unnecessary risk: app servers become a data hotspot, logs might leak content types and sizes, and retention is easy to get wrong. This approach keeps raw bytes off your servers, applies defense‑in‑depth, and makes auditing/retention explicit.
+While working on a new project we faced a task where end-user needs to upload a file with the sensitive data (*eg. national ID of most people in a country, yay*), which should be persisted within a minimal security perimeter.
 
-## Threat model (quick)
+> I do not think that this is the only right approach, there is always a tradeoff. This solution was the best for our use case.
 
-- Interception in transit (user → storage)
-- Compromise of app servers or build artifacts
-- Over‑permissive object storage (buckets, ACLs)
-- Long‑lived credentials/URLs
-- PII leakage through file names/paths/metadata
-- Insecure processing pipeline (virus scanning, content sniffing)
-- Retention without deletion, lack of auditability
+## Picking the data store
 
-## Goals
+Since we are running our projects on Google Container Engine, we decided to keep using benefits of cloud services and store files in a Google Cloud Storage. There is no real vendor lock addition because of it, there are plenty of similar solutions that can replace existing implementation by only rewriting the API connector: Amazon S3, OpenStack Swift and even [some containerized open source solutions](https://github.com/minio/minio) with compatible API's.
 
-- Zero raw bytes through application servers
-- Short‑lived credentials for upload/download
-- No PII in object keys, no guessable names
-- Encryption at rest (KMS) + optional client‑side encryption
-- Strong audit: who uploaded, when, what (hashed), where
-- Bounded retention, explicit lifecycle and redaction
-- Async scanning/validation; quarantine on failure
+When you deploy to a Kubernetes you have an additional benefit by using cloud storages - you don't need to deal with persistent volumes and backups for the data.
 
-## Architecture overview
+And a security benefit is that cloud storage guarantees that there is no way to perform Unrestricted File Upload to Remote Code Execution attacks, which [PayPal faced recently](http://blog.pentestbegins.com/2017/07/21/hacking-into-paypal-server-remote-code-execution-2017/).
 
-1) Client requests an upload session (intended document type, size, mime)
-2) Server authorizes user and issues a one‑time, short‑lived pre‑signed upload URL (or POST fields) for object storage (e.g., S3/Cloudflare R2/GCS)
-3) Client optionally encrypts locally, uploads directly to object storage
-4) Object storage emits event → processing queue (quarantine bucket/prefix by default)
-5) Workers process:
-   - Anti‑virus scan (ClamAV or vendor)
-   - Content sniffing (magic numbers) vs declared type
-   - Size limits, image dimensions if applicable
-   - Compute SHA‑256 digest, store metadata
-6) If all checks pass → move to “clean” prefix, emit “ready” event to app
-7) App persists reference, retention policy, and audit entry
-8) Access is via short‑lived pre‑signed GET URLs; server checks authorization then mints
+## What is the common approach for handling uploads?
 
-This keeps raw bytes out of your app, minimizes credential scope, and creates a single, auditable control plane.
+Most projects I've seen take a simple approach where API consumers upload files directly to the application, which uses libraries like [arc](https://github.com/stavro/arc) to take care of future file processing and storing it in an upstream storage.
 
-## Server: create upload session (pseudo)
+<SequenceDiagram>
+  <Participants>
+    <Participant name="Client" color="accent" />
+    <Participant name="Application" color="secondary" />
+    <Participant name="Cloud Storage" color="primary" />
+  </Participants>
+  <Messages>
+    <Message label="Upload file" from={0} to={1} />
+    <Message label="Process file" from={1} to={1} type="async" />
+    <Message label="Store file" from={1} to={2} />
+    <Message label="OK" from={2} to={1} type="response" />
+    <Message label="OK" from={1} to={0} type="response" />
+  </Messages>
+  <Note text="The common approach" />
+</SequenceDiagram>
 
-You can implement in any stack; the key is short‑lived, least‑privilege credentials and random object keys.
+The main advantage of it is that is simple to understand and provides ability synchronously post process the data - crop the image, validate its mime-type, contents, etc and respond immediately to a client.
 
-```ts
-// @noErrors
-// Pseudo TypeScript (Node) – concepts apply to any language
-type UploadIntent = {
-  kind: "national_id" | "invoice" | "medical_record";
-  maxBytes: number;
-  contentType: string; // expected, validated server-side
-};
+But what's the disadvantages:
 
-type CreateUploadResp = {
-  objectKey: string;            // random, no PII
-  uploadUrl: string;            // pre-signed PUT/POST
-  expiresAt: string;            // ISO timestamp, short-lived (e.g., 5 min)
-  encryption?: {                 // optional, for client-side crypto
-    alg: "AES-GCM";
-    keyId: string;              // app-level key registry id (wrapped by KMS)
-  };
-  policy: {
-    maxBytes: number;
-    contentType: string;
-  };
-};
+- Sensitive data is temporarily stored in the application, which extends security perimeters. It can be intercepted, accidentally persisted along with a VM snapshot, you can simply forget to remove temporary copies. This problem is magnified in microservice architectures, where those requests hits multiple application services;
+- You can run out of disk space while processing large uploads;
+- [Increased RAM usage](https://github.com/stavro/arc/issues/105), some API clients is not able to perform chunk uploads;
+- Credentials for cloud storage are long-living. More credential lives, less secure it is because the probability of leaking it grows over time. In monolith, any parts of the code can use them. Any microservice that works with these files needs a copy or a separate service account.
 
-async function createUploadSession(userId: string, intent: UploadIntent): Promise<CreateUploadResp> {
-  assertAuthorized(userId, intent.kind);
+Can we do better?
 
-  // Generate non-guessable object key (no PII, no file extension required)
-  const objectKey = `uploads/quarantine/${randomUUID()}`;
+## Signed URL's
 
-  // Mint short-lived pre-signed URL with minimal scope
-  const { url, expiresAt } = await mintPresignedPutUrl({
-    bucket: process.env.UPLOAD_BUCKET!,
-    key: objectKey,
-    expiresInSeconds: 300, // 5 min
-    contentType: intent.contentType,
-    // server-side encryption at rest is still enforced by bucket policy (KMS)
-  });
+Most of the cloud storage providers ([1](https://cloud.google.com/storage/docs/access-control/create-signed-urls-program), [2](http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html), [3](https://docs.openstack.org/icehouse/config-reference/content/object-storage-tempurl.html)) allow signing a URL that can be used as temporary access token to send a file directly to the cloud storage. This URL can grant only a fraction of what application IAM role allows, limiting to only single file upload within limited time frame.
 
-  // Persist an upload intent record for auditing and later correlation
-  await db.upload_intents.insert({
-    id: randomUUID(),
-    user_id: userId,
-    object_key: objectKey,
-    kind: intent.kind,
-    expected_content_type: intent.contentType,
-    max_bytes: intent.maxBytes,
-    status: "INITIATED",
-    expires_at: new Date(Date.now() + 5 * 60_000)
-  });
+IAM role itself can allow only write access, thus even by holding a service account private key, it is not possible to read data from the storage.
 
-  return {
-    objectKey,
-    uploadUrl: url,
-    expiresAt,
-    policy: {
-      maxBytes: intent.maxBytes,
-      contentType: intent.contentType
-    }
-  };
-}
+<SequenceDiagram>
+  <Participants>
+    <Participant name="Client" color="accent" />
+    <Participant name="Application" color="secondary" />
+    <Participant name="Cloud Storage" color="primary" />
+  </Participants>
+  <Messages>
+    <Message label="Request upload URL" from={0} to={1} />
+    <Message label="Generate signed URL" from={1} to={1} type="async" />
+    <Message label="Signed URL" from={1} to={0} type="response" />
+    <Message label="Upload file directly" from={0} to={2} />
+    <Message label="OK" from={2} to={0} type="response" />
+  </Messages>
+  <Note text="Upload with a Signed URL" />
+</SequenceDiagram>
+
+There are plenty of options how to run a post processing for uploads:
+
+- Spin up a worker GenServer with a delayed message and timeout greater than signed URL TTL;
+- Depending on your storage provider you might also be able to define a callback (eg. with AWS lambda or Google Cloud pub/sub) that triggers file processing pipeline in your back-end;
+- Or make your front-end responsible for notifying on successful file upload by posting related metadata to the back-end, as we did.
+
+<SequenceDiagram>
+  <Participants>
+    <Participant name="Client" color="accent" />
+    <Participant name="Application" color="secondary" />
+    <Participant name="Queue" color="primary" />
+    <Participant name="Worker" color="primary" />
+    <Participant name="Cloud Storage" color="primary" />
+  </Participants>
+  <Messages>
+    <Message label="File uploaded, here's metadata" from={0} to={1} />
+    <Message label="Queue processing job" from={1} to={2} />
+    <Message label="Process file" from={2} to={3} />
+    <Message label="Fetch file" from={3} to={4} />
+    <Message label="File data" from={4} to={3} type="response" />
+    <Message label="Post-process" from={3} to={3} type="async" />
+    <Message label="Done" from={3} to={2} type="response" />
+  </Messages>
+  <Note text="Async job processing" />
+</SequenceDiagram>
+
+Do not go this direction when you have a monolith, without an isolated microservice your application would still share a secret with a full bucket permissions and it would be meaningless in terms of security.
+
+Also, is negates most of the performance benefits we discussed above, but allows to queue jobs and spend this time asynchronously which requires us to have fewer resources up and running.
+
+## Secret management for Cloud Storage
+
+We took one more step further and built a Cloud Storage secret management around this idea. Similarly to [Hashicorp Vault](http://vaultproject.io), each time some part of our application or a front-end (that verifies document contents) needs an access to the file in storage, it requests a Signed URL with only the rights that it needs and a reasonable TTL.
+
+<SequenceDiagram>
+  <Participants>
+    <Participant name="Client" color="accent" />
+    <Participant name="Application" color="secondary" />
+    <Participant name="Secret Manager" color="primary" />
+    <Participant name="Cloud Storage" color="primary" />
+  </Participants>
+  <Messages>
+    <Message label="Request file access" from={0} to={1} />
+    <Message label="Request signed URL" from={1} to={2} />
+    <Message label="Authorize & log request" from={2} to={2} type="async" />
+    <Message label="Generate signed URL" from={2} to={3} />
+    <Message label="Signed URL" from={2} to={1} type="response" />
+    <Message label="Signed URL" from={1} to={0} type="response" />
+    <Message label="Fetch file with signed URL" from={0} to={3} />
+    <Message label="File data" from={3} to={0} type="response" />
+  </Messages>
+  <Note text="Working via Storage Secret Manager" />
+</SequenceDiagram>
+
+This requests can be authorized based on service role and logged for a security tail.
+
+## Implementation
+
+Erlang/OTP has a :public_key application to handle public-key infrastructure, building and signing URL takes only a few lines of code:
+
+```elixir
+defmodule Ael.Secrets.API do
+  def get_secret_url(secret) do
+    %Secret{
+      action: action, 
+      expires_at: expires_at, 
+      bucket: bucket, 
+      resource_id: resource_id, 
+      resource_name: resource_name
+    } = secret
+
+    canonicalized_resource = "/#{bucket}/#{resource_id}/#{resource_name}"
+    signature =
+      action
+      |> string_to_sign(expires_at, canonicalized_resource)
+      |> sign()
+      |> Base.encode64()
+      |> URI.encode_www_form()
+
+    "https://storage.googleapis.com#{canonicalized_resource}" <>
+    "?GoogleAccessId=#{get_from_registry(:gcs_service_account_id)}" <>
+    "&Expires=#{expires_at}" <>
+    "&Signature=#{signature}"
+  end
+
+  defp string_to_sign(action, expires_at, canonicalized_resource), 
+    do: Enum.join([action, "", "", expires_at, canonicalized_resource], "\n")
+
+  defp sign(plaintext),
+    do: :public_key.sign(plaintext, :sha256, get_from_registry(:gcs_service_account_key))
+
+  defp get_from_registry(key) do
+    [{_pid, val}] = Registry.lookup(Ael.Registry, key)
+    val
+  end
+end
 ```
 
-Client uploads directly to `uploadUrl`; the app never proxies the bytes.
+Full source code is available in a GitHub repo, it is a dockerized Phoenix 1.3 microservice: [Nebo15/ael.api](https://github.com/Nebo15/ael.api)
 
-## Optional: client‑side encryption
+## Thanks
 
-If you want to avoid the storage provider from seeing plaintext (in addition to KMS‑at‑rest):
-
-```ts
-// @noErrors
-// Browser WebCrypto (simplified)
-const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]);
-const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit nonce
-const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, fileBytes);
-
-// Upload enc to pre-signed URL; send iv + wrapped key to server
-await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: enc });
-
-// Send metadata for later decrypt (server keeps key wrapped in KMS)
-await fetch("/api/uploads/finalize", {
-  method: "POST",
-  body: JSON.stringify({
-    objectKey,
-    contentType: "application/octet-stream",
-    iv: Array.from(iv),
-    keyId: await wrapKeyWithKMS(key) // app-defined helper
-  })
-});
-```
-
-This is optional; many regulated environments accept KMS‑at‑rest plus strict access controls. If you do client‑side crypto, ensure you can still scan (decrypt in a secured worker with short‑lived unwrap) or move scanning pre‑encryption (trade‑off).
-
-## Processing pipeline (workers)
-
-- Trigger source: Object storage event on `uploads/quarantine/*`
-- Steps:
-  - Enforce max size (early reject)
-  - AV scan; if infected → delete/quarantine + audit + alert
-  - Magic number/content sniffing → must match allowed types for `kind`
-  - Compute SHA‑256; store as integrity digest
-  - Extract safe metadata (dimensions, pages) without PII
-- If OK:
-  - Move to `uploads/clean/<uuid>` (atomic copy + delete)
-  - Tag with retention class (e.g., `retention=30d`, `legal_hold=false`)
-  - Emit domain event “upload.ready” with `objectKeyClean`, `digest`, `kind`, `owner`
-
-Keep processors in a separate trust domain from app servers; least privilege IAM for `quarantine/*` read and `clean/*` write.
-
-## Access pattern (download)
-
-- App checks authorization for the resource (ownership, role, consent)
-- Mint short‑lived pre‑signed GET URL (e.g., 2–5 minutes)
-- Log/audit access: who, when, IP, purpose if applicable
-- Optional: watermarking on the fly (if image/PDF), or serve via controlled proxy that injects watermark
-
-Never grant wide list/get permissions; users should only obtain time‑boxed URLs.
-
-## Object key hygiene
-
-- Never embed user identifiers, names, emails, or original filenames in keys
-- Prefer random UUID keys; keep metadata (original filename) in DB, not in the key
-- Enforce bucket‑level policies: deny public ACLs, force KMS, block unencrypted puts
-
-Example key layout:
-
-```
-uploads/
-  quarantine/
-    3a1d6f1e-... (raw, pending checks)
-  clean/
-    7bf2c9a4-... (ready for use)
-  deleted/
-    ... (optional: tombstoned for grace period)
-```
-
-## Retention & deletion
-
-- Set lifecycle policies at bucket level (auto‑expire quarantine after N hours)
-- Application enforces business retention (e.g., 30–180 days) and explicit deletion on user request
-- Use object locks/legal holds only when legally required
-- Redact or rotate references in your DB; prevent “dangling references”
-
-## Auditing
-
-Maintain an append‑only audit log:
-
-- `who` (user id/service account)
-- `action` (`upload.intent`, `upload.finalize`, `scan.ok`, `scan.fail`, `download.request`, `download.issued`, `delete`)
-- `when` (timestamp)
-- `what` (object key, digest, kind)
-- `where` (IP/user agent if available)
-- `why` (free text or policy code, optional)
-
-Ship logs to a separate storage/project with immutability (WORM) for a fixed period.
-
-## Checklist
-
-- [ ] App never proxies raw upload bytes
-- [ ] Pre‑signed URLs short‑lived, least privilege, content‑type/size constrained
-- [ ] Random, PII‑free object keys
-- [ ] KMS encryption at rest (bucket policy enforces SSE‑KMS)
-- [ ] Optional client‑side encryption with secure unwrap in workers
-- [ ] AV scan + content sniffing before “clean” promotion
-- [ ] Strict IAM separation (quarantine vs clean, workers vs app)
-- [ ] Short‑lived pre‑signed GET for access; full audit on access
-- [ ] Lifecycle rules for quarantine expiry and business retention
-- [ ] Comprehensive, append‑only audit logs exported to immutable storage
-
-This pattern reduces the blast radius, keeps your servers out of the hot path, and gives you predictable, auditable control over sensitive documents—without sacrificing UX.
+I want to thank [Pavel Vesnin](https://github.com/PavelVesnin) who was responsible for most of the implementation code.

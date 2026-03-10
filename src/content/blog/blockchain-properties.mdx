@@ -1,6 +1,6 @@
 ---
 title: "Bringing blockchain properties to centralized government databases"
-description: "How to design for immutability, auditability, and tamper evidence without running a blockchain in production."
+description: "Making it cryptographically impossible to alter records in a database even with full system access."
 publishDate: 2017-07-27
 updatedDate: 2017-07-27
 category: "Database"
@@ -10,156 +10,127 @@ tags:
   - Database
   - Architecture
   - Security
+  - Blockchain
   - Immutability
-  - Audit
 relatedProjects:
   - ehealth
 draft: false
 ---
+import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
-import {
-  SequenceDiagram,
-  Participants,
-  Participant,
-  Messages,
-  Message,
-  Note,
-} from "@/components/mdx/SequenceDiagram";
+Right now we are building [a large project in a healthcare field](/blog/national-health-service) for our government. There are lots of interesting tasks and I want to share our ideas on one of them - making sure that it's cryptographically not possible to alter records in a database even if you own full access to the system.
 
-Right now we are building [a large project in a healthcare field](https://medium.com/nebo-15/national-health-service-on-elixir-and-kubernetes-b1c2551f0dbb) for our government. One of the most interesting problems is making sure it is cryptographically impossible to alter records in the database—even if someone compromises the infrastructure.
+Why this matters? First of all, we want to make sure that it would not be possible to remove evidence of a medical treatment that led to a patient injury, whenever there is an investigation on such case. Second is that our government is going to reimburse all services that are recorded in this database and we don't want to leave a way to abuse this system and receive money which was not fairly earned.
 
-Why does that matter? Investigations must be able to rely on the authenticity of medical records, and the government reimburses providers based on this data. Tampering equates to fraud and, more importantly, patient safety risks.
+Nowadays, when you want to solve "trust" problem, there is an existing wide-spread buzzword as a solution - blockchain. Full integration of the blockchain principles would require us to decentralize our database and come up with some proof algorithm to solve consensus problem (common ones are proof of work and proof of stake, and there are much more theoretical ones, e.g. proof of elapsed time) that is the best for our use-case.
 
-> This post was originally written as an RFC. The design is now battle-tested, and I’ve cleaned it up for clarity and grammar while preserving the intent.
+But when working for the government there are some limitations that won't allow you to go this path:
 
-## Why not just run a blockchain?
+- This database stores extremely sensitive data (e.g. patients and prescriptions, country-wide), which, by both ethical and legislation reasons, cannot be shared with third-parties;
+- You can distribute encrypted data, but in the long-term, any kinds of encryption can be broken, bugs are found pretty often and quantum computing is knocking on the doors. We could lose lots of sensitive data and people won't be happy with that;
+- All proven proof algorithms would require us to burn additional CPU time, skyrocketing the limited cost of infrastructure for this project.
 
-The obvious answer in 2017 was “just use a blockchain.” In practice we had a few hard constraints:
+## How can we get blockchain properties with an off-the-shelf database?
 
-- The database stores extremely sensitive data (national healthcare). We cannot replicate it beyond the trust boundary.
-- Encryption alone is not enough. Algorithms age, bugs appear, and quantum attacks are no longer theoretical.
-- Proof-of-work/proof-of-stake style consensus burns CPU we simply don’t have in the budget.
+This is possible by leveraging one of our project requirements - everything that is submitted to a database is signed with the private key of a physician. Private keys are distributed by accredited certification centers. Basically, they are licensed third-parties that are allowed to issue private keys which are considered to be legally-equal to handwritten signatures in Ukraine.
 
-So we asked a better question: _how do we give the platform blockchain-like guarantees while keeping a centralized database?_ The answer hinges on strong signing practices plus tamper-evident storage.
+The actual stored data can look like this:
 
-## Data model (simplified)
-
-Everything a physician submits is signed with their private key, issued by a certified authority. Rows are immutable; we only append new versions.
-
-| Column                    | Type   | Modifiers |
-| ------------------------- | ------ | --------- |
-| `master_patient_index_id` | UUID   | not null  |
-| `patient_first_name`      | string | not null  |
-| `patient_last_name`       | string | not null  |
-| `patient_passport_number` | string | not null  |
-| `physician_personnel_id`  | UUID   | not null  |
-| `previous_block_hash`     | string | not null  |
-| `physician_signature`     | bytes  | not null  |
-
-The `physician_signature` covers the entire row payload. `previous_block_hash` links each record to the Merkle root of the prior block.
-
-<SequenceDiagram class="my-6">
-  <Participants>
-    <Participant name="Physician" position="left" color="terminal-green" />
-    <Participant name="Ledger Service" position="right" color="primary" />
-  </Participants>
-  <Messages>
-    <Message label="Sign payload + prev_hash" type="success" />
-    <Message label="Submit signed row" />
-    <Message label="Persist row & enqueue block update" type="success" direction="left" />
-  </Messages>
-  <Note text="Every row links to the previous block. Altering history breaks the hash chain." />
-</SequenceDiagram>
-
-Blocks are rolled every few minutes. The trade-off is simple: shorter windows mean lower exposure; longer windows reduce coordination overhead.
-
-## Failure scenarios
-
-### Transactions not yet in a block
-
-To alter a pending transaction you’d need the physician’s private key. Deleting a pending row is detectable via audit logs. This mirrors how Bitcoin treats unconfirmed transactions.
-
-### Transactions in the latest block
-
-Every new write references the latest block hash. To tamper you would need either to:
-
-- Delete the block entirely (which we detect), or
-- Re-sign every row with each physician’s key (functionally impossible).
-
-### Time is our ally
-
-As more blocks confirm on top of a transaction, confidence increases—exactly like cumulative proof-of-work. We publish block headers externally so any third party can detect gaps.
-
-## Implementation options we considered
-
-1. A database with first-class immutability guarantees (none fit our needs in 2017).
-2. A native extension enforcing signatures and hash chaining (risk: portability).
-3. An Ecto adapter encapsulating the logic (works, but ties us to Elixir).
-4. A dedicated Elixir service that enforces the rules while writing to PostgreSQL (our choice).
-
-We landed on option 4 for maintainability and rollout speed.
-
-### Storage engines
-
-Append-friendly, Dynamo-inspired stores (Cassandra, Riak) are a great fit. They shard naturally and make partial rebuilds easy. When we eventually need to scale horizontally, this is where we’ll go.
-
-```text
-Ring topology snapshot (simplified)
-
-      [Node A]
-     /       \
- [Node D]   [Node B]
-     \       /
-      [Node C]
+```
+Column                   |            Type             | Modifiers
+-------------------------+-----------------------------+-----------
+master_patient_index_id  | uuid                        | not null
+patient_first_name       | String                      | not null
+patient_last_name        | String                      | not null
+patient_passport_number  | String                      | not null
+physician_personnel_id   | uuid                        | not null
+...
+previous_block_hash      | string                      | not null
+physician_signature      | binary                      | not null
 ```
 
-For now a single highly-available PostgreSQL cluster is enough, and we can mix in Citus/Timescale if we need managed sharding later.
+`physician_signature` is a cryptographic signature for all columns in a row (this row is an actual document) which were added on behalf of physician.
 
-### Consistency knobs (`N`, `W`, `R`)
+`previous_block_hash` is a Merkle tree root for a previous block or a genesis hash if we just started the system. Blocks can be created on any specific timeout with a tradeoff - you can alter all data within the last block so we don't want it to be too big and we would not accept any new records when new block is creating so we can't generate new blocks too often.
 
-We still need to balance consistency and availability:
+<AsciiDiagram label="Architecture diagram showing API consumers, gateway, integration layer, and downstream services">{`
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────┐
+│   Genesis Block  │     │      Block N     │     │    Block N+1     │     │ Future Block │
+│    Genesis ID    │     │ Merkle tree root │     │ Merkle tree root │     │              │
+└─▲────────────────┘     └─┬──▲─────────────┘     └─┬──▲─────────────┘     └─┬────────────┘
+    │                        │  │                     │  │                     │  
+    │   ┌───────┐            │  │   ┌───────┐         │  │   ┌───────┐         │  
+    └───│  TX   │◀───────────┘  └───│  TX   │◀────────┘  └───│  TX   │◀────────┘  
+    │   └───────┘            │  │   └───────┘         │  |   └───────┘         │  
+    │      ...               │  │      ...            │  |      ...            │  
+    │   ┌───────┐            │  │   ┌───────┐         │  │   ┌───────┐         │  
+    └───│  TX   │◀───────────┘  └───│  TX   │◀────────┘  └───│  TX   │◀────────┘  
+        └───────┘                   └───────┘                └───────┘            
+                                                                 ▲
+                                                                 │
+                                                         New transactions`}
+</AsciiDiagram>
 
-- Writes that mutate business state use `W = ALL`.
-- Read paths that materialize blocks use `R = ALL`.
-- Non-critical reads (analytics, reporting) can be eventually consistent.
+Let's go through few cases to make sure this would actually work.
 
-The beauty of tunable consistency is that we pick what matters per operation.
+### Changes to the transactions that are not grouped in a block yet
 
-### Integrity checks
+They are not possible to change unless you acquire physician private key. However, you can delete the record and it would be not easy to notice that it ever existed.
 
-Periodically we recompute hashes and signatures:
+This is similar to transactions in Bitcoin, they are not guaranteed to be mined and some merchants even wait for a few additional blocks on a chain, to start counting your payment as succeeded.
 
-- Chain verification: walk backwards, recomputing each hash.
-- Batch verification: recompute the Merkle root for the block.
-- Signature verification: validate with stored public keys.
-- Snapshot verification: recompute state digests and check pointers.
+We are okay with that, this issue can be mitigated by very common security approaches - access management and audit trail. We might even use this property to give a "rollback within a day" feature for our clients.
 
-Failures trigger an automated restore-from-backup, followed by another validation pass. If the check fails twice, the system halts and alerts humans.
+### Changes to the transactions that are in the latest block
 
-## CAP refresher
+Since all new-coming transactions include previous Block ID in a signed content, it is not possible to make any changes without corrupting the hash chain.
 
-| Choice | Guarantees         | Trade-off                                  |
-| ------ | ------------------ | ------------------------------------------ |
-| CP     | Strong consistency | You lose availability during partitions    |
-| AP     | High availability  | Clients may read stale data                |
-| CA     | Mythical           | Partitions _will_ happen in real systems   |
+If you really want to do that, you need to either delete the fact of block existence and all records that were inserted after its creation or to acquire a private key of each single physician that submitted any data to the database to update previous block hash column for those records too. (Or to hack all certification centers that issued those keys.)
 
-We deliberately choose CP for writes that affect money or medical records. Everything else can degrade gracefully.
+### When time starts to play on our side
 
-## Open questions (still true years later)
+The total number of transactions in newer blocks works like "score" property of the blockchain. In Bitcoin, this would be the total amount of hashing power on the chain. When this number grows, confidence that you can't change data without being noticed is also growing.
 
-- What is the runbook when integrity checks fail?
-- How do we reject transactions that link to stale blocks without burning operators?
-- Should we anchor block headers in a public ledger (e.g., Ethereum) for extra assurance?
+Even more, we could publicly share the list of known blocks on a website or in an Ethereum smart contract, so that even if we are screwed in our responsibility to notice missing block, there are plenty of other people that do that for us.
 
-These are policy decisions as much as technical ones.
+## What are the implementation options?
 
-## Takeaways
+There are three that were able to come out from my mind:
 
-We achieved blockchain-style tamper evidence without adopting a full decentralized stack:
+1. Pick a database that already gives that properties (anyone?);
+2. Native DB extension that enforces constraints when data is inserted and on demand;
+3. Database adapter for [Ecto](https://github.com/elixir-ecto/ecto) which encapsulates additional logic (may be good option if we going to use some rare database with built-in encryption, which we can't afford to modify);
+4. Custom Elixir application that fetches data from a database and enforces all this logic.
 
-- Physicians sign everything they submit.
-- Hash chaining + Merkle roots make tampering obvious.
-- External anchors raise the bar for attackers.
+Unless this approach exists in some database, the second one looks to be the most efficient since there would be no need to query for too much data each time we are doing inserts.
 
-The result is boring, audit-friendly infrastructure that satisfies regulators and keeps operations lean. That’s the goal.
+## Which database to pick if you want to implement this logic?
+
+At my opinion, databases that are inspired by [Amazon Dynamo white paper](http://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf) (Cassandra, Riak and much more), would be the best fit for our needs. When data is not tightly coupled, simple K/V lookups in combination with map/reduce for block generation and reports is more than enough. Those scale pretty well.
+
+![Visual representation of a DHT ring, from official Riak documentation](/blog/blockchain-properties/dht-ring.png)
+
+Also, there are few solutions on top of PostgreSQL that are also making sharding easy (CitusDB and PostgreXL). However, I do not have an in-depth understanding of their internal concepts. Probably, they have built a new layer for query planning which aggregates results after querying all the shards.
+
+But for a while we would fit a single PostgreSQL instance and while we don't deal with a scale, we use HA PostgreSQL deployment as battle-tested tool we have experience dealing with.
+
+## Consistency model for read operations availability in NoSQL databases
+
+Also, we want to be highly available to all the medical service providers that are sending data to us. Let's start with some theory.
+
+CAP theorem states that there are no systems which can be both consistent (CP) and highly available (AP).
+
+![The CAP theorem](/blog/blockchain-properties/cap-theorem.png)
+
+Some people may say that there are CA systems, they are wrong. Partitions will happen in real life, you can't do anything with that.
+
+Databases on top of DHT rings tend to allow customizing N/W/R values for different types of queries. Where N is the data replication factor (on how many nodes we are storing a copy for a single document); W is a number of nodes that need to confirm write for an overall transaction to be completed; R is a number of nodes we are reading from.
+
+With their enforced at the table level, we can achieve the best consistency/availability tradeoff - to be strongly consistent for our system needs and highly available for API consumers.
+
+This can be done by writing transactions with eventual consistency; writing previous block hash with strong consistency (W=ALL, reading with R=ALL would hurt availability for new transactions); building block with strong read consistency (map/reduce with R=ALL properties).
+
+## Open questions
+
+- What is the right procedure for detected failed integrity checks? Possible option: restore corrupted block from a backup and re-run integrity check, after that cancel everything since last valid transaction.
+- What to do with the new-coming transactions that are linked to a block that is not the latest? Possible option: decline them and require a user to send a new one with a link to the latest block.

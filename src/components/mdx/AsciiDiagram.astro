@@ -1,0 +1,19 @@
+---
+interface Props {
+  label?: string;
+  content?: string;
+  class?: string;
+}
+
+const { label, content, class: className = "" } = Astro.props;
+
+// If content prop is provided, use it. Otherwise use slot content.
+const diagramContent = content || (await Astro.slots.render("default"));
+---
+
+<pre
+  role="img"
+  aria-label={label}
+  class={`whitespace-pre !text-terminal-cyan overflow-x-auto font-mono text-sm leading-relaxed ${className}`.trim()}
+  set:text={diagramContent}
+/>

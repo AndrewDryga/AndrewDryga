@@ -1,43 +1,28 @@
 ---
 interface Props {
   label: string;
-  position?: "left" | "right";
-  offset?: number;
+  participant?: number;
   class?: string;
 }
 
-const {
-  label,
-  position = "left",
-  offset,
-  class: className = "",
-} = Astro.props as Props;
-
-const resolvedOffset =
-  typeof offset === "number" ? offset : position === "left" ? 15 : 85;
-
-const railStyle = `left:${resolvedOffset}%`;
-
-const isRight = resolvedOffset >= 50;
-
-const callTranslation = isRight ? "-translate-x-full" : "";
-
-const boxShape = isRight
-  ? "rounded-r-none border-r-0"
-  : "rounded-l-none border-l-0";
-
-const labelStyle = `left:${resolvedOffset}%`;
+const { label, participant = 0, class: className = "" } = Astro.props as Props;
 ---
 
-<div class={`sd-row relative h-20 flex items-center ${className}`.trim()}>
-  <div class={`absolute w-16 ${callTranslation}`.trim()} style={railStyle}>
-    <div class={`border-2 border-accent rounded-lg h-12 ${boxShape}`.trim()}>
+<div
+  class={`sd-row sd-self-call-standalone relative h-20 ${className}`.trim()}
+  data-participant={participant}
+>
+  <div class="sd-self-call-box-container absolute top-1/2 -translate-y-1/2">
+    <div
+      class="border-2 border-accent rounded-r-lg rounded-l-none border-l-0 w-16 h-12"
+    >
+      <div
+        class="absolute left-0 bottom-0 translate-y-[calc(50%-1px)] w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] border-r-accent"
+      >
+      </div>
     </div>
   </div>
-  <div
-    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-    style={labelStyle}
-  >
+  <div class="sd-self-call-label absolute top-1/2 -translate-y-1/2">
     <div
       class="inline-block bg-terminal-surface px-2 py-1 text-accent text-[10px] border border-accent rounded whitespace-nowrap"
     >

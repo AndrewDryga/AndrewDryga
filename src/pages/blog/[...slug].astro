@@ -36,7 +36,7 @@ const updatedISO = (post.data.updatedDate ?? post.data.publishDate)?.toISOString
 const tags = post.data.tags ?? [];
 const image = post.data.heroImage;
 
-// Related Projects: explicit via frontmatter or heuristic fallback
+// Related Projects: explicit via frontmatter only
 const explicitRelated = (post.data.relatedProjects ?? []) as string[];
 
 function norm(s: string | undefined | null): string {
@@ -45,20 +45,9 @@ function norm(s: string | undefined | null): string {
 
 const explicitSet = new Set(explicitRelated.map((x) => norm(x)));
 
-let relatedProjects = allProjects.filter(
+const relatedProjects = allProjects.filter(
   (p) => explicitSet.has(norm(p.id)) || explicitSet.has(norm(p.name))
 );
-
-if (relatedProjects.length === 0) {
-  const haystack = [post.data.title, post.data.description, (post.data.tags ?? []).join(" ")].map(norm).join(" ");
-  relatedProjects = allProjects
-    .filter((p) => {
-      const id = norm(p.id);
-      const name = norm(p.name);
-      return haystack.includes(id) || haystack.includes(name);
-    })
-    .slice(0, 6);
-}
 
 function formatDate(d?: Date) {
   if (!d) return "";
@@ -149,11 +138,6 @@ void breadcrumbLd;
             <img src={image.src} width={image.width} height={image.height} alt={post.data.title} loading="eager" decoding="async" class="w-full h-auto" />
           </div>
         )}
-        {!image && (
-          <div class="mb-8 rounded-lg overflow-hidden border border-border bg-card/40 shadow-card">
-            <img src="/og-default.jpg" alt={post.data.title} loading="eager" decoding="async" class="w-full h-auto" />
-          </div>
-        )}
 
         <div class="prose prose-invert max-w-none prose-pre:bg-[hsl(var(--terminal-surface))] prose-pre:text-foreground prose-pre:border prose-pre:border-border prose-pre:rounded-md prose-pre:overflow-x-auto">
           <Content />
@@ -219,6 +203,9 @@ void breadcrumbLd;
           a.classList.toggle('text-terminal-cyan', isActive);
           a.classList.toggle('text-muted-foreground', !isActive);
           a.setAttribute('aria-current', isActive ? 'true' : 'false');
+          if (isActive) {
+            a.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
         });
       }
 

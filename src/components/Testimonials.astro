@@ -73,7 +73,6 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       <div
         class="p-4 md:p-6 lg:p-8 font-mono text-xs md:text-sm lg:text-base relative h-[400px] md:h-[500px] overflow-y-auto md:overflow-hidden select-none"
         data-testimonials-container
-        tabindex="0"
       >
         <div class="space-y-8" data-testimonials-list>
           {
@@ -185,36 +184,23 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
         </div>
 
         <div
-          class="flex items-center justify-center gap-1.5 md:gap-2 text-muted-foreground text-xs md:text-sm py-4 animate-pulse"
+          class="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 text-muted-foreground text-xs md:text-sm py-4 animate-pulse bg-gradient-to-t from-terminal-surface via-terminal-surface to-transparent pointer-events-none"
           data-testimonials-hint
-          hidden={totalTestimonials <= 1}
         >
           <span class="hidden md:inline">Press</span>
-          <svg
-            class="w-3 h-3 md:w-4 md:h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m7 15 5-5 5 5"></path>
-          </svg>
-          <svg
-            class="w-3 h-3 md:w-4 md:h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m7 9 5 5 5-5"></path>
-          </svg>
-          <span class="hidden md:inline">to see more</span>
+          <span class="inline-flex items-center gap-1">
+            <kbd
+              class="px-1.5 py-0.5 border border-border/60 rounded bg-terminal-bg/80 text-center leading-tight"
+            >
+              ↑
+            </kbd>
+            <kbd
+              class="px-1.5 py-0.5 border border-border/60 rounded bg-terminal-bg/80 text-center leading-tight"
+            >
+              ↓
+            </kbd>
+          </span>
+          <span class="hidden md:inline">to navigate</span>
           <span class="md:hidden">Scroll for more</span>
         </div>
       </div>
@@ -228,8 +214,8 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
           <span data-testimonials-status>
             {
               totalTestimonials > 0
-                ? `1/${totalTestimonials} commits`
-                : "0/0 commits"
+                ? `1/${totalTestimonials} recommendations`
+                : "0/0 recommendations"
             }
           </span>
           <div class="flex items-center gap-2 md:gap-4">
@@ -354,16 +340,27 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       }
 
       if (status) {
-        status.textContent = `${clamped + 1}/${items.length} commits`;
+        status.textContent = `${clamped + 1}/${items.length} recommendations`;
       }
 
       if (hint) {
-        hint.toggleAttribute("hidden", clamped >= items.length - 1);
+        // Show hint only on first testimonial (index 0)
+        const shouldHide = clamped !== 0 || items.length <= 1;
+        if (shouldHide) {
+          hint.classList.add("hidden");
+        } else {
+          hint.classList.remove("hidden");
+        }
       }
 
       updateIndicator(clamped);
       activeIndex = clamped;
     };
+
+    // Initialize hint visibility (hide if only 1 testimonial)
+    if (hint && items.length <= 1) {
+      hint.classList.add("hidden");
+    }
 
     setActive(0, { scroll: false, force: true });
 
@@ -384,21 +381,25 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
 
+      // Ignore if user is typing in an input field
       if (
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT"
+        target.tagName === "SELECT" ||
+        target.isContentEditable
       ) {
         return;
       }
 
-      if (container.contains(target)) {
+      // Ignore if user is interacting with a link or button
+      if (target.tagName === "A" || target.tagName === "BUTTON") {
         return;
       }
 
+      // Only respond if testimonials section is visible in viewport
       if (header) {
         const rect = header.getBoundingClientRect();
-        if (rect.top < 0 || rect.top > 150) {
+        if (rect.top < 0 || rect.top > window.innerHeight) {
           return;
         }
       }

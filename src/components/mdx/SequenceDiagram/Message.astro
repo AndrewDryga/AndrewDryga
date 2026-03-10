@@ -2,7 +2,6 @@
 interface Props {
   label: string;
   type?: "request" | "response" | "async" | "error" | "success";
-  direction?: "left" | "right";
   from?: number;
   to?: number;
   class?: string;
@@ -11,7 +10,6 @@ interface Props {
 const {
   label,
   type = "request",
-  direction,
   from,
   to,
   class: className = "",
@@ -21,85 +19,97 @@ const styles: Record<
   NonNullable<Props["type"]>,
   {
     line: string;
-    arrow: string;
+    arrowRight: string;
+    arrowLeft: string;
     text: string;
-    defaultDirection: "left" | "right";
+    borderColor: string;
   }
 > = {
   request: {
     line: "border-primary",
-    arrow: "border-l-primary",
+    arrowRight: "border-l-primary",
+    arrowLeft: "border-r-primary",
     text: "text-foreground border-border",
-    defaultDirection: "right" as const,
+    borderColor: "border-primary",
   },
   response: {
     line: "border-dashed border-secondary",
-    arrow: "border-r-secondary",
+    arrowRight: "border-l-secondary",
+    arrowLeft: "border-r-secondary",
     text: "text-secondary border-secondary",
-    defaultDirection: "left" as const,
+    borderColor: "border-secondary border-dashed",
   },
   async: {
     line: "border-dashed border-accent",
-    arrow: "border-l-accent",
+    arrowRight: "border-l-accent",
+    arrowLeft: "border-r-accent",
     text: "text-accent border-accent",
-    defaultDirection: "right" as const,
+    borderColor: "border-accent border-dashed",
   },
   error: {
     line: "border-dashed border-destructive",
-    arrow: "border-r-destructive",
+    arrowRight: "border-l-destructive",
+    arrowLeft: "border-r-destructive",
     text: "text-destructive border-destructive",
-    defaultDirection: "left" as const,
+    borderColor: "border-destructive border-dashed",
   },
   success: {
     line: "border-dashed border-terminal-green",
-    arrow: "border-r-terminal-green",
+    arrowRight: "border-l-terminal-green",
+    arrowLeft: "border-r-terminal-green",
     text: "text-terminal-green border-terminal-green",
-    defaultDirection: "left" as const,
+    borderColor: "border-terminal-green border-dashed",
   },
 };
 
 const style = styles[type];
 
-const defaultFrom = type === "response" || direction === "left" ? 85 : 15;
-const defaultTo = type === "response" || direction === "left" ? 15 : 85;
+// Default from/to indices based on message type
+const defaultFrom = type === "response" || type === "error" || type === "success" ? 1 : 0;
+const defaultTo = type === "response" || type === "error" || type === "success" ? 0 : 1;
 
-const fromOffset = from ?? defaultFrom;
-const toOffset = to ?? defaultTo;
+const fromIndex = from ?? defaultFrom;
+const toIndex = to ?? defaultTo;
 
-const actualDirection = toOffset >= fromOffset ? "right" : "left";
-
-const start = Math.min(fromOffset, toOffset);
-const width = Math.max(Math.abs(toOffset - fromOffset), 0.5);
-
-const lineStyle = `left:${start}%;width:${width}%;`;
+const isSelfCall = fromIndex === toIndex;
 ---
 
-<div class={`sd-row relative h-16 ${className}`.trim()}>
+{isSelfCall ? (
+  <!-- Self-call / loop -->
   <div
-    class="absolute top-1/2 -translate-y-1/2 flex items-center"
-    style={lineStyle}
+    class={`sd-row sd-message sd-self-call relative h-20 ${className}`.trim()}
+    data-from={fromIndex}
+    data-to={toIndex}
   >
-    <div class={`w-full border-t-2 relative ${style.line}`}>
-      {
-        actualDirection === "right" ? (
-          <div
-            class={`absolute right-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] -translate-y-[calc(50%+1px)] ${style.arrow}`}
-          />
-        ) : (
-          <div
-            class={`absolute left-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] -translate-y-[calc(50%+1px)] ${style.arrow}`}
-          />
-        )
-      }
+    <div class="sd-message-arrow absolute top-1/2 -translate-y-1/2">
+      <!-- Will be positioned by JS -->
+      <div class={`sd-self-call-box border-2 rounded-r-lg rounded-l-none border-l-0 w-16 h-12 ${style.borderColor}`}>
+        <!-- Arrow pointing back to lifeline at bottom -->
+        <div class={`sd-arrow-head absolute left-0 bottom-0 translate-y-[calc(50%-1px)] w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] ${style.arrowLeft}`}></div>
+      </div>
+    </div>
+    <div class="sd-message-label absolute top-1/2 -translate-y-1/2 pointer-events-none z-10">
+      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}>
+        {label}
+      </div>
     </div>
   </div>
+) : (
+  <!-- Regular message between participants -->
   <div
-    class="absolute -top-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+    class={`sd-row sd-message relative h-16 ${className}`.trim()}
+    data-from={fromIndex}
+    data-to={toIndex}
   >
-    <div
-      class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}
-    >
-      {label}
+    <div class="sd-message-arrow absolute top-1/2 -translate-y-1/2 flex items-center">
+      <div class={`w-full border-t-2 relative ${style.line}`}>
+        <div class={`sd-arrow-head ${style.arrowRight} ${style.arrowLeft}`}></div>
+      </div>
+    </div>
+    <div class="sd-message-label absolute -top-1 z-10 pointer-events-none">
+      <div class={`inline-block bg-terminal-surface px-2 py-1 text-[10px] border rounded whitespace-nowrap ${style.text}`}>
+        {label}
+      </div>
     </div>
   </div>
-</div>
+)}

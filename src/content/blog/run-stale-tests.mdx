@@ -15,40 +15,58 @@ relatedProjects: []
 draft: false
 ---
 
-Short and sweet: you don’t have to re-run the entire test suite after every change. Elixir’s `mix test --stale` runs only the tests affected by your recent edits, which speeds up the feedback loop significantly on mid-sized codebases.
+Mix is an awesome tool but most Elixir beginners not aware of all its features. `mix test --stale` is the one them and can make your workflow much smoother. It tells mix to run only tests which reference modules that changed from the latest test run.
 
-## Quick start
+Literally, this means that if you have changed some code in your application, the mix will run only the tests that touch this code or it’s dependents. This saves a lot of time if you trying to follow TDD in a mid-to-large sized project.
 
-```bash
-mix test --stale
-```
+But to run this command we still have to switch between a code editor and a console. Fortunately, mix test supports `--listen-on-stdin` flag that configures mix to read stdin and restart the tests after receiving a newline. Now we only need a way to watch for the file system events.
 
-This command re-runs:
-- Tests that failed in the previous run
-- Tests whose source files (or their dependencies) changed since the last successful run
-
-To see more detail while iterating:
+Here is simple bash script for that (tested on macOS):
 
 ```bash
-mix test --stale --trace
+#!/bin/bash
+
+command -v fswatch >/dev/null 2>&1 || { echo >&2 "fswatch is not installed. To install it use 'brew install fswatch'. Aborting."; exit 1; }
+command -v mix >/dev/null 2>&1 || { echo >&2 "mix is not installed. Aborting."; exit 1; }
+
+PROJECT_PATH=$(git rev-parse --show-toplevel)
+[[ "$?" != "0" ]] && echo "Stale test watch works only within git project." && exit 1;
+
+declare -a IGNORED_PATHS
+declare -i throttle_by=2
+
+# Ignore all paths from gitignore and ~/.gitignore_global
+IGNORED_PATHS+=('.git' '_build' 'docs' 'deps' 'cover')
+
+function read_gitignore() {
+  while IFS='' read -r line || [[ -n "$line" ]]; do
+    IGNORE_PATH=${line%%#*}
+    if [[ "${IGNORE_PATH}" != "" ]]; then
+      IGNORED_PATHS=("${IGNORED_PATHS[@]}" ${IGNORE_PATH})
+    fi
+  done < "$1"
+}
+
+[ -f "${PROJECT_PATH}/.gitignore" ] && read_gitignore "${PROJECT_PATH}/.gitignore"
+[ -f "$HOME/.gitignore_global" ] && read_gitignore "$HOME/.gitignore_global"
+
+function filter_ignored_paths() {
+  while read match; do
+    local changes_detected=1
+    for e in "${IGNORED_PATHS[@]}"; do
+      [[ "$match" == "${PROJECT_PATH}/$e"* || "$match" == *"$e" ]] && changes_detected="0" && break;
+    done
+
+    [[ "${changes_detected}" == "1" ]] && echo "Changes detected in $match";
+  done
+}
+
+ARGS="$@"
+[[ "${ARGS}" == "" ]] && ARGS="--stale"
+
+fswatch $PWD | filter_ignored_paths | mix test --listen-on-stdin ${ARGS}
 ```
 
-You can also target a specific file or line (still benefits from staleness tracking):
+If you run into odd dependency resolution (e.g., renames or large refactors), reset state with a full run: `mix test`.
 
-```bash
-mix test --stale test/my_app/some_test.exs:42
-```
-
-## Tips
-
-- Pair `--stale` with smaller, focused test files during development for very fast cycles.
-- If you run into odd dependency resolution (e.g., renames or large refactors), reset state with a full run:
-  ```bash
-  mix test
-  ```
-- For continuous re-runs on file change, consider using a file watcher (e.g., `fswatch`, `entr`) around `mix test --stale`:
-  ```bash
-  ls -1 **/*.{ex,exs} | entr -c mix test --stale
-  ```
-
-Faster iteration makes better tests—and better code. Keep the loop tight.
+Faster iteration makes better tests - and better code. Keep the loop tight.

@@ -1,0 +1,179 @@
+---
+type Status = "default" | "success" | "fail" | "warning" | "info" | "inactive";
+export interface Props {
+  tx?: string | string[];
+  comp?: string | string[];
+  txStatus?: Status | Status[];
+  compStatus?: Status | Status[];
+  vline?: boolean;
+  vlineDir?: "down" | "up";
+  vlineLabel?: string;
+}
+const {
+  tx,
+  comp,
+  txStatus = "default",
+  compStatus = "default",
+  vline = false,
+  vlineDir = "down",
+  vlineLabel,
+} = Astro.props;
+
+const txItems = tx ? (Array.isArray(tx) ? tx : [tx]) : [];
+const compItems = comp ? (Array.isArray(comp) ? comp : [comp]) : [];
+const txStatuses = Array.isArray(txStatus)
+  ? txStatus
+  : txItems.map(() => txStatus);
+const compStatuses = Array.isArray(compStatus)
+  ? compStatus
+  : compItems.map(() => compStatus);
+
+const colors = {
+  default: {
+    stroke: "rgba(0,255,255,0.4)",
+    fill: "rgba(0,255,255,0.05)",
+    text: "text-terminal-cyan",
+  },
+  success: {
+    stroke: "rgba(0,255,0,0.4)",
+    fill: "rgba(0,255,0,0.05)",
+    text: "text-terminal-green",
+  },
+  fail: {
+    stroke: "rgba(239,68,68,0.6)",
+    fill: "rgba(239,68,68,0.1)",
+    text: "text-red-400",
+  },
+  warning: {
+    stroke: "rgba(234,179,8,0.5)",
+    fill: "rgba(234,179,8,0.08)",
+    text: "text-terminal-yellow",
+  },
+  info: {
+    stroke: "rgba(96,165,250,0.5)",
+    fill: "rgba(96,165,250,0.08)",
+    text: "text-blue-400",
+  },
+  inactive: {
+    stroke: "rgba(160,160,160,0.3)",
+    fill: "rgba(160,160,160,0.03)",
+    text: "text-muted-foreground",
+  },
+};
+
+const d = 12;
+const clipRight = `polygon(0% 0%, ${100 - d}% 0%, 100% 50%, ${100 - d}% 100%, 0% 100%, ${d}% 50%)`;
+const clipLeft = `polygon(${d}% 0%, 100% 0%, ${100 - d}% 50%, 100% 100%, ${d}% 100%, 0% 50%)`;
+---
+
+<div class="contents">
+  {/* Row 1: TX */}
+  <div class="flex items-center justify-center min-h-7">
+    {
+      txItems.length > 0 && (
+        <span
+          class={`inline-flex flex-col gap-1 ${txItems.length > 1 ? "border-l border-r border-dashed border-terminal-cyan/30 px-2 py-1 rounded" : ""}`}
+        >
+          {txItems.map((label, i) => {
+            const c = colors[txStatuses[i] || "default"] || colors.default;
+            return (
+              <span
+                class="saga-step relative inline-block"
+                style={`clip-path: ${clipRight};`}
+              >
+                <span
+                  class="absolute inset-0"
+                  style={`background: ${c.fill};`}
+                />
+                <span
+                  class="absolute inset-0"
+                  style={`background: ${c.stroke}; clip-path: ${clipRight};`}
+                />
+                <span
+                  class="absolute"
+                  style={`top: 1px; right: 1px; bottom: 1px; left: 1px; background: ${c.fill}; clip-path: ${clipRight};`}
+                />
+                <span
+                  class={`relative z-10 inline-block px-5 py-1 text-[10px] leading-tight text-center whitespace-pre-line ${c.text}`}
+                >
+                  {label}
+                </span>
+              </span>
+            );
+          })}
+        </span>
+      )
+    }
+  </div>
+
+  {/* Row 2: Vertical line */}
+  <div class="h-4 flex items-center justify-center gap-1">
+    {
+      vline && (
+        <Fragment>
+          <div class="flex flex-col items-center h-full">
+            {vlineDir === "up" && (
+              <span class="text-[8px] leading-none text-yellow-400/60">▲</span>
+              <span class="flex-1 border-l border-yellow-500/40" />
+            )}
+
+            {vlineDir === "down" && (
+              <span class="flex-1 border-l border-red-500/40" />
+              <span class="text-[8px] leading-none text-red-400/60">▼</span>
+            )}
+          </div>
+          {vlineLabel && (
+            vlineDir === "up" && (
+            <span class="text-[9px] leading-none text-yellow-400/60">
+              {vlineLabel}
+            </span>
+            ) || (
+            <span class="text-[9px] leading-none text-red-400/60">
+              {vlineLabel}
+            </span>
+            )
+          )}
+        </Fragment>
+      )
+    }
+  </div>
+
+  {/* Row 3: Comp */}
+  <div class="flex items-center justify-center min-h-7">
+    {
+      compItems.length > 0 && (
+        <span
+          class={`inline-flex flex-col gap-1 ${compItems.length > 1 ? "border-l border-r border-dashed border-red-500/30 px-2 py-1 rounded" : ""}`}
+        >
+          {compItems.map((label, i) => {
+            const c = colors[compStatuses[i] || "default"] || colors.default;
+            return (
+              <span
+                class="saga-step relative inline-block"
+                style={`clip-path: ${clipLeft};`}
+              >
+                <span
+                  class="absolute inset-0"
+                  style={`background: ${c.fill};`}
+                />
+                <span
+                  class="absolute inset-0"
+                  style={`background: ${c.stroke}; clip-path: ${clipLeft};`}
+                />
+                <span
+                  class="absolute"
+                  style={`top: 1px; right: 1px; bottom: 1px; left: 1px; background: ${c.fill}; clip-path: ${clipLeft};`}
+                />
+                <span
+                  class={`relative z-10 inline-block px-5 py-1 text-[10px] leading-tight text-center whitespace-pre-line ${c.text}`}
+                >
+                  {label}
+                </span>
+              </span>
+            );
+          })}
+        </span>
+      )
+    }
+  </div>
+</div>

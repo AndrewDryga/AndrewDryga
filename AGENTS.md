@@ -208,7 +208,7 @@ Uses Tailwind's standard 4px-based spacing scale.
     <FormField.Label class="text-sm font-medium text-foreground">Email</FormField.Label>
     <Input type="email" placeholder="~/> user@domain.dev" required />
     <FormField.Description class="text-xs text-muted-foreground">
-      We never send spam—only deploy logs.
+      We never send spam - only deploy logs.
     </FormField.Description>
   </FormField>
 </form>

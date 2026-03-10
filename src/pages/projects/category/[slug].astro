@@ -26,30 +26,40 @@ const computedUnique = Array.from(
 ).sort();
 
 const CATEGORY_META = {
-  Architecture: {
+  AdTech: {
     description:
-      "Architecture work that stayed simple under load—clear boundaries, performance headroom, and designs that are easy to evolve.",
+      "Advertising platforms, lead generation, and sales automation — high-traffic systems that drive revenue.",
     accent: "cyan" as const,
   },
-  Engineering: {
+  FinTech: {
     description:
-      "Hands-on product engineering: shipping thin slices, keeping quality high, and leaving code easy to change.",
+      "Payment systems, P2P lending, eWallets, and financial platforms built for regulated workflows at scale.",
+    accent: "yellow" as const,
+  },
+  HealthTech: {
+    description:
+      "National-scale healthcare systems — EMR, e-prescriptions, reimbursements, and patient data platforms.",
     accent: "green" as const,
   },
-  DevOps: {
+  LegalTech: {
     description:
-      "Pipelines, observability, and operations that keep teams shipping. Fewer surprises, calmer on-call.",
-    accent: "yellow" as const,
+      "Contract management and legal workflow automation for B2B clients.",
+    accent: "cyan" as const,
   },
   Security: {
     description:
       "Zero-trust access, hardened services, and practical controls that reduce risk without blocking delivery.",
     accent: "cyan" as const,
   },
-  Database: {
+  "Open Source": {
     description:
-      "Schema design, migrations, and performance that keep data correct and fast, with headroom to grow.",
+      "Libraries, tools, and frameworks contributed to the Elixir and other ecosystems.",
     accent: "green" as const,
+  },
+  Other: {
+    description:
+      "Side projects, experiments, and advisory work across various domains.",
+    accent: "yellow" as const,
   },
 } satisfies Record<
   string,

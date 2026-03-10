@@ -14,8 +14,10 @@ import {
   CombinedFragment,
   CombinedOperand,
 } from "@/components/mdx/SequenceDiagram";
+import { SagaDiagram, SagaStep, SagaArrow } from "@/components/mdx/SagaDiagram";
 import AsciiStackedBar from "@/components/ascii/StackedBar.astro";
 import AsciiVerticalBar from "@/components/ascii/VerticalBar.astro";
+import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -166,11 +168,9 @@ const sparkline = buildSparkline(sparklinePoints);
           <div
             class="rounded-lg border border-border bg-card p-6 font-mono text-sm leading-relaxed"
           >
-            <pre
-              role="img"
-              aria-label="Deployment flow diagram showing stage build, quality gate, deploy, rollback path, and observe metrics"
-              class="whitespace-pre text-terminal-cyan overflow-x-auto">
-┌─────────────┐    ┌──────────────┐    ┌────────────┐
+            <AsciiDiagram
+              label="Deployment flow diagram showing stage build, quality gate, deploy, rollback path, and observe metrics"
+              content={`┌─────────────┐    ┌──────────────┐    ┌────────────┐
 │ Stage build │───▶│ Quality gate │───▶│   Deploy   │
 │    ci/cd    │    │    checks    │    │   fly.io   │
 └─────────────┘    └──────────────┘    └────────────┘
@@ -184,7 +184,8 @@ const sparkline = buildSparkline(sparklinePoints);
 ┌────────────┐
 │  Observe   │
 │  metrics   │
-└────────────┘</pre>
+└────────────┘`}
+            />
             <p class="mt-4 text-xs text-muted-foreground">
               Compose diagrams using monospace boxes; each node includes a
               primary label and a secondary descriptor beneath it.
@@ -194,12 +195,121 @@ const sparkline = buildSparkline(sparklinePoints);
 
         <section id="sequence" class="space-y-6">
           <header class="space-y-3">
-            <h2 class="text-3xl font-bold text-foreground">Request sequence</h2>
+            <h2 class="text-3xl font-bold text-foreground">
+              Sequence Diagrams
+            </h2>
             <p class="text-sm text-muted-foreground max-w-2xl">
-              Loop, alt, opt, break, and negative fragments mapped to
-              terminal-native sequence notation for the session endpoint.
+              World-class sequence diagrams with automatic layout, proper arrow
+              routing, self-calls, activation boxes, and fragment support (loop,
+              alt, opt, break, neg).
             </p>
           </header>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            Basic 2-participant
+          </h3>
+          <SequenceDiagram>
+            <Participants>
+              <Participant name="Client" color="accent" />
+              <Participant name="Server" color="primary" />
+            </Participants>
+            <Messages>
+              <Message label="Request data" from={0} to={1} />
+              <Message label="Process request" from={1} to={1} type="async" />
+              <Message label="Return data" from={1} to={0} type="response" />
+            </Messages>
+            <Note text="Simple request-response pattern" />
+          </SequenceDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            3 participants with self-call
+          </h3>
+          <SequenceDiagram>
+            <Participants>
+              <Participant name="Client" color="accent" />
+              <Participant name="API" color="secondary" />
+              <Participant name="Database" color="primary" />
+            </Participants>
+            <Messages>
+              <Message label="POST /users" from={0} to={1} />
+              <Message label="Validate input" from={1} to={1} type="async" />
+              <Message label="INSERT query" from={1} to={2} />
+              <Message label="Row inserted" from={2} to={1} type="response" />
+              <Message label="201 Created" from={1} to={0} type="success" />
+            </Messages>
+            <Note text="Self-call shows internal processing" />
+          </SequenceDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            5 participants - complex flow
+          </h3>
+          <SequenceDiagram>
+            <Participants>
+              <Participant name="Client" color="accent" />
+              <Participant name="API" color="secondary" />
+              <Participant name="Queue" color="primary" />
+              <Participant name="Worker" color="primary" />
+              <Participant name="Storage" color="primary" />
+            </Participants>
+            <Messages>
+              <Message label="Upload file" from={0} to={1} />
+              <Message label="Enqueue job" from={1} to={2} />
+              <Message label="202 Accepted" from={1} to={0} type="success" />
+              <Message label="Dequeue job" from={2} to={3} />
+              <Message label="Process file" from={3} to={3} type="async" />
+              <Message label="Store result" from={3} to={4} />
+              <Message label="Stored" from={4} to={3} type="response" />
+              <Message label="Job complete" from={3} to={2} type="success" />
+            </Messages>
+            <Note text="Demonstrates automatic spacing for 5 participants" />
+          </SequenceDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            With activation boxes
+          </h3>
+          <SequenceDiagram>
+            <Participants>
+              <Participant name="Client" color="accent" />
+              <Participant name="Server" color="primary" />
+            </Participants>
+            <Messages>
+              <Message label="Request" from={0} to={1} />
+              <ActivationBox participant={1}>
+                <Message label="Validate" from={1} to={1} type="async" />
+                <Message label="Process" from={1} to={1} type="async" />
+                <Message label="Save" from={1} to={1} type="async" />
+              </ActivationBox>
+              <Message label="Response" from={1} to={0} type="response" />
+            </Messages>
+            <Note
+              text="Activation box shows when participant is actively processing"
+            />
+          </SequenceDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">Error handling</h3>
+          <SequenceDiagram>
+            <Participants>
+              <Participant name="Client" color="accent" />
+              <Participant name="API" color="secondary" />
+              <Participant name="Database" color="primary" />
+            </Participants>
+            <Messages>
+              <Message label="Create record" from={0} to={1} />
+              <Message label="INSERT" from={1} to={2} />
+              <Message
+                label="Constraint violation"
+                from={2}
+                to={1}
+                type="error"
+              />
+              <Message label="400 Bad Request" from={1} to={0} type="error" />
+            </Messages>
+            <Note text="Error type uses dashed lines and error styling" />
+          </SequenceDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            Advanced: Fragments
+          </h3>
 
           <SequenceDiagram class="space-y-6">
             <Participants>
@@ -250,7 +360,7 @@ const sparkline = buildSparkline(sparklinePoints);
                         />
                         <SelfCall
                           label="Increment attempt counter"
-                          position="left"
+                          participant={0}
                         />
                         <Note
                           text="State invariant: attempts ≤ 3"
@@ -349,6 +459,120 @@ const sparkline = buildSparkline(sparklinePoints);
               position="center"
             />
           </SequenceDiagram>
+        </section>
+
+        <section id="saga" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Saga diagram</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Visualise distributed transaction flows with forward steps
+              (transactions) and reverse steps (compensations) aligned
+              vertically. Supports failure markers, vertical connectors, step
+              labels, and parallel groups.
+            </p>
+          </header>
+
+          <h3 class="text-xl font-semibold text-foreground">
+            Linear saga with failure
+          </h3>
+          <SagaDiagram title="Trip booking — flight fails at step 4">
+            <SagaStep
+              tx={"Fetch currency\nexchange rates"}
+              txStatus="success"
+              comp={"Send\nexcuse letter"}
+              compStatus="inactive"
+            />
+            <SagaArrow showTx txLabel="1" />
+            <SagaStep
+              tx={"Pre-authorize\ncard"}
+              txStatus="success"
+              comp={"Cancel pre-\nauthorization"}
+              compStatus="warning"
+            />
+            <SagaArrow showTx txLabel="2" showComp compLabel="8" />
+            <SagaStep
+              tx={"Book\nhotel"}
+              txStatus="success"
+              comp={"Cancel\nhotel booking"}
+              compStatus="warning"
+            />
+            <SagaArrow showTx txLabel="3" showComp compLabel="7" />
+            <SagaStep
+              tx={"Book\ncar"}
+              txStatus="success"
+              comp={"Cancel\ncar booking"}
+              compStatus="warning"
+            />
+            <SagaArrow showTx txLabel="4" showComp compLabel="6" />
+            <SagaStep
+              tx={"Book\nflight"}
+              txStatus="fail"
+              comp={"Ensure flight\nis not booked"}
+              compStatus="warning"
+              vline
+              vlineLabel="5"
+            />
+            <SagaArrow />
+            <SagaStep
+              tx={"Send email\nconfirmation"}
+              txStatus="inactive"
+              comp={"Refund\npayment"}
+              compStatus="inactive"
+            />
+            <SagaArrow />
+            <SagaStep tx="Charge card" txStatus="inactive" />
+          </SagaDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">Parallel steps</h3>
+          <SagaDiagram title="Concurrent bookings with partial failure">
+            <SagaStep
+              tx={"Fetch currency\nexchange rates"}
+              txStatus="success"
+              comp={"Send\nexcuse letter"}
+              compStatus="inactive"
+            />
+            <SagaArrow showTx txLabel="1" />
+            <SagaStep
+              tx={"Pre-authorize\ncard"}
+              txStatus="success"
+              comp={"Cancel pre-\nauthorization"}
+              compStatus="warning"
+            />
+            <SagaArrow showTx txLabel="2,3,4" showComp compLabel="8" />
+            <SagaStep
+              tx={["Book\nflight", "Book\nhotel", "Book\ncar"]}
+              txStatus={["success", "fail", "success"]}
+              comp={[
+                "Ensure flight\nis not booked",
+                "Cancel\nhotel booking",
+                "Cancel\ncar booking",
+              ]}
+              compStatus="warning"
+              vline
+              vlineLabel="5"
+            />
+            <SagaArrow showComp compLabel="7,6" />
+            <SagaStep
+              tx={"Send email\nconfirmation"}
+              txStatus="inactive"
+              comp={"Refund\npayment"}
+              compStatus="inactive"
+            />
+            <SagaArrow />
+            <SagaStep tx="Charge card" txStatus="inactive" />
+          </SagaDiagram>
+
+          <h3 class="text-xl font-semibold text-foreground">Minimal</h3>
+          <SagaDiagram>
+            <SagaStep
+              tx="Create user"
+              txStatus="success"
+              comp="Delete user"
+              compStatus="warning"
+            />
+            <SagaArrow showTx txLabel="1" showComp compLabel="2" />
+            <SagaStep tx="Send email" txStatus="fail" vline />
+          </SagaDiagram>
         </section>
       </div>
     </div>

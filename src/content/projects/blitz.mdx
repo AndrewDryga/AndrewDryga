@@ -1,0 +1,134 @@
+---
+projectId: "blitz"
+title: "Blitz - Overlays, Personalized Stats, and Meta Insights Powered by Billions of Matches"
+draft: false
+---
+
+## The Ask
+
+When I joined, the business was in a tough spot. Leadership started the rewrite everything in Rust to fix performance issues, operational costs were through the roof, and development had basically stalled. The ask was simple: keep things running while the rewrite happens. The scale was pretty substantional - we served 25k RPS with peaks around 150k RPS _(and at times LLM bots/other scrapers tried to do as much as 1M RPS)_, tens of terrabytes of data per day, for a 7-figure DAU.
+
+But here's the thing - after digging in, I realized the language and framework weren't the problem. It was infrastructure and lack of proper care. So instead of babysitting a dying system, I went all-in on fixing it.
+
+Oh, and there was one more thing: the last backend engineer left a week after I joined. He stayed long enough to onboard me, but most of the internal knowledge walked out the door. So I was flying solo, reverse-engineering a system that nobody fully understood anymore.
+
+## What Was Actually Broken
+
+### The Backend Was Drowning in Errors
+
+The Elixir apps were stable enough, but they were generating **tens of thousands** of Sentry events every day, requiring pretty sizeable Sentry cluster and sometimes taking it down requiring manual reset of Kafka queues. Most of it was noise-race conditions, failed inserts where upserts should've been used, unmaintained databases, and an overcomplicated architecture nobody fully understood.
+
+I went heads-down for a month:
+- Added NIFs for JSON encoding (at our RPS, encoding/decoding JSON is expensive);
+- Mapped out internal dependencies and ripped out dead code;
+- Fixed race conditions one by one;
+- Did a maintenance pass on the billing system, which unlocked annual subscriptions and drove substantial growth in paying customers;
+- Removed places that were doing unnecessary remote RPC calls or inserting data to Riak just so that later Oban job can read it's payload;
+- Later removed beefy Riak cluster - it was barely used and locked us on an old Erlang version;
+- *And did the most basic thing* - started every single day by just triaging Sentry, fixing issues, until there was nothing left.
+
+_I can't thank Elixir and Erlang enough for their outstanding debugging story. Being able to remote shell into an IEx console, run `:recon_trace`, inspect production state, or even hot-patch a fixed module directly into production saved my ass countless times. You can't do this stuff in most languages - it's a superpower when you're firefighting solo. This is **one of many** reasons why Elixir is my language of choise!_
+
+**Result:** Error rate dropped from six figures to ~42 events per day (mostly timeouts, which are occasionally fine at our scale).
+
+### Infrastructure Was a Mess
+
+Manually provisioned, overprovisioned in some places, underprovisioned in others. Tons of stuff running that nobody used, but nobody could figure out if it was safe to remove because the codebase was so tangled.
+
+Since I already knew how the backend worked, I started by stopping everything unused. Then I spent three months moving everything to Terraform - the only viable way to manage this solo. Along the way, I right-sized everything: merged Redis instances, moved caching to ETS where it made sense, cut the cluster size and cloud bill substantially (saved seven figures annually).
+
+**One almost comical example:** A 6-node TypeSense cluster that was supposedly "overprovisioned for performance" and then another hand-written Rust search service was written to replace "slow TypeSense" - except **4 out of 6 nodes had been down for at least 5 months** and were many major versions behind. I fixed it, downscaled to 3 nodes, and later recreated the whole thing from scratch on Terraform-managed infra with proper alerting, the data was fully migrated along the way. We removed hand-rolled service and had zero issues since then.
+
+### Monitoring Was Noisy and Expensive
+
+The monitoring stack was decent in theory - everything was monitored. But alerts were misconfigured and fired multiple times a day even when nothing was wrong. The stack ran on Mimir hosted on its own **42-core, 160GB RAM, 12-node Kubernetes cluster**.
+
+I migrated everything to self-hosted VictoriaMetrics and Grafana running on **two small VMs**, then reworked every dashboard, panel, and alert to eliminate noise.
+
+**Savings from monitoring alone:** $50k/year.
+
+I also found we were sending tons of metrics directly to Google Cloud Monitoring that were never queried, costing thousands per month just for storage. Disabled all unused metrics. Same story with logs - at our scale, verbose logs aren't that useful, but they were costing a lot to store. Never enable load balancer or HTTP requests logging on highload projects ;).
+
+### Databases Needed Love
+
+Backend databases hadn't gotten proper care in a while. Oban queues didn't have reindexing and purging enabled, so queueing databases accumulated dead tuples and bloated indexes. Application databases had heavy queries running without proper indexes, and the default response to any performance issue was to upscale the database instead of tuning queries or looking at application behavior.
+
+I've spent a week going though each PostgreSQL instance, analyzing `pg_stat_statements`, application that used it and tuning queries and the database itself. I removed unused indexes, added missing ones, rebuilt bloated indexes and perfomed manual vacuuming during off-peak hours. Changing PostgreSQL flags in most cases reduced it's load by 20% right away and allowed further downscaling. Proper `AUTOVACCUM` settings ensured that I don't need to go back there and do manual actions anymore.
+
+### Networking Costs Were Out of Control
+
+GCP CDN and Media CDN are **extremely expensive**, mostly due to traffic replication costs across regions. Cloud Security Policies (CSP) on GCP bill per request, which didn't work for our business model either - we had far too many requests, and it was costing a fortune.
+
+I initiated a migration to **BunnyCDN**, which saved **$500k/year**. BunnyCDN required a bit more hands-on work and interactions with support, but they responded within 10 minutes every time and were great to work with.
+
+### Frontend Was Slow
+
+Built on a home-grown React-based framework that sometimes took **seconds to server-render a single page**. It was a constant struggle to add new features, and improving performance was even harder.
+
+I didn't touch FE much, but I kept bringing up issues and need of taking proper care of it. The frontend team decided to rewrite everything in Svelte. A few thing I did change myself:
+- Removed large headers in generated JS chunks (at 300 chunks per page and our request volume, those headers were costing real money);
+- Pushed for reducing the number of chunks per page-some pages required **700 chunks** to render;
+- Migrated from Cloud Run to Compute Engine to reduce costs and have better control / easier debugging.
+
+### CI/CD Was a Gamble
+
+The deployment system was a hand-rolled Slack bot that could accidentally ship a **6-month-old version of code to prod** due to a bug. Nobody had deployed a fix to the entire cluster in over a year. Fixes were deployed from PR branches by manually editing CircleCI config in the branch, then removing the change before merging to master.
+
+I moved everything to GitHub Actions (**$24k/year saved**) and built a proper CI/CD pipeline with Terraform. All apps now build containers and open PRs in the infra repo that auto-deploy when merged, with Slack notifications and full audit trails.
+
+---
+
+## The Numbers
+
+### When I've joined
+- **Cloud spend:** ~$220k/month
+- **Daily errors:** Six-figure Sentry events
+- **Monitoring cost:** $50k/year for a 12-node cluster
+- **CI/CD cost:** CircleCI + custom tooling
+- **CDN cost:** GCP CDN + CSP billing disaster
+- **Deployment:** Manual, risky, slow
+
+### After 1 year at the company
+- **Cloud spend:** ~$20k/month (**91% reduction**)
+- **Daily errors:** ~42 events (mostly acceptable timeouts)
+- **Monitoring cost:** Two small VMs
+- **CI/CD:** GitHub Actions + Terraform automation
+- **CDN cost:** BunnyCDN migration saved $500k/year
+- **Deployment:** One-click, safe, automated
+
+**Total annual savings:** Over **$2M**.
+
+---
+
+## What I Learned
+
+This wasn't a language problem, a framework problem, or even really a scale problem. It was a **maintenance debt problem**. Systems don't stay healthy on their own - they need care, attention, and someone willing to roll up their sleeves and fix the boring stuff.
+
+The biggest wins came from:
+1. **Measuring first** - You can't optimize what you don't measure;
+2. **Removing before adding** - Dead code and unused infra cost money and mental overhead;
+3. **Fixing root causes** - Upscaling databases is easy, but designing with database in mind or at least fixing bad queries is what actually works;
+4. **Boring infrastructure** - Terraform, Compute VMs (no k8s or anything like that for a small team), proper CI/CD, and reliable monitoring aren't sexy, but they're worth their weight in gold;
+5. **Focusing on what matters** - Error budgets, SLOs, observable systems and simply caring during the day let you sleep at night.
+
+The work proved that **systematic infrastructure improvements can deliver both cost savings and reliability gains without sacrificing performance**. 
+
+### A Side Note on Rewrites
+
+I'll be honest - I've been guilty of chasing "the rewrite" in the past. It rarely works out. The new "fixed" platform almost never sees the light of day because **the business can't wait**. Features need to ship, so you end up playing cat-and-mouse, implementing the same things in both the old and new systems. It's exhausting, expensive, and demoralizing.
+
+I've spent a lot of time thinking about this, and I keep coming back to this analogy:
+
+> What would you say to a plumber who tells you that in order to fix a few leaky pipes, he needs to tear down and rebuild your entire house?
+
+Yeah. Exactly.
+
+Most of the time, the best move isn't a rewrite - it's rolling up your sleeves and taking care of what you already have. Fix the leaks, replace the bad pipes, and keep the house standing. The business will thank you for it.
+
+---
+
+## Thanks
+
+Huge thanks to **Austin Reifsteck** for staying an extra week to onboard me and transferring as much knowledge as he could in that short window. It made all the difference.
+
+And to **Naveed Khan** and the rest of the team - thank you for trusting me, letting me go wild, and giving me the space to change things aggressively without micromanagement. Not every team would tolerate my "move fast and fix things"/YOLO approach, and I'm grateful you did.

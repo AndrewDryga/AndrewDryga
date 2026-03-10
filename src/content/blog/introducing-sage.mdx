@@ -1,6 +1,6 @@
 ---
-title: "Introducing Sage — a Sagas pattern implementation in Elixir"
-description: "Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project— this article is for you."
+title: "Introducing Sage  -  a Sagas pattern implementation in Elixir"
+description: "Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project -  this article is for you."
 publishDate: 2018-05-31
 updatedDate: 2018-05-31
 category: "Architecture"
@@ -16,11 +16,27 @@ relatedProjects:
   - sage
 ---
 
-![Introducing Sage — cover](/blog/introducing-sage/hero.jpeg)
+import { SagaDiagram, SagaStep, SagaArrow } from "../../components/mdx/SagaDiagram";
+
+<SagaDiagram title="Diagram 1  -  Linear Saga with Compensations">
+  <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
+  <SagaArrow showTx txLabel="1" />
+  <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="warning" />
+  <SagaArrow showTx txLabel="2" showComp compLabel="8" />
+  <SagaStep tx={"Book\nhotel"} txStatus="success" comp={"Cancel hotel booking"} compStatus="warning" />
+  <SagaArrow showTx txLabel="3" showComp compLabel="7" />
+  <SagaStep tx={"Book\ncar"} txStatus="success" comp={"Cancel car booking"} compStatus="warning" />
+  <SagaArrow showTx txLabel="4" showComp compLabel="6" />
+  <SagaStep tx={"Book\nflight"} txStatus="fail" comp={"Ensure flight is not booked"} compStatus="warning" vline vlineLabel="5" />
+  <SagaArrow />
+  <SagaStep tx={"Send email confirmation"} txStatus="inactive" comp={"Send excuse letter"} compStatus="inactive" />
+  <SagaArrow />
+  <SagaStep tx="Charge card" txStatus="inactive" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
 
 ## What problem are we trying to solve?
 
-Most products integrate with external systems — payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
+Most products integrate with external systems  -  payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
 
 Example: creating a user in your DB, provisioning a customer in Stripe, sending a welcome email, and writing an audit log. If any of those fail, you can’t magically roll back the rest with a single ACID transaction.
 
@@ -40,13 +56,40 @@ Imagine a trip booking flow where you:
 3) Book a hotel
 4) Charge the customer’s card
 
-If step 4 fails (payment), you must cancel steps 1–3. If step 2 fails (flight), you must cancel step 1 (car) before continuing. These compensations are not always perfect “undo”—they are business actions that reverse the effects semantically (e.g., send a follow-up email instead of “unsending” the original).
+If step 4 fails (payment), you must cancel steps 1–3. If step 2 fails (flight), you must cancel step 1 (car) before continuing. These compensations are not always perfect “undo” - they are business actions that reverse the effects semantically (e.g., send a follow-up email instead of “unsending” the original).
 
 Without structure, this logic becomes brittle and hard to evolve.
 
+### Conference Talk - Code BEAM STO
+
+<div class="relative w-full" style="padding-bottom: 56.25%;">
+  <iframe
+    class="absolute top-0 left-0 w-full h-full rounded-lg"
+    src="https://www.youtube.com/embed/excmcS6Id2E"
+    title="Code BEAM STO - Introducing Sage"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+</div>
+
 ## What is a Saga?
 
-![Saga flow visualization](/blog/introducing-sage/diagram-1.jpeg)
+<SagaDiagram title="Diagram 2  -  Saga successful flow visualization">
+    <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
+    <SagaArrow showTx txLabel="1" />
+    <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="inactive" />
+    <SagaArrow showTx txLabel="2" />
+    <SagaStep tx={"Book hotel"} txStatus="success" comp={"Cancel hotel booking"} compStatus="inactive" />
+    <SagaArrow showTx txLabel="3" />
+    <SagaStep tx={"Book car"} txStatus="success" comp={"Cancel car booking"} compStatus="inactive" />
+    <SagaArrow showTx txLabel="4" />
+    <SagaStep tx={"Book flight"} txStatus="success" comp={"Ensure flight is not booked"} compStatus="inactive" />
+    <SagaArrow showTx txLabel="5" />
+    <SagaStep tx={"Send email confirmation"} txStatus="success" comp={"Send excuse letter"} compStatus="inactive" />
+    <SagaArrow showTx txLabel="6" />
+    <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
 
 A Saga is a failure management pattern for long-lived, multi-step work that cannot be wrapped in a single database transaction.
 
@@ -62,10 +105,6 @@ In practice, you trade strict atomicity for availability and explicit compensati
 
 ## Introducing Sage
 
-![Asynchronous stages diagram](/blog/introducing-sage/diagram-async.jpeg)
-
-![Retry with savepoint diagram](/blog/introducing-sage/diagram-retry.jpeg)
-
 [Sage](https://github.com/Nebo15/sage) is a dependency-free Elixir library inspired by Sagas, designed for organizing distributed transactions across business logic and third‑party APIs.
 
 Key goals:
@@ -75,6 +114,36 @@ Key goals:
 - Provide hooks for instrumentation and persistence
 
 > “It’s like Ecto.Multi but across business logic and third-party APIs.”
+
+<SagaDiagram title="Diagram 3  -  Parallel Bookings">
+  <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
+  <SagaArrow showTx txLabel="1" />
+  <SagaStep tx={"Pre-authorize card"} txStatus="success" comp={"Cancel pre- authorization"} compStatus="warning" />
+  <SagaArrow showTx txLabel="2,3,4" showComp compLabel="8" />
+  <SagaStep tx={["Book flight", "Book hotel", "Book car"]} txStatus={["success", "fail", "success"]} comp={["Cancel flight booking", "Cancel hotel booking", "Cancel car booking"]} compStatus="warning" vline vlineLabel="5" />
+  <SagaArrow />
+  <SagaStep tx={"Send email confirmation"} txStatus="inactive" comp={"Send excuse letter"} compStatus="inactive" />
+  <SagaArrow />
+  <SagaStep tx="Charge card" txStatus="inactive" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
+
+<br />
+
+<SagaDiagram title="Diagram 3  -  Retries">
+  <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
+  <SagaArrow showTx txLabel="1" />
+  <SagaStep tx={"Pre-authorize card"} txStatus="success" comp={"Cancel pre- authorization"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="2" />
+  <SagaStep tx={["Book flight"]} txStatus={["success"]} comp={["Cancel flight booking"]} compStatus="warning" vline vlineDir="up" vlineLabel="8" />
+  <SagaArrow showTx txLabel="3,9" showComp compLabel="7" />
+  <SagaStep tx={["Book hotel"]} txStatus={["success"]} comp={["Cancel hotel booking"]} compStatus="warning" />
+  <SagaArrow showTx txLabel="4,10" showComp compLabel="6" />
+  <SagaStep tx={["Book car"]} txStatus={["warning"]} comp={["Cancel car booking"]} compStatus="warning" vline vlineLabel="5" />
+  <SagaArrow showTx txLabel="11" />
+  <SagaStep tx={"Send email confirmation"} txStatus="success" comp={"Send excuse letter"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="12" />
+  <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
 
 ### High-level example (pseudo-Elixir)
 
@@ -117,7 +186,7 @@ Sage.new()
 
 ## Tradeoffs and mental model
 
-- You’re not doing a single ACID transaction — you’re modeling a distributed, multi-step business process.
+- You’re not doing a single ACID transaction  -  you’re modeling a distributed, multi-step business process.
 - Compensations are business semantics, not magical inverse operations.
 - Embrace idempotency everywhere: steps and compensations should be safe to retry.
 - Build for partial failure as a first-class reality.
@@ -136,4 +205,4 @@ Sage.new()
 - Paper (Sagas, 1987): A key conceptual reference for long-running transactions
 - Start small: wrap one gnarly multi-step flow and add compensations where you already perform manual cleanups
 
-By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be — while still shipping what matters.
+By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be  -  while still shipping what matters.

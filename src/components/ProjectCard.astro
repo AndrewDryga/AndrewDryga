@@ -15,10 +15,16 @@ const {
   index = 0,
   showImpact = true,
   clampDescription = false,
-  ctaLabel = "View project →",
+  ctaLabel,
   class: wrapperClass = "",
 } = Astro.props;
+
+// Always link to internal project page
 const href = `/projects/${project.id}/`;
+
+const defaultCtaLabel = "View project →";
+const finalCtaLabel = ctaLabel || defaultCtaLabel;
+
 const animationDelay = `${index * 100}ms`;
 const rootClasses = [
   "group relative flex h-full flex-col rounded-lg border border-border bg-card p-6 shadow-card transition-all duration-300 hover:border-terminal-green hover:shadow-glow animate-fade-in",
@@ -56,7 +62,7 @@ const rootClasses = [
           <ul class="space-y-2">
             {project.impact.map((item) => (
               <li class="flex items-start gap-2 text-sm leading-relaxed text-foreground/90">
-                <span class="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-terminal-green" />
+                <span class="mt-[0.5rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-terminal-green" />
                 <span class="font-sans">{item}</span>
               </li>
             ))}
@@ -69,7 +75,7 @@ const rootClasses = [
       <span
         class="inline-flex items-center gap-2 font-mono text-sm text-terminal-green transition-all group-hover:gap-3"
       >
-        {ctaLabel}
+        {finalCtaLabel}
       </span>
     </div>
   </div>
