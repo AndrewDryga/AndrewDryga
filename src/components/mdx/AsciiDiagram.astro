@@ -11,9 +11,40 @@ const { label, content, class: className = "" } = Astro.props;
 const diagramContent = content || (await Astro.slots.render("default"));
 ---
 
-<pre
-  role="img"
-  aria-label={label}
-  class={`whitespace-pre !text-terminal-cyan overflow-x-auto font-mono text-sm leading-relaxed ${className}`.trim()}
-  set:text={diagramContent}
-/>
+<div class="ascii-diagram-wrapper not-prose w-full overflow-hidden">
+  <pre
+    role="img"
+    aria-label={label}
+    class={`ascii-diagram whitespace-pre !text-terminal-cyan font-mono text-sm leading-relaxed origin-top-left ${className}`.trim()}
+    set:text={diagramContent}
+  />
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".ascii-diagram-wrapper").forEach((wrapper) => {
+      const pre = wrapper.querySelector(".ascii-diagram") as HTMLElement;
+      if (!pre) return;
+
+      const fit = () => {
+        // Reset scale to measure natural width
+        pre.style.transform = "";
+        pre.style.marginBottom = "";
+        const contentW = pre.scrollWidth;
+        const containerW = (wrapper as HTMLElement).clientWidth;
+
+        if (contentW > containerW && containerW > 0) {
+          const scale = containerW / contentW;
+          pre.style.transform = `scale(${scale})`;
+          // Compensate for the scaled height so no extra space
+          const naturalH = pre.offsetHeight;
+          const scaledH = naturalH * scale;
+          pre.style.marginBottom = `${scaledH - naturalH}px`;
+        }
+      };
+
+      fit();
+      window.addEventListener("resize", fit);
+    });
+  });
+</script>
