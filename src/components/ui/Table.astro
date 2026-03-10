@@ -3,12 +3,12 @@ interface Column {
   header: string;
   accessor?: string;
   class?: string;
-  render?: (row: Record<string, any>) => any;
+  render?: (row: Record<string, unknown>) => unknown;
 }
 
 interface Props extends astroHTML.JSX.HTMLAttributes<HTMLTableElement> {
   columns: Column[];
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   class?: string;
   caption?: string;
 }

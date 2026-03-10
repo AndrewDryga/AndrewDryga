@@ -15,7 +15,7 @@ interface Props {
 }
 
 const {
-  title = "Command Menu",
+  title: _title = "Command Menu",
   placeholder = "Type a command...",
   items = [],
   class: className = "",
@@ -286,7 +286,7 @@ const {
       }
     });
 
-    items.forEach((item, index) => {
+    items.forEach((item) => {
       item.addEventListener("mouseenter", () => {
         const visibles = visibleItems();
         const visibleIndex = visibles.indexOf(item);

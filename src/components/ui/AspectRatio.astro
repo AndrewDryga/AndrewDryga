@@ -4,7 +4,7 @@ interface Props {
   class?: string;
 }
 
-const { ratio = 16 / 9, class: className = "", ...rest } = Astro.props as Props &
+const { ratio = 16 / 9, class: className = "" } = Astro.props as Props &
   Record<string, unknown>;
 ---
 

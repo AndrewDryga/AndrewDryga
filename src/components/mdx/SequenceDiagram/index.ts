@@ -1,4 +1,3 @@
-// @ts-nocheck
 export { default as SequenceDiagram } from "./SequenceDiagram.astro";
 export { default as Participants } from "./Participants.astro";
 export { default as Participant } from "./Participant.astro";

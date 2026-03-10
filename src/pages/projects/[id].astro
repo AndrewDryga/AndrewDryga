@@ -42,7 +42,7 @@ try {
     const rendered = await render(entry);
     Content = rendered.Content;
   }
-} catch (e) {
+} catch {
   // No markdown content exists, that's fine
 }
 
@@ -53,11 +53,11 @@ const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL(`/projects/${projectId}/`, site).toString();
 
 // Find related blog posts (explicit only via relatedProjects field)
-const allBlogPosts = await getCollection("blog", ({ data }: { data: any }) =>
+const allBlogPosts = await getCollection("blog", ({ data }) =>
   import.meta.env.PROD ? !data.draft : true,
 );
 
-const relatedPosts = allBlogPosts.filter((post: any) => {
+const relatedPosts = allBlogPosts.filter((post) => {
   const relatedProjects = post.data.relatedProjects ?? [];
   return relatedProjects.some(
     (relId: string) =>
@@ -236,7 +236,7 @@ const projectLd = {
             Related <span class="text-terminal-yellow">Articles</span>
           </h2>
           <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
-            {relatedPosts.map((post: any, idx: number) => {
+            {relatedPosts.map((post) => {
               const publishDate = post.data.publishDate
                 ? new Date(post.data.publishDate).toLocaleDateString("en-US", {
                     year: "numeric",

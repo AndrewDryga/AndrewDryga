@@ -8,9 +8,9 @@ function shouldRespectDNT(): boolean {
 
   return (
     navigator.doNotTrack === "1" ||
-    // @ts-ignore legacy vendor properties
+    // @ts-expect-error legacy vendor properties
     window.doNotTrack === "1" ||
-    // @ts-ignore legacy vendor property
+    // @ts-expect-error legacy vendor property
     navigator.msDoNotTrack === "1"
   );
 }

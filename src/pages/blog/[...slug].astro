@@ -8,10 +8,10 @@ import { allProjects } from "../../data/projects";
 
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }: { data: any }) =>
+  const posts = await getCollection("blog", ({ data }) =>
     import.meta.env.PROD ? !data.draft : true
   );
-  return posts.map((post: any) => ({
+  return posts.map((post) => ({
     params: { slug: post.id },
     props: { postSlug: post.id },
   }));
