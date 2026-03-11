@@ -120,7 +120,7 @@ void breadcrumbLd;
                 {tags.map((t: string) => (
                   <li>
                     <a
-                      href={`/tags/${encodeURIComponent(t.toLowerCase())}`}
+                      href={`/tags/${t.toLowerCase().replace(/\//g, "-")}`}
                       class="inline-flex items-center font-mono text-xs px-2 py-1 rounded border border-terminal-yellow/30 text-terminal-yellow hover:border-terminal-yellow hover:bg-terminal-yellow/10 transition-colors"
                       rel="tag"
                     >

@@ -13,15 +13,16 @@ export async function getStaticPaths() {
 
   // Collect tags from both blog posts and project tech arrays
   const tagMap = new Map<string, string>();
+  const toSlug = (t: string) => t.toLowerCase().replace(/\//g, "-");
   for (const p of posts) {
     for (const t of p.data.tags ?? []) {
-      const key = t.toLowerCase();
+      const key = toSlug(t);
       if (!tagMap.has(key)) tagMap.set(key, t);
     }
   }
   for (const proj of allProjects) {
     for (const t of proj.tech) {
-      const key = t.toLowerCase();
+      const key = toSlug(t);
       if (!tagMap.has(key)) tagMap.set(key, t);
     }
   }
@@ -43,7 +44,7 @@ const allPosts = await getCollection(
 );
 const posts = allPosts
   .filter((p: CollectionEntry<"blog">) =>
-    (p.data.tags ?? []).some((t: string) => t.toLowerCase() === lowerTag),
+    (p.data.tags ?? []).some((t: string) => t.toLowerCase().replace(/\//g, "-") === lowerTag),
   )
   .sort((a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) => {
     const at = a.data.publishDate?.getTime?.() ?? 0;
@@ -53,7 +54,7 @@ const posts = allPosts
 
 // Projects matching tech (case-insensitive)
 const projects = allProjects.filter((p) =>
-  p.tech.some((t) => t.toLowerCase() === lowerTag),
+  p.tech.some((t) => t.toLowerCase().replace(/\//g, "-") === lowerTag),
 );
 
 const site = Astro.site ?? new URL("https://dryga.com/");
