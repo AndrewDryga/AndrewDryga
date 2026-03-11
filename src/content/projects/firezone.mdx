@@ -1,0 +1,39 @@
+---
+projectId: "firezone"
+title: "Firezone - From HN's favorite self-Hosted VPN to an Enterprise SaaS"
+draft: false
+---
+
+## The Ask
+
+Firezone started as an open source WireGuard management UI that blew up on Hacker News and Reddit. Self-hosted, simple, loved by the community. The kind of project that gets thousands of GitHub stars because people genuinely use it.
+
+But stars don't pay salaries. The team (YC W22) needed to turn this into a real business - a SaaS product that enterprises would pay for. That meant completely rethinking and rebuilding the product from the ground up.
+
+I joined to help make that happen.
+
+## What I Did
+
+This wasn't an incremental migration. We redesigned and rebuilt everything - new architecture, new data model, new infrastructure.
+
+I architected and built the control plane and client dashboard - roughly **~60% of the overall codebase**. Elixir, Phoenix, LiveView, PostgreSQL. I also built most of the management portal frontend, contributed to UI/UX decisions, and was involved in most product discussions.
+
+The infrastructure was all Terraform on GCP - proper IaC from day one. The control plane ran at **99.99%+ uptime**, which matters a lot when you're the thing that lets people into their networks.
+
+In a startup this size, you wear every hat. I did first-line customer support in Slack, on-call SRE, mentored new hires, and shaped product roadmaps in GitHub Issues. Whatever the startup needed to keep shipping.
+
+Everything stayed [open source](https://github.com/firezone/firezone/) - Apache 2.0. The community that made Firezone what it was could still see and contribute to every line of code.
+
+## The Interesting Bits
+
+Building a VPN replacement has some unique challenges:
+
+**Security is the product.** Unlike most SaaS where a bug means a broken form or a wrong number, a bug here could mean someone gets unauthorized access to a private network. Every decision went through that lens. We passed **SOC 2 Type II** audit and multiple pentests without any non-minor issues - not because we crammed for the exam, but because security was baked into how we built things from the start.
+
+**Self-hosted to SaaS migration.** The existing community was running their own instances. We had to build something compelling enough that they'd trust us to run it for them, while keeping the self-hosting option alive and honest.
+
+## What I Learned
+
+Enterprise security tools are a rough space for startups. It's hard to get in - a typical customer expects a lot of features to already be there before they'll even sign a LoI. Sales cycles are very long, so you have to start early and hope everything will be done by the time you're closing the deal. But being open source and already adopted helps with gaining trust and landing early customers. The product is also very sticky - once you're in, it's hard to leave.
+
+Also, being an open source product doesn't mean anyone will contribute to it. Community doesn't build by itself.
