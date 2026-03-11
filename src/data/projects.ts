@@ -165,6 +165,179 @@ export const allProjects: Project[] = [
     period: "Aug 2018 - Dec 2022",
   },
 
+  // LegalTech
+  {
+    id: "contractbook",
+    name: "Contractbook",
+    description:
+      "Built the self-service billing system, B2B API and marketing pipeline that let the business grow.",
+    impact: [
+      "Billing integrations for B2B clients",
+      "API platform for third-party integrations",
+      "CRM, BI and marketing tooling to make sure business makes informed decisions based on data",
+    ],
+    tech: [
+      "Elixir",
+      "Phoenix",
+      "PostgreSQL",
+      "Terraform",
+      "Kubernetes",
+      "BI",
+      "CI/CD",
+      "Heroku",
+    ],
+    categories: ["LegalTech"],
+    links: [
+      {
+        type: "website",
+        url: "https://contractbook.com/",
+        label: "Website",
+      },
+    ],
+    period: "Jul 2017 - Apr 2018",
+  },
+
+  // FinTech
+  {
+    id: "4finance",
+    name: "Financial P2P Marketplace",
+    description:
+      "Architecture and implementation for an institutional P2P lending marketplace for one of Europe's largest lenders ($9B portfolio). Built with robust order-book matching and auditability for regulated workflows.",
+    impact: [
+      "P2P lending for a $9B portfolio lender",
+      "Low-latency order-book matching via Mnesia",
+      "Event-driven architecture at scale",
+    ],
+    tech: [
+      "Elixir",
+      "Phoenix",
+      "PostgreSQL",
+      "Mnesia",
+      "Kubernetes",
+      "RabbitMQ",
+    ],
+    categories: ["FinTech"],
+    links: [],
+    period: "Jun 2016 - Feb 2017",
+    relatedPostIds: ["p2p-lending-platform"],
+  },
+  {
+    id: "mbill",
+    name: "Mbill - P2P Transfers",
+    description:
+      "P2P transfer service for individuals and small-to-medium online merchants. Create a page for your card and share a link to receive payments. Includes customer cabinet, payment button constructor, and transaction reports.",
+    impact: [
+      "Card-to-card transfers via shareable links",
+      "Payment button constructor for website integrations",
+    ],
+    tech: ["PHP", "AngularJS", "PostgreSQL"],
+    categories: ["FinTech"],
+    links: [],
+    period: "Oct 2016 - May 2017",
+  },
+  {
+    id: "mastercard-moneysend",
+    name: "Mastercard MoneySend",
+    description:
+      "Front-end application to receive P2P transfers sent via recipient phone number. Country-wide rollout of phone-number-based transfers.",
+    impact: ["Country-wide rollout of phone-number-based transfers"],
+    tech: ["AngularJS"],
+    categories: ["FinTech"],
+    links: [],
+    period: "Feb 2017 - Apr 2017",
+  },
+  {
+    id: "forza",
+    name: "Forza - PayDay Loan Websites",
+    description:
+      "Front-end, SMS gateway, decision engine, and marketing tools for an online lending originator operating in Moldova, Bosnia, and North Macedonia.",
+    impact: [
+      "Multi-country launch with shared core and localized front-ends",
+      "Reduced time-to-market dramatically",
+    ],
+    tech: ["PHP", "AngularJS"],
+    categories: ["FinTech"],
+    links: [
+      {
+        type: "website",
+        url: "https://forza.md/",
+        label: "Forza Moldova",
+      },
+    ],
+    period: "Jan 2016 - Feb 2016",
+  },
+  {
+    id: "best-wallet",
+    name: "Best Wallet (ex. MBank)",
+    description:
+      "eWallet cloud for worldwide money transfers. For B2C: pay for 2,700+ services across Russia/CIS, send money to phone numbers, cash out via partnered banks or cards. For B2B: free SaaS white-label eWallets for banks with simple integration.",
+    impact: [
+      "2,700+ bill-pay services across Russia/CIS",
+      "White-label eWallet SaaS for banks",
+      "Available on App Store, Google Play, and web",
+    ],
+    tech: ["PHP", "AngularJS", "Objective-C", "Java", "PostgreSQL"],
+    categories: ["FinTech", "Security"],
+    links: [
+      {
+        type: "website",
+        url: "http://wallet.best",
+        label: "Website",
+      },
+    ],
+    period: "Feb 2014 - 2015",
+  },
+  {
+    id: "ipsp",
+    name: "IPSP.com - Payment Pages",
+    description:
+      "Responsive landing and payment pages for an Internet Payment Service Provider. Improved conversion on payment flows via lighter UI.",
+    impact: ["Improved conversion on payment flows"],
+    tech: ["PHP", "CSS", "JavaScript", "HTML"],
+    categories: ["FinTech"],
+    links: [
+      {
+        type: "website",
+        url: "http://ipsp.com",
+        label: "Website",
+      },
+    ],
+    period: "Aug 2014",
+  },
+  {
+    id: "ecommpay",
+    name: "ECommPay - Mobile App",
+    description:
+      "iOS and Android business application for partners to manage payment workflows on the go.",
+    impact: ["Brought critical KPIs to mobile for faster responses"],
+    tech: ["Objective-C", "Java"],
+    categories: ["FinTech"],
+    links: [],
+    period: "Oct 2013",
+  },
+  {
+    id: "autopayment",
+    name: "Autopayment",
+    description:
+      "Automatically pays for bills based on two types of rules: by threshold of supplier balance (e.g., mobile top-up) or on a periodic basis.",
+    impact: ["Reduced missed payments through rule-based automation"],
+    tech: ["PHP", "MySQL"],
+    categories: ["FinTech"],
+    links: [],
+    period: "Sep 2013",
+  },
+  {
+    id: "mobile-cashier",
+    name: "Mobile Cashier",
+    description:
+      "Turns Android devices into payment terminals for deposits and top-ups across numerous service providers, from cellular carriers to credit card loan repayments.",
+    impact: ["Hardware-lite rollout for distributed cash-in networks"],
+    tech: ["Java"],
+    categories: ["FinTech"],
+    links: [],
+    period: "Jul 2013",
+  },
+
   // Open Source
   {
     id: "sage",
@@ -352,179 +525,6 @@ export const allProjects: Project[] = [
       },
     ],
     period: "Mar 2014",
-  },
-
-  // LegalTech
-  {
-    id: "contractbook",
-    name: "Contractbook",
-    description:
-      "Built the self-service billing system, B2B API and marketing pipeline that let the business grow.",
-    impact: [
-      "Billing integrations for B2B clients",
-      "API platform for third-party integrations",
-      "CRM, BI and marketing tooling to make sure business makes informed decisions based on data",
-    ],
-    tech: [
-      "Elixir",
-      "Phoenix",
-      "PostgreSQL",
-      "Terraform",
-      "Kubernetes",
-      "BI",
-      "CI/CD",
-      "Heroku",
-    ],
-    categories: ["LegalTech"],
-    links: [
-      {
-        type: "website",
-        url: "https://contractbook.com/",
-        label: "Website",
-      },
-    ],
-    period: "Jul 2017 - Apr 2018",
-  },
-
-  // FinTech
-  {
-    id: "4finance",
-    name: "Financial P2P Marketplace",
-    description:
-      "Architecture and implementation for an institutional P2P lending marketplace for one of Europe's largest lenders ($9B portfolio). Built with robust order-book matching and auditability for regulated workflows.",
-    impact: [
-      "P2P lending for a $9B portfolio lender",
-      "Low-latency order-book matching via Mnesia",
-      "Event-driven architecture at scale",
-    ],
-    tech: [
-      "Elixir",
-      "Phoenix",
-      "PostgreSQL",
-      "Mnesia",
-      "Kubernetes",
-      "RabbitMQ",
-    ],
-    categories: ["FinTech"],
-    links: [],
-    period: "Jun 2016 - Feb 2017",
-    relatedPostIds: ["p2p-lending-platform"],
-  },
-  {
-    id: "mbill",
-    name: "Mbill - P2P Transfers",
-    description:
-      "P2P transfer service for individuals and small-to-medium online merchants. Create a page for your card and share a link to receive payments. Includes customer cabinet, payment button constructor, and transaction reports.",
-    impact: [
-      "Card-to-card transfers via shareable links",
-      "Payment button constructor for website integrations",
-    ],
-    tech: ["PHP", "AngularJS", "PostgreSQL"],
-    categories: ["FinTech"],
-    links: [],
-    period: "Oct 2016 - May 2017",
-  },
-  {
-    id: "mastercard-moneysend",
-    name: "Mastercard MoneySend",
-    description:
-      "Front-end application to receive P2P transfers sent via recipient phone number. Country-wide rollout of phone-number-based transfers.",
-    impact: ["Country-wide rollout of phone-number-based transfers"],
-    tech: ["AngularJS"],
-    categories: ["FinTech"],
-    links: [],
-    period: "Feb 2017 - Apr 2017",
-  },
-  {
-    id: "forza",
-    name: "Forza - PayDay Loan Websites",
-    description:
-      "Front-end, SMS gateway, decision engine, and marketing tools for an online lending originator operating in Moldova, Bosnia, and North Macedonia.",
-    impact: [
-      "Multi-country launch with shared core and localized front-ends",
-      "Reduced time-to-market dramatically",
-    ],
-    tech: ["PHP", "AngularJS"],
-    categories: ["FinTech"],
-    links: [
-      {
-        type: "website",
-        url: "https://forza.md/",
-        label: "Forza Moldova",
-      },
-    ],
-    period: "Jan 2016 - Feb 2016",
-  },
-  {
-    id: "best-wallet",
-    name: "Best Wallet (ex. MBank)",
-    description:
-      "eWallet cloud for worldwide money transfers. For B2C: pay for 2,700+ services across Russia/CIS, send money to phone numbers, cash out via partnered banks or cards. For B2B: free SaaS white-label eWallets for banks with simple integration.",
-    impact: [
-      "2,700+ bill-pay services across Russia/CIS",
-      "White-label eWallet SaaS for banks",
-      "Available on App Store, Google Play, and web",
-    ],
-    tech: ["PHP", "AngularJS", "Objective-C", "Java", "PostgreSQL"],
-    categories: ["FinTech", "Security"],
-    links: [
-      {
-        type: "website",
-        url: "http://wallet.best",
-        label: "Website",
-      },
-    ],
-    period: "Feb 2014 - 2015",
-  },
-  {
-    id: "ipsp",
-    name: "IPSP.com - Payment Pages",
-    description:
-      "Responsive landing and payment pages for an Internet Payment Service Provider. Improved conversion on payment flows via lighter UI.",
-    impact: ["Improved conversion on payment flows"],
-    tech: ["PHP", "CSS", "JavaScript", "HTML"],
-    categories: ["FinTech"],
-    links: [
-      {
-        type: "website",
-        url: "http://ipsp.com",
-        label: "Website",
-      },
-    ],
-    period: "Aug 2014",
-  },
-  {
-    id: "ecommpay",
-    name: "ECommPay - Mobile App",
-    description:
-      "iOS and Android business application for partners to manage payment workflows on the go.",
-    impact: ["Brought critical KPIs to mobile for faster responses"],
-    tech: ["Objective-C", "Java"],
-    categories: ["FinTech"],
-    links: [],
-    period: "Oct 2013",
-  },
-  {
-    id: "autopayment",
-    name: "Autopayment",
-    description:
-      "Automatically pays for bills based on two types of rules: by threshold of supplier balance (e.g., mobile top-up) or on a periodic basis.",
-    impact: ["Reduced missed payments through rule-based automation"],
-    tech: ["PHP", "MySQL"],
-    categories: ["FinTech"],
-    links: [],
-    period: "Sep 2013",
-  },
-  {
-    id: "mobile-cashier",
-    name: "Mobile Cashier",
-    description:
-      "Turns Android devices into payment terminals for deposits and top-ups across numerous service providers, from cellular carriers to credit card loan repayments.",
-    impact: ["Hardware-lite rollout for distributed cash-in networks"],
-    tech: ["Java"],
-    categories: ["FinTech"],
-    links: [],
-    period: "Jul 2013",
   },
 
   // Other
