@@ -152,11 +152,11 @@ export const allProjects: Project[] = [
   },
   {
     id: "talkinto",
-    name: "TalkInto - Omnichannel Messaging Platform",
+    name: "TalkInto - Omnichannel Messaging Platform and CRM",
     description:
-      "Messaging/voice backbone powering products like Hammer, Bullpen, and Text2Buy: SMS, voice, Marketplace chat, and web chat with clean agent UI and APIs. Features included local numbers, call recording, and routing.",
+      "Messaging/voice backbone powering products like Hammer, Bullpen, and Text2Buy: SMS, voice, various chat integrations, and web chat with clean agent UI and APIs. Features included local numbers, call recording, and routing.",
     impact: [
-      "Omnichannel: SMS, voice, Marketplace chat, web chat",
+      "Omnichannel: SMS, voice, chat integrations, web chat",
       "Powers multiple business domains and products",
     ],
     tech: ["Elixir", "Phoenix", "PostgreSQL", "Terraform", "Kubernetes"],

@@ -1,0 +1,42 @@
+---
+projectId: "ehealth"
+title: "eHealth - Building Ukraine's National Health Service From Scratch"
+draft: false
+---
+
+## The Context
+
+Ukraine was going through a massive healthcare reform. The old Soviet-era system was broken in every way you'd expect: clinics got funding based on how many people had a residence address in their region (which was almost always wrong), patient records were handwritten on paper, prescriptions were untraceable, and corruption was rampant at every level.
+
+One day people who wanted to digitalize all of it came to us. They had no money, but a way to create political will. Declarations between patients and doctors, medical reimbursements, e-prescriptions, patient records - the whole thing had to be online. And they wanted it open source, transparent, and, due to existing commitments, in production within about four months 🙃.
+
+## The Scale
+
+This wasn't a startup MVP. This was a system that would eventually serve every person in the country. Nowadays it serves:
+
+- **35M+ patients**
+- **350k+ healthcare workers**
+- **16k+ medical facilities**
+- Billions of records - EMRs, e-prescriptions, declarations
+
+By law, every doctor participating in the reform had to use it starting 2018. There was no "soft launch."
+
+## What We Built
+
+I co-designed the architecture and led the technical side - architecture decisions, security, hiring, and hands-on Elixir development and DevOps. The [Nebo #15](https://nebo15.com/) team was about 10 engineers plus we were given a few analysts, and a project office on the customer side.
+
+Obviously we couldn't ship everything in four months, but in six we got Master Patient Index, Operations (mostly declarations for country-wide medical reimbursement) and a few other internal services to production. They were well documented and already integrated by some of the larger Medical Service Providers. And the architecture was already designed for e-prescriptions, EMRs, and more.
+
+The entire codebase was [open sourced under Apache license](https://github.com/edenlabllc). Every line of code, every architectural decision - publicly auditable. In a country fighting corruption, transparency wasn't optional. Later it was partially closed due to security regulations though.
+
+## What Happened After
+
+The system went live and kept developing and growing. When I last visited a private clinic, they offered to process my visit through eHealth so I wouldn't have to pay out of pocket. The system I helped build was now part of daily life. I felt really proud of that.
+
+I wrote a [detailed technical blog post](/blog/national-health-service/) about the architecture while it was still fresh.
+
+## What I Learned
+
+Building for a country is different from building for a company. The stakes are real - not "our metrics dip" real, but "people don't get medicine" real. It changes how you think about reliability, security, and simplicity.
+
+Also, when anyone can read your code, you write better code.
