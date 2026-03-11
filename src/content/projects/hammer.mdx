@@ -1,0 +1,54 @@
+---
+projectId: "hammer"
+title: "Hammer Corp - From a Stagnating AdTech Platform to 3x Annual Revenue Growth"
+draft: false
+---
+
+## The Situation
+
+I walked into a company where the previous engineering team had already left. The platform was stagnating, maintenance was barely keeping things alive, and the technical debt was the kind that makes you question your life choices. The business couldn't grow because the old products had hit their ceiling.
+
+On the upside, they had the best business team I've ever worked with. They were all hardworking, agile, and smart. The Sales team was especially crushing it - whatever you built, they sold before it was even ready.
+
+## Getting Started
+
+First thing I did was map everything - infrastructure, codebase, business domain, the whole picture. You can't fix what you don't understand, and nobody was left to explain it. Once I had a clear view of what we were working with, I hired a few strong engineers and we got to work.
+
+Within **5 months** of my first day, we shipped new products that grew net revenue by **117%**. Within a year, the company was growing **3x annually** - Sales were outpacing even brutal churn rates by simply selling more than we lost. We went from 6- to 7-figure revenue rapidly.
+
+<figure style="max-width: 480px;">
+  <img src="/projects/hammer-revenue-expenses.jpg" style="width: 100%;" />
+  <figcaption style="text-align: center; font-size: 0.8em; opacity: 0.6; margin-top: 0.5em;">Purple is MRR. Try to guess what orange line means.</figcaption>
+</figure>
+
+## The Live Chat Problem
+
+One of our core products was an adtech platform that was putting vehicle ads everywhere, and a live response service - human agents answering customer questions about dealership vehicles within 60 seconds, 24/7. It worked, but it was expensive. At peak we had **150+ agents** working around the clock. Lots of humans, lots of overhead.
+
+Our **60-second SLA** was unbeatable in the industry - no competitor came close. But we wanted to keep that edge while cutting costs. We rebuilt the entire workflow, had many UX passes, added some automation and AI. By the time we were done, our company needed **3-10x fewer agents** than competitors to handle the same volume, without sacrificing response quality or that 60-second guarantee. At our scale (thousands of dealerships), that was a massive cost advantage.
+
+The messaging backbone we built for this - SMS, voice, chat integrations, web chat - became its own internal product: [TalkInto](/projects/talkinto/). Clean agent UI, APIs, local numbers, call recording, routing, lead tracking, built-in CRM and dealership profiling.
+
+## COVID and Bullpen
+
+Then COVID hit and our sales floor went remote overnight. We needed something to keep the team connected and productive, so we built it - a virtual sales floor with real-time collaboration and shared context. It was named [Bullpen](/projects/bullpen/) and is powered by the same TalkInto platform. It's built like a product from the ground up, it's ready to be sold, and it's still used by the business.
+
+## The Team
+
+We made a deliberate choice to stay small. The CEO wanted to grow in multiple directions at once, and the only way to do that without burning cash was to hire fewer, better people and give them real ownership.
+
+For the first two years, everything was built by **~5 engineers**. At peak, we had **12 engineers** total - and we were competing against companies with 100+ devs spending millions on development. Every engineer was semi-autonomous: they designed, built, shipped, and maintained their own stuff. Sometimes that meant months of solo work on a new product, sometimes intense collaboration.
+
+The structure was flat. No titles (CTO is the closest description of my role, but we didn't use them). Decisions were made by whoever understood the problem best. Common sense over process.
+
+## The Tech
+
+I was hands-on the entire time - only toward the end did management start taking more of my time than code. The stack was Elixir, Phoenix, PostgreSQL, RabbitMQ, and Redis on the backend, with infrastructure on a mix of Heroku (early days), AWS, Google Cloud, Terraform, Helm, and Kubernetes.
+
+We also had to deal with the inherited technical debt while shipping new things (eg. we still had old system in Ruby talking to legacy Elixir service over Sidekiq). That's always a balancing act - you can't stop everything to clean up, but you also can't keep building on a crumbling foundation. We chipped away at it continuously focusing on what would lead to best results for the business.
+
+## What I Learned
+
+Businesses must stay agile to survive. Over nearly five years, we pivoted constantly - new products, new markets, changing the pricing model multiple times a month. We were trying any wild idea and seeing what stuck. The companies that moved fast made it. The ones that didn't, didn't. Engineering has to match that pace, or it becomes the bottleneck.
+
+Small teams with real ownership will outperform large teams with heavy process, every single time. Not because small is inherently better, but because when every person matters, you hire differently, communicate differently, and care differently.
