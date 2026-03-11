@@ -59,7 +59,15 @@ export const featuredProjects: Project[] = [
       "Built control plane & dashboard with 99.99%+ uptime",
       "Owned infrastructure end-to-end with IaC on GCP",
     ],
-    tech: ["Elixir", "Phoenix", "LiveView", "GCP", "Terraform", "Tailwind"],
+    tech: [
+      "Elixir",
+      "Phoenix",
+      "LiveView",
+      "GCP",
+      "Terraform",
+      "Tailwind",
+      "SOC 2 Type II",
+    ],
     categories: ["Security", "Open Source"],
     links: [
       {
@@ -170,11 +178,11 @@ export const allProjects: Project[] = [
     id: "contractbook",
     name: "Contractbook",
     description:
-      "Built the self-service billing system, B2B API and marketing pipeline that let the business grow.",
+      "Built the self-service billing system, B2B API and marketing pipeline that let kicked off the business growt.",
     impact: [
       "Billing integrations for B2B clients",
       "API platform for third-party integrations",
-      "CRM, BI and marketing tooling to make sure business makes informed decisions based on data",
+      "CRM, BI and marketing tooling",
     ],
     tech: [
       "Elixir",
@@ -185,6 +193,9 @@ export const allProjects: Project[] = [
       "BI",
       "CI/CD",
       "Heroku",
+      "Metabase",
+      "Mixpanel",
+      "HubSpot",
     ],
     categories: ["LegalTech"],
     links: [
@@ -202,10 +213,11 @@ export const allProjects: Project[] = [
     id: "4finance",
     name: "Financial P2P Marketplace",
     description:
-      "Architecture and implementation for an institutional P2P lending marketplace for one of Europe's largest lenders ($9B portfolio). Built with robust order-book matching and auditability for regulated workflows.",
+      "Architecture and implementation for an institutional P2P lending marketplace for one of Europe's largest lenders ($9B portfolio).",
     impact: [
-      "P2P lending for a $9B portfolio lender",
-      "Low-latency order-book matching via Mnesia",
+      "P2P lending for a $9B multi-country portfolio lender",
+      "Low-latency multi-bucket order-book matching preserving risk profile",
+      "Loan origination and servicing",
       "Event-driven architecture at scale",
     ],
     tech: [
@@ -270,10 +282,10 @@ export const allProjects: Project[] = [
     id: "best-wallet",
     name: "Best Wallet (ex. MBank)",
     description:
-      "eWallet cloud for worldwide money transfers. For B2C: pay for 2,700+ services across Russia/CIS, send money to phone numbers, cash out via partnered banks or cards. For B2B: free SaaS white-label eWallets for banks with simple integration.",
+      "eWallet cloud for worldwide money transfers. For B2C: pay for 2,700+ services across CIS, send money to phone numbers, cash out via partnered banks or cards. For B2B: free SaaS white-label eWallets for banks with simple integration.",
     impact: [
-      "2,700+ bill-pay services across Russia/CIS",
-      "White-label eWallet SaaS for banks",
+      "2,700+ bill-pay services across CIS",
+      "White-label eWallet SaaS for multiple banks",
       "Available on App Store, Google Play, and web",
     ],
     tech: ["PHP", "AngularJS", "Objective-C", "Java", "PostgreSQL"],
@@ -308,7 +320,7 @@ export const allProjects: Project[] = [
     id: "ecommpay",
     name: "ECommPay - Mobile App",
     description:
-      "iOS and Android business application for partners to manage payment workflows on the go.",
+      "iOS and Android business application for partners to manage payment platform on the go.",
     impact: ["Brought critical KPIs to mobile for faster responses"],
     tech: ["Objective-C", "Java"],
     categories: ["FinTech"],
@@ -473,7 +485,7 @@ export const allProjects: Project[] = [
     id: "gandalf",
     name: "Gandalf - Decision Engine",
     description:
-      "Open-source decision engine for big data with UI for rule tables, champion/challenger split testing, revision history, decision analytics, and debugging tools. Includes SaaS role model and OAuth 2.0.",
+      "Open-source decision engine SaaS for rule tables, champion/challenger split testing, revision history, decision analytics, and debugging tools.",
     impact: [
       "100+ stars across components",
       "Split testing, revision history, and decision analytics",
