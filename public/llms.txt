@@ -1,0 +1,62 @@
+# Andrew Dryga
+
+> Engineering leader who turns fragile systems into reliable, observable, cost-sane platforms.
+
+## About
+
+Andrew Dryga is a multi-hat product-minded engineering leader with 17+ years of experience. He has held roles from Principal Engineer at early-stage startups to CTO at established products, consistently shipping what matters, measuring results, and cutting waste without slowing teams.
+
+- Email: andrew@dryga.com
+- Website: https://dryga.com
+- GitHub: https://github.com/andrewdryga
+- LinkedIn: https://www.linkedin.com/in/andrew-dryga-bb382557/
+- CV: https://dryga.com/downloads/cv.pdf
+
+## Key Achievements
+
+- Grew revenue 3x to mid-seven figures while slashing infrastructure costs by $2M+/yr — both in year one
+- Architected and shipped Ukraine's national eHealth platform serving 35M+ patients and 400K+ medical professionals
+- Single-handedly operated legacy Elixir systems and infrastructure handling 100K+ RPS across tens of services
+- Passed SOC 2 Type II audits and penetration tests for enterprise security product (Firezone, YC W22)
+- 19 open-source packages on hex.pm with 21M+ combined downloads
+
+## Expertise
+
+- Backend & distributed systems: Elixir, Phoenix, LiveView, Erlang/OTP (10+ years)
+- Infrastructure: Terraform, GCP, AWS, Kubernetes, Helm, Docker
+- Databases: PostgreSQL, Redis, Cassandra, RabbitMQ, Kafka
+- Practices: platform engineering, site reliability, observability, CI/CD, cost optimization
+- Leadership: hiring, mentoring, cross-functional collaboration, product strategy
+
+## Notable Projects
+
+### Blitz (AdTech, 2023–present)
+Single-handedly owned ~20 high-traffic backends (77 Elixir umbrella apps, 70+ Redis/50+ PostgreSQL instances) serving ~25k RPS with peaks to 120k. Cut cloud spend 91% ($220k/mo to $20k/mo), saving >$2M/yr. Drove daily errors from six-figure counts to near-zero.
+
+### Hammer Corp (AdTech, 2017–2023)
+Led engineering for a call center platform from stagnation to 3x+ revenue growth (8 figures). Managed 150+ agents with a 60-second SLA. Spun off two additional products (TalkInto, Bullpen).
+
+### eHealth (HealthTech, 2017–2018)
+Led design and launch of Ukraine's National Health Service digital platform — built by a team of 10 in 6 months. Serves 35M+ patients, 400K+ healthcare workers, 16K+ medical facilities. Open sourced under Apache license.
+
+### Firezone (Security, YC W22, 2022–2023)
+Wrote ~60% of the codebase for an enterprise WireGuard-based VPN replacement. Achieved 99.99%+ uptime, 8.4K+ GitHub stars. Passed SOC 2 Type II and multiple penetration tests.
+
+### Contractbook (LegalTech, 2021–2022)
+Built billing infrastructure, B2B API integrations, and CRM pipeline automation for a contract management platform (now Series B, backed by Microsoft).
+
+### Open Source
+- Sage: sagas pattern for Elixir (1.83M+ downloads)
+- Confex: runtime configuration (3.9M+ downloads)
+- LoggerJSON: structured JSON logging (4.9M+ downloads)
+- 19 packages total on hex.pm, 21M+ combined downloads
+
+## Testimonials
+
+"Andrew is easily one of the best engineers I've had the pleasure to work with in my career." — Jamil Bou Kheir, CEO at Firezone (YC W22)
+
+"Andrew is one of the most efficient engineering managers I've worked with. He focuses on business results that can be unlocked with pragmatic technical moves." — Ivan Alts, Co-founder at Reface
+
+"Andrew is the best manager that I worked with. He has the strong skills in team organization and motivation." — Oleksii Bondarenko, Founder at Superbase.me
+
+"Knowledgeable and experienced contributor that can also lead. Andrew took charge when it was needed and made room for others to grow." — Jarek Owczarek, Founder at Contractbook

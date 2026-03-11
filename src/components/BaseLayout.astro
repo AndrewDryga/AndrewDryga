@@ -41,6 +41,34 @@ const websiteLd = JSON.stringify({
     "query-input": "required name=search_term_string",
   },
 });
+
+const personLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Andrew Dryga",
+  url: site.toString(),
+  jobTitle: "CTO",
+  description:
+    "Multi-hat product-minded engineering leader. Turns fragile systems into reliable, observable, cost-sane platforms. 17+ years of experience shipping what matters.",
+  image: new URL("/og-default.jpg", site).toString(),
+  email: "andrew@dryga.com",
+  sameAs: [
+    "https://github.com/andrewdryga",
+    "https://www.linkedin.com/in/andrew-dryga-bb382557/",
+    "https://twitter.com/andrew_dryga",
+  ],
+  knowsAbout: [
+    "Elixir",
+    "Phoenix",
+    "Erlang/OTP",
+    "Kubernetes",
+    "Terraform",
+    "PostgreSQL",
+    "Distributed Systems",
+    "Platform Engineering",
+    "Site Reliability",
+  ],
+});
 ---
 
 <!doctype html>
@@ -84,6 +112,7 @@ const websiteLd = JSON.stringify({
     <meta name="astro-dev" content={IS_DEV ? "true" : "false"} />
 
     <script type="application/ld+json" is:inline set:html={websiteLd} />
+    <script type="application/ld+json" is:inline set:html={personLd} />
 
     {noIndex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 
