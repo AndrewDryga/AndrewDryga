@@ -115,6 +115,10 @@ export const featuredProjects: Project[] = [
       "Terraform",
       "Kubernetes",
       "PostgreSQL",
+      "Heroku",
+      "RabbitMQ",
+      "Redis",
+      "VoIP",
     ],
     categories: ["AdTech"],
     links: [
@@ -355,13 +359,22 @@ export const allProjects: Project[] = [
     id: "contractbook",
     name: "Contractbook",
     description:
-      "Built the self-service billing system and B2B API that let the business grow.",
+      "Built the self-service billing system, B2B API and marketing pipeline that let the business grow.",
     impact: [
       "Billing integrations for B2B clients",
       "API platform for third-party integrations",
       "CRM, BI and marketing tooling to make sure business makes informed decisions based on data",
     ],
-    tech: ["Elixir", "Phoenix", "PostgreSQL", "Terraform", "Kubernetes"],
+    tech: [
+      "Elixir",
+      "Phoenix",
+      "PostgreSQL",
+      "Terraform",
+      "Kubernetes",
+      "BI",
+      "CI/CD",
+      "Heroku",
+    ],
     categories: ["LegalTech"],
     links: [
       {
@@ -580,9 +593,11 @@ export const allProjects: Project[] = [
 
 export const projectCategories = [
   "All",
-  ...Array.from(new Set(allProjects.flatMap((p) => p.categories))).sort((a, b) => {
-    if (a === "Other") return 1;
-    if (b === "Other") return -1;
-    return a.localeCompare(b);
-  }),
+  ...Array.from(new Set(allProjects.flatMap((p) => p.categories))).sort(
+    (a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.localeCompare(b);
+    },
+  ),
 ];
