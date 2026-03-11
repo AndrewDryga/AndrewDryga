@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ site }) => {
       authors: [
         {
           name: "Andrew Dryga",
-          url: new URL("/about", siteUrl).toString(),
+          url: new URL("/", siteUrl).toString(),
         },
       ],
       language: "en-US",
@@ -76,8 +76,8 @@ export const GET: APIRoute = async ({ site }) => {
     home_page_url: homeUrl,
     feed_url: feedUrl,
     description:
-      "Articles on engineering leadership, reliability, and building cost-sane, observable platforms.",
-    icon: new URL("/icon.svg", siteUrl).toString(),
+      "Real notes from shipping actual systems: what worked, what broke, and the lessons that stuck.",
+    icon: new URL("/icon-512.png", siteUrl).toString(),
     favicon: new URL("/favicon.ico", siteUrl).toString(),
     language: "en-US",
     authors: [

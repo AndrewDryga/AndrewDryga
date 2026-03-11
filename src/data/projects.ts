@@ -136,7 +136,7 @@ export const allProjects: Project[] = [
     id: "bullpen",
     name: "Bullpen - Virtual Sales Floor + CRM",
     description:
-      "When COVID hit, our sales team lost the buzz of the office. We built a platform that brought it all back - a CRM with virtual space where reps could collaborate, learn from each other in real time, and keep the same drive. Then we turned it into a product, enhanced by AI.",
+      "When COVID hit, our sales team lost the buzz of the office. We built a platform that brought it back - a CRM with virtual space where reps could collaborate, learn from each other in real time, and keep the same drive. Then we turned it into a standalone product with AI sprinkled around it.",
     impact: [
       "Remote-first virtual sales floor with real-time collaboration",
       "AI-enhanced CRM with shared context",
@@ -355,10 +355,11 @@ export const allProjects: Project[] = [
     id: "contractbook",
     name: "Contractbook",
     description:
-      "Architected and engineered backend and infrastructure solutions that enabled business growth through automated billing integrations and a robust API for B2B clients.",
+      "Built the self-service billing system and B2B API that let the business grow.",
     impact: [
-      "Automated billing integrations for B2B clients",
-      "Enhanced customer acquisition and retention",
+      "Billing integrations for B2B clients",
+      "API platform for third-party integrations",
+      "CRM, BI and marketing tooling to make sure business makes informed decisions based on data",
     ],
     tech: ["Elixir", "Phoenix", "PostgreSQL", "Terraform", "Kubernetes"],
     categories: ["LegalTech"],
@@ -531,7 +532,8 @@ export const allProjects: Project[] = [
     description:
       "Storytelling social network that helps see other people's lives through their eyes. Capture moments through the day and share them with descriptions - from special forces in Belarus to a family visit to a film museum in South Korea.",
     impact: [
-      "Invented and build Instagram before it existed but failed at marketing",
+      "Invented and built Instagram before it existed",
+      "Failed at marketing miserabily and learned in the process",
     ],
     tech: ["PHP", "MySQL", "HTML", "JavaScript", "CSS"],
     categories: ["Other"],
@@ -567,7 +569,7 @@ export const allProjects: Project[] = [
     id: "trubrain",
     name: "truBrain 1.0",
     description:
-      "I like to help people and know how hard it is to build a succesful startup, so was helping guys by shipping UX and performance fixes issues pro-bono for an early product push.",
+      "An early-stage product that needed help. I took some swings at UX and performance for free because I wanted to see them make it.",
     impact: [],
     tech: ["JavaScript", "CSS"],
     categories: ["Other"],

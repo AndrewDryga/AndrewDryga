@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ site }) => {
 
   const channelTitle = "Andrew Dryga - Blog";
   const channelDescription =
-    "Articles on engineering leadership, reliability, and building cost-sane, observable platforms.";
+    "Real notes from shipping actual systems: what worked, what broke, and the lessons that stuck.";
   const channelLink = new URL("/blog/", siteUrl).toString();
   const selfLink = new URL("/rss.xml", siteUrl).toString();
   const imageUrl = new URL("/og-default.jpg", siteUrl).toString();
