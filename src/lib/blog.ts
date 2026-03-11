@@ -51,7 +51,11 @@ export async function loadBlogSummaries(): Promise<BlogPostSummary[]> {
 export function getBlogCategories(posts: BlogPostSummary[]): string[] {
   const set = new Set<string>();
   posts.forEach((post) => set.add(post.category));
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
+  return Array.from(set).sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  });
 }
 
 export function formatPublishDate(date: Date): string {

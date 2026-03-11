@@ -580,5 +580,9 @@ export const allProjects: Project[] = [
 
 export const projectCategories = [
   "All",
-  ...Array.from(new Set(allProjects.flatMap((p) => p.categories))).sort(),
+  ...Array.from(new Set(allProjects.flatMap((p) => p.categories))).sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b);
+  }),
 ];
