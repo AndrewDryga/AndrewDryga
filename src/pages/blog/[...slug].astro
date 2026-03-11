@@ -163,14 +163,12 @@ void breadcrumbLd;
         )}
       </article>
 
-      <aside class="hidden lg:block min-w-0 lg:sticky lg:top-24 h-max self-start">
-        <div class="rounded-lg border border-border bg-card/40 p-4 lg:max-h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden">
-          <h2 class="font-mono text-sm uppercase tracking-wider text-muted-foreground mb-3">
-            Table of contents
-          </h2>
-          {toc.length === 0 ? (
-            <p class="text-sm text-muted-foreground">No headings</p>
-          ) : (
+      {toc.length > 0 && (
+        <aside class="hidden lg:block min-w-0 lg:sticky lg:top-24 h-max self-start">
+          <div class="rounded-lg border border-border bg-card/40 p-4 lg:max-h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden">
+            <h2 class="font-mono text-sm uppercase tracking-wider text-muted-foreground mb-3">
+              Table of contents
+            </h2>
             <ul class="space-y-2">
               {toc.map((h: { depth: number; slug: string; text: string }) => (
                 <li style={`padding-left: ${(h.depth - 2) * 1}rem`}>
@@ -184,9 +182,9 @@ void breadcrumbLd;
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      </aside>
+          </div>
+        </aside>
+      )}
     </div>
   </section>
     <Header slot="footer" variant="footer" />
