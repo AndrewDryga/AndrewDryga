@@ -67,18 +67,13 @@ async function initMixpanel() {
   }
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-      initMixpanel().catch((error) => {
-        console.error("Mixpanel initialisation error", error);
-      });
-    },
-    { once: true },
-  );
-} else {
+// Defer analytics to avoid blocking rendering and LCP
+const schedule = typeof requestIdleCallback === "function"
+  ? requestIdleCallback
+  : (cb: () => void) => setTimeout(cb, 200);
+
+schedule(() => {
   initMixpanel().catch((error) => {
     console.error("Mixpanel initialisation error", error);
   });
-}
+});
