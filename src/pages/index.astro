@@ -7,11 +7,13 @@ import Testimonials from "../components/Testimonials.astro";
 import { getFeaturedTestimonials } from "../data/testimonials";
 import TechStack from "../components/TechStack.astro";
 import Button from "../components/ui/Button.astro";
+import { loadBlogSummaries, formatPublishDate } from "../lib/blog";
 
 const title = "Andrew Dryga - Making things work";
 const description =
   "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms - shipping what matters, measuring results, and cutting waste without slowing teams.";
 const testimonials = await getFeaturedTestimonials();
+const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 ---
 
 <BaseLayout {title} {description}>
@@ -317,114 +319,43 @@ const testimonials = await getFeaturedTestimonials();
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <article
-            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-0 relative"
-          >
-            <a
-              href="/blog/introducing-sage/"
-              class="absolute inset-0 rounded-lg"
-              aria-label="Read more: Introducing Sage - a Sagas pattern implementation in Elixir"
-            ></a>
-            <div class="flex h-full flex-col gap-4">
-              <div class="flex items-center justify-between">
-                <span
-                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
-                  >Architecture</span
-                >
-                <div class="font-mono text-xs text-muted-foreground">
-                  May 31
+          {latestPosts.map((post, i) => {
+            const delays = ["animate-delay-0", "animate-delay-100", "animate-delay-200"];
+            return (
+              <article
+                class={`group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in ${delays[i]} relative`}
+              >
+                <a
+                  href={post.url}
+                  class="absolute inset-0 rounded-lg"
+                  aria-label={`Read more: ${post.title}`}
+                ></a>
+                <div class="flex h-full flex-col gap-4">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
+                    >{post.category}</span>
+                    <div class="font-mono text-xs text-muted-foreground">
+                      {formatPublishDate(post.publishDate)}
+                    </div>
+                  </div>
+                  <h3
+                    class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
+                  >
+                    {post.title}
+                  </h3>
+                  <p class="text-muted-foreground text-sm leading-relaxed">
+                    {post.description}
+                  </p>
+                  <span
+                    class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
+                  >
+                    Read more →
+                  </span>
                 </div>
-              </div>
-              <h3
-                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
-              >
-                Introducing Sage - a Sagas pattern implementation in Elixir
-              </h3>
-              <p class="text-muted-foreground text-sm leading-relaxed">
-                Distributed transactions are hard and expensive, if you wonder
-                how to pragmatically handle them in a mid-size project - this
-                article is for you.
-              </p>
-              <span
-                class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
-              >
-                Read more →
-              </span>
-            </div>
-          </article>
-
-          <article
-            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-100 relative"
-          >
-            <a
-              href="/blog/run-stale-tests/"
-              class="absolute inset-0 rounded-lg"
-              aria-label="Read more: Run stale tests on file change in Elixir"
-            ></a>
-            <div class="flex h-full flex-col gap-4">
-              <div class="flex items-center justify-between">
-                <span
-                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
-                  >Engineering</span
-                >
-                <div class="font-mono text-xs text-muted-foreground">
-                  Nov 12
-                </div>
-              </div>
-              <h3
-                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
-              >
-                Run stale tests on file change in Elixir
-              </h3>
-              <p class="text-muted-foreground text-sm leading-relaxed">
-                Mix is an awesome tool but most Elixir beginners not aware of
-                all its features. mix test --stale is the one them and can make
-                your workflow much better.
-              </p>
-              <span
-                class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
-              >
-                Read more →
-              </span>
-            </div>
-          </article>
-
-          <article
-            class="group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in animate-delay-200 relative"
-          >
-            <a
-              href="/blog/runtime-configuration-migrations/"
-              class="absolute inset-0 rounded-lg"
-              aria-label="Read more: Runtime configuration, migrations and deployment for Elixir applications"
-            ></a>
-            <div class="flex h-full flex-col gap-4">
-              <div class="flex items-center justify-between">
-                <span
-                  class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
-                  >DevOps</span
-                >
-                <div class="font-mono text-xs text-muted-foreground">
-                  Aug 20
-                </div>
-              </div>
-              <h3
-                class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
-              >
-                Runtime configuration, migrations and deployment for Elixir
-                applications
-              </h3>
-              <p class="text-muted-foreground text-sm leading-relaxed">
-                Shortly after moving from PHP to Elixir I've faced a common
-                issue, the way how do we deploy applications is totally
-                different from the one I used to work with.
-              </p>
-              <span
-                class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
-              >
-                Read more →
-              </span>
-            </div>
-          </article>
+              </article>
+            );
+          })}
         </div>
 
         <div class="flex justify-center pt-8">
