@@ -1,0 +1,83 @@
+---
+title: "The Real 10x Engineer"
+shortTitle: "Engineering for business impact"
+description: "The real multiplier in software isn’t writing more code. It’s judgment: choosing the right problems, avoiding unnecessary systems, and reducing the maintenance burden that slows teams down."
+publishDate: 2026-03-12
+updatedDate: 2026-03-12
+category: "Engineering"
+readTime: "6 min read"
+cardGradient: "from-terminal-cyan to-primary"
+tags:
+  - Engineering
+  - Architecture
+  - Management
+draft: true
+---
+
+Too many times in my life I've been the person hired to solve a disaster created by others. Walk in, previous team is gone, everything is on fire, and you're the one holding the extinguisher. It changes you. You stop being impressed by clever code and start being impressed by code that just _works_. You stop caring about what technology stack someone used and start caring about whether the thing runs without waking someone up at 3am.
+
+Those experiences changed how I think about engineering. They taught me that the biggest multiplier is rarely raw shipping speed. It is judgment. The right mindset can make you a 10x engineer without being a coding prodigy. Because the 10x myth has it backwards: it was never about shipping more, but about generating 10x **value**.
+
+Engineers are paid well because software is one of the highest-leverage forms of work in the modern economy. A small number of people can build systems that move enormous amounts of revenue, cost, and risk. But most of them have no idea how much value they actually create. Or destroy.
+
+## Value requires visibility
+
+Most companies are terrible at measuring it. Even companies that measure well often fail at visibility. The data exists, but the people expected to move the business every day cannot see it.
+
+If you can't measure impact, you optimize for the wrong things. Lines of code. Number of PRs. "Story points." How clever your architecture looks on a whiteboard. None of these correlate with business outcomes. I've seen engineers who ship 3 PRs a week generate more value than teams of 20, and I've seen teams who ship constantly while the business metrics go sideways or down.
+
+The fix is embarrassingly simple: make business metrics visible. ARR, MRR, retention, conversion - whatever actually matters for your company. Put it on a dashboard. Make sure every engineer can see it. When people can see the line go up (or down) after they ship something, they start making fundamentally different decisions about what to work on.
+
+## The true cost of software
+
+The fastest way to increase business value is often not to add something new, but to remove something expensive, fragile, or unnecessary. Here's the single most important thing I've learned in 17 years: **the true cost of software is its maintenance**. The best code is the code you don't write.
+
+I've walked into systems where monitoring alone ran on a 12-node Kubernetes cluster - 42 cores, 160GB RAM - just to tell you whether your _other_ clusters were healthy. The alerts fired multiple times a day on false positives, so everyone ignored them. The system meant to catch problems had become the problem itself.
+
+The replacement? Two small VMs running VictoriaMetrics. Works better. Costs a fraction. Because two things that can break is fewer than twelve things that can break. That's not clever engineering - that's arithmetic.
+
+Every component you add is a liability. Every package is maintenance. Every service is a potential 3am page. The engineer who removes complexity is often more valuable than the engineer who adds features, because removal makes everything else faster and cheaper forever.
+
+## The hype tax
+
+Another cost that companies often overlook is the "hype tax." Whatever technology is hot today will most likely be forgotten in a few years. Remember when MongoDB and NoSQL were going to replace everything relational? A lot of companies made expensive bets on that hype. Some are still paying the maintenance tax.
+
+I'm not saying don't learn new things. But there's a difference between learning a new language on a weekend because it's genuinely fun, and rewriting your company's production infrastructure in it because you want to learn it on the job. One costs you a Saturday. The other costs the business months of engineering time and a more complex system to maintain **forever**.
+
+The worst version of this is copying Big Tech. Whatever Google, Netflix, or Facebook are doing makes sense for _their_ problems at _their_ scale. You are not them. A startup's main advantage is agility - the ability to move fast, try things, and adapt. Why would you kill that advantage by adopting architectures designed for 10,000-person organizations?
+
+I've seen too many small companies adopt Kubernetes for three services without anyone on the team knowing how to run a Kubernetes cluster in production. Teams implementing event sourcing for a CRUD app. Engineers spending months building internal platforms for 5 users. Every one justified by "that's how [big company] does it."
+
+Find your own way. Use first-principles thinking. Put common sense before copying others. What problem are you _actually_ solving? 
+
+## Choosing what to build
+
+Even if you understand value, maintenance cost, and the hype tax, one hard question remains: _what should you work on next?_
+
+Nobody will give you an answer. You have to use judgment. Talk to customers. Talk to sales. Talk to support. Talk to your CEO. Look at the data. Look at the market. Look at your competitors. Look at your own product and see where it's falling short. Then make a decision and get to work.
+
+And most likely you will be wrong. That's fine. Learn from it and try your next best idea. Repeat until something works. The only way to avoid failure is to never ship anything, and that's the most expensive failure of all.
+
+## Hire for curiosity about the business, not the tech stack
+
+Once you become that “10x” person, the company will eventually ask you to scale yourself. The first mistake is trying to hire copies of yourself. That’s a dead end. Hire for mindset, not imitation.
+
+And don’t expect to find many. Truly strong engineers are rare. But 5 of them can outperform 100 mediocre ones, especially in a company that needs to stay agile.
+
+That’s why small teams win. A small, sharp team is a speedboat. A big org is a cruise ship. More headcount usually means more coordination, more management, and more drag.
+
+Unless you are Google, you probably do not need an army. You need special forces.
+
+So don’t copy Big Tech hiring either. Long interview loops and LeetCode theater solve Big Tech problems, not startup problems. Keep the process short. Write honest job descriptions. Look for people who care about real problems, not just trendy tech.
+
+Hire people with good judgment. Protect their time. Give them real ownership. Then get out of the way.
+
+## The uncomfortable part
+
+The 10x engineer myth survives because output is easy to see. Commits are visible. Pull requests are visible. New systems are visible. Judgment usually is not.
+
+But judgment is what compounds.
+
+Great engineers are not the ones who write the most code. They are the ones who consistently create the most value: by choosing the right problems, avoiding unnecessary complexity, reducing maintenance burden, and making the business move faster. 
+
+That is the real multiplier.
