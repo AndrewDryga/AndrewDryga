@@ -437,11 +437,12 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
                 autocomplete="off"
                 spellcheck="false"
                 class="bg-transparent text-terminal-cyan outline-none caret-transparent p-0 m-0 border-0"
-                style="width:0;min-width:0;font:inherit"
+                style="width:1ch;min-width:0;font:inherit"
                 autofocus
               /><span
                 id="terminal-cursor"
-                class="animate-pulse text-terminal-cyan hidden">▊</span
+                class="animate-pulse text-terminal-cyan hidden relative -left-[1ch]"
+                >▊</span
               >
             </span>
           </div>
@@ -488,7 +489,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
                 '<span class="text-destructive">  ✗ Please enter a valid email address.</span>',
               );
               input.value = "";
-              input.style.width = "0";
+              input.style.width = "1ch";
               input.focus();
               return;
             }
@@ -501,7 +502,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 
             current++;
             input.value = "";
-            input.style.width = "0";
+            input.style.width = "1ch";
 
             if (current < steps.length) {
               label.textContent = steps[current].label;
@@ -627,7 +628,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
               label.textContent = steps[0].label;
               input.type = steps[0].type;
               input.value = "";
-              input.style.width = "0";
+              input.style.width = "1ch";
               prompt.classList.remove("hidden");
               input.focus();
             }
@@ -650,7 +651,8 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
           }
 
           function autoSize(el: HTMLInputElement) {
-            el.style.width = el.value.length + 1 + "ch";
+            el.style.width =
+              (el.value.length === 0 ? 1 : el.value.length + 1) + "ch";
           }
 
           input.addEventListener("keydown", (e) => {
