@@ -507,7 +507,9 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
             if (current < steps.length) {
               label.textContent = steps[current].label;
               input.type = steps[current].type;
-              input.focus();
+              input.inputMode = steps[current].type === "email" ? "email" : "text";
+              input.blur();
+              requestAnimationFrame(() => input.focus());
             } else {
               showConfirm();
             }
