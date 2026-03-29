@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
 import Button from "@/components/ui/Button.astro";
 import ComboboxField from "@/components/ui/ComboboxField.astro";
+import TerminalForm from "@/components/ui/TerminalForm.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -394,6 +395,127 @@ const checklist = [
                   Animate focus transitions with minimal easing.
                 </li>
               </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="terminal-form" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Terminal form
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              A step-by-step CLI wizard that collects input one question at a
+              time. Supports validation, confirmation, and POST submission.
+            </p>
+          </header>
+
+          <TerminalForm
+            id="demo"
+            title="survey.sh"
+            steps={[
+              { key: "name", label: "Your name?", type: "text" },
+              {
+                key: "email",
+                label: "Your email?",
+                type: "email",
+                pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+                error: "Please enter a valid email address.",
+              },
+              { key: "feedback", label: "Any feedback?", type: "text" },
+            ]}
+            confirm={{ label: "Submit? (y/n)" }}
+            successMessage="Thanks for the feedback!"
+          >
+            <Fragment slot="preamble">
+              <div class="text-terminal-green">$ ./survey.sh</div>
+              <div class="text-muted-foreground">Starting survey...</div>
+            </Fragment>
+          </TerminalForm>
+
+          <div
+            class="rounded-lg border border-border bg-card p-6 font-mono text-sm space-y-4"
+          >
+            <h3 class="text-foreground font-bold text-base">Usage</h3>
+            <pre class="text-muted-foreground overflow-x-auto"><code>{`<TerminalForm
+  id="contact"
+  title="contact.sh"
+  steps={[
+    { key: "name", label: "Your name?", type: "text" },
+    {
+      key: "email",
+      label: "Email?",
+      type: "email",
+      pattern: "^[^\\\\s@]+@[^\\\\s@]+\\\\.[^\\\\s@]+$",
+      error: "Invalid email.",
+    },
+    { key: "message", label: "Message:", type: "text" },
+  ]}
+  action="/api/contact"
+  confirm={{ label: "Send? (y/n)" }}
+  successMessage="Sent!"
+>
+  <Fragment slot="preamble">
+    <div class="text-terminal-green">$ ./contact.sh</div>
+  </Fragment>
+</TerminalForm>`}</code></pre>
+
+            <h3 class="text-foreground font-bold text-base mt-6">Props</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b border-border text-muted-foreground">
+                    <th class="py-2 pr-4">Prop</th>
+                    <th class="py-2 pr-4">Type</th>
+                    <th class="py-2 pr-4">Default</th>
+                    <th class="py-2">Description</th>
+                  </tr>
+                </thead>
+                <tbody class="text-foreground/80">
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">id</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">Unique ID (required)</td>
+                  </tr>
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">title</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">"form.sh"</td>
+                    <td class="py-2">Title bar text</td>
+                  </tr>
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">steps</td>
+                    <td class="py-2 pr-4">Step[]</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">Questions to ask (key, label, type, pattern, error)</td>
+                  </tr>
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">action</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">POST URL. If omitted, dispatches a custom event instead</td>
+                  </tr>
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">confirm</td>
+                    <td class="py-2 pr-4">object | false</td>
+                    <td class="py-2 pr-4">"Confirm? (y/n)"</td>
+                    <td class="py-2">Confirm step config, or false to skip</td>
+                  </tr>
+                  <tr class="border-b border-border/40">
+                    <td class="py-2 pr-4 text-terminal-cyan">successMessage</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">"Done!"</td>
+                    <td class="py-2">Success text</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4 text-terminal-cyan">errorMessage</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">"Something went wrong..."</td>
+                    <td class="py-2">Error text</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>

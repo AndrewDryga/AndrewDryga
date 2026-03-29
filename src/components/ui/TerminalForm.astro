@@ -1,0 +1,393 @@
+---
+export interface TerminalFormStep {
+  /** Unique key for this field, used in the submitted data record */
+  key: string;
+  /** Prompt label shown to the user (e.g. "What's your name?") */
+  label: string;
+  /** Input type — controls keyboard on mobile */
+  type?: "text" | "email" | "url" | "tel";
+  /** Regex pattern string for validation */
+  pattern?: string;
+  /** Error message shown when pattern validation fails */
+  error?: string;
+}
+
+export interface TerminalFormConfirm {
+  /** Label for the confirm prompt (default: "Confirm? (y/n)") */
+  label?: string;
+  /**
+   * Callback that receives the collected data and returns a summary
+   * as an array of {label, value} pairs to display before confirming.
+   */
+  summary?: { label: string; value: string }[];
+}
+
+interface Props {
+  /** Unique ID for this form instance */
+  id: string;
+  /** Title shown in the terminal title bar */
+  title?: string;
+  /** Steps the user will be prompted through */
+  steps: TerminalFormStep[];
+  /** URL to POST the form data to, if not set the form will dispatch a custom event instead */
+  action?: string;
+  /** Confirm step config. Set to false to skip confirmation. */
+  confirm?: TerminalFormConfirm | false;
+  /** Message shown on successful submit */
+  successMessage?: string;
+  /** Message shown on error */
+  errorMessage?: string;
+  /** Additional CSS classes for the outer wrapper */
+  class?: string;
+}
+
+const {
+  id,
+  title = "form.sh",
+  steps,
+  action,
+  confirm: confirmConfig,
+  successMessage = "Done!",
+  errorMessage = "Something went wrong. Please try again.",
+  class: className = "",
+} = Astro.props;
+
+const containerId = `${id}-terminal`;
+const logId = `${id}-log`;
+const promptId = `${id}-prompt`;
+const labelId = `${id}-label`;
+const inputId = `${id}-input`;
+const cursorId = `${id}-cursor`;
+
+const confirmLabel =
+  confirmConfig === false
+    ? null
+    : (confirmConfig?.label ?? "Confirm? (y/n)");
+---
+
+<div
+  class:list={[
+    "relative overflow-hidden rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-base md:text-sm",
+    className,
+  ]}
+>
+  <!-- Title bar -->
+  <div
+    class="flex items-center gap-2 border-b border-border/40 px-4 py-3 bg-terminal-bg/40"
+  >
+    <span class="h-2.5 w-2.5 rounded-full bg-destructive/70"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-secondary/70"></span>
+    <span class="h-2.5 w-2.5 rounded-full bg-terminal-green/70"></span>
+    <span class="ml-3 text-xs uppercase tracking-wide text-muted-foreground"
+      >{title}</span
+    >
+  </div>
+
+  <div id={containerId} class="p-6 space-y-1">
+    <!-- Preamble slot -->
+    <slot name="preamble" />
+
+    <div id={logId} class="empty:hidden space-y-1"></div>
+    <div id={promptId} class="flex items-center gap-2 flex-wrap">
+      <span class="text-terminal-yellow shrink-0">?</span>
+      <span id={labelId} class="text-foreground shrink-0"
+        >{steps[0].label}</span
+      >
+      <span class="inline-flex items-center gap-0">
+        <input
+          id={inputId}
+          type={steps[0].type ?? "text"}
+          autocomplete="off"
+          spellcheck="false"
+          class="bg-transparent text-terminal-cyan outline-none caret-transparent p-0 m-0 border-0 text-base md:text-sm"
+          style="width:1ch;min-width:0"
+        /><span
+          id={cursorId}
+          class="animate-pulse text-terminal-cyan hidden relative -left-[1ch]"
+          >▊</span
+        >
+      </span>
+    </div>
+  </div>
+
+  <script
+    is:inline
+    data-id={id}
+    data-steps={JSON.stringify(steps)}
+    data-action={action ?? ""}
+    data-confirm-label={confirmLabel ?? ""}
+    data-skip-confirm={confirmConfig === false ? "true" : "false"}
+    data-success-message={successMessage}
+    data-error-message={errorMessage}
+  >
+    (function () {
+      const script = document.currentScript;
+      const id = script.getAttribute("data-id");
+      const steps = JSON.parse(script.getAttribute("data-steps"));
+      const action = script.getAttribute("data-action");
+      const skipConfirm = script.getAttribute("data-skip-confirm") === "true";
+      const confirmLabel = script.getAttribute("data-confirm-label");
+      const successMsg = script.getAttribute("data-success-message");
+      const errorMsg = script.getAttribute("data-error-message");
+
+      let current = 0;
+      const data = {};
+
+      const container = document.getElementById(id + "-terminal");
+      const log = document.getElementById(id + "-log");
+      const prompt = document.getElementById(id + "-prompt");
+      const label = document.getElementById(id + "-label");
+      const input = document.getElementById(id + "-input");
+      const cursor = document.getElementById(id + "-cursor");
+
+      input.addEventListener("focus", function () {
+        cursor.classList.remove("hidden");
+      });
+      input.addEventListener("blur", function () {
+        cursor.classList.add("hidden");
+      });
+
+      function escapeHtml(str) {
+        var el = document.createElement("span");
+        el.textContent = str;
+        return el.innerHTML;
+      }
+
+      function autoSize(el) {
+        el.style.width =
+          (el.value.length === 0 ? 1 : el.value.length + 1) + "ch";
+      }
+
+      function addLine(html) {
+        var div = document.createElement("div");
+        div.innerHTML = html;
+        log.appendChild(div);
+      }
+
+      function advance() {
+        var value = input.value.trim();
+        if (!value) return;
+
+        var step = steps[current];
+
+        if (step.pattern && !new RegExp(step.pattern).test(value)) {
+          addLine(
+            '<span class="text-destructive">  ✗ ' +
+              escapeHtml(step.error || "Invalid input.") +
+              "</span>"
+          );
+          input.value = "";
+          input.style.width = "1ch";
+          input.focus();
+          return;
+        }
+
+        data[step.key] = value;
+
+        addLine(
+          '<span class="text-terminal-green">✓</span> <span class="text-muted-foreground">' +
+            escapeHtml(step.label) +
+            '</span> <span class="text-terminal-cyan">' +
+            escapeHtml(value) +
+            "</span>"
+        );
+
+        current++;
+        input.value = "";
+        input.style.width = "1ch";
+
+        if (current < steps.length) {
+          label.textContent = steps[current].label;
+          var nextType = steps[current].type || "text";
+          input.type = nextType;
+          input.inputMode = nextType === "email" ? "email" : nextType === "tel" ? "tel" : nextType === "url" ? "url" : "text";
+          input.blur();
+          requestAnimationFrame(function () {
+            input.focus();
+          });
+        } else if (skipConfirm) {
+          prompt.classList.add("hidden");
+          submitForm();
+        } else {
+          showConfirm();
+        }
+      }
+
+      function showConfirm() {
+        prompt.classList.add("hidden");
+
+        // Dispatch event so consumers can render a custom summary
+        var summaryEvent = new CustomEvent(id + ":summary", {
+          detail: Object.assign({}, data),
+          bubbles: true,
+        });
+        container.dispatchEvent(summaryEvent);
+
+        var confirmDiv = document.createElement("div");
+        confirmDiv.className = "flex items-center gap-2 mt-2";
+        confirmDiv.innerHTML =
+          '<span class="text-terminal-yellow">?</span>' +
+          '<span class="text-foreground">' +
+          escapeHtml(confirmLabel) +
+          "</span>" +
+          '<span class="inline-flex items-center">' +
+          '<input id="' +
+          id +
+          '-confirm" type="text" size="1" autocomplete="off" spellcheck="false" ' +
+          'class="bg-transparent text-terminal-cyan outline-none caret-transparent p-0 m-0 border-0 text-base md:text-sm" ' +
+          'style="width:1ch;min-width:0" />' +
+          '<span id="' +
+          id +
+          '-confirm-cursor" class="animate-pulse text-terminal-cyan hidden relative -left-[1ch]">▊</span>' +
+          "</span>";
+        container.appendChild(confirmDiv);
+
+        var confirmInput = document.getElementById(id + "-confirm");
+        var confirmCursor = document.getElementById(
+          id + "-confirm-cursor"
+        );
+        confirmInput.addEventListener("focus", function () {
+          confirmCursor.classList.remove("hidden");
+        });
+        confirmInput.addEventListener("blur", function () {
+          confirmCursor.classList.add("hidden");
+        });
+        confirmInput.focus();
+        confirmInput.addEventListener("input", function () {
+          autoSize(confirmInput);
+        });
+
+        confirmInput.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") return;
+          var answer = confirmInput.value.trim().toLowerCase();
+          if (answer === "y" || answer === "yes") {
+            confirmDiv.remove();
+            addLine(
+              '<span class="text-terminal-green">✓</span> <span class="text-muted-foreground">' +
+                escapeHtml(confirmLabel) +
+                '</span> <span class="text-terminal-cyan">yes</span>'
+            );
+            submitForm();
+          } else if (answer === "n" || answer === "no") {
+            confirmDiv.remove();
+            addLine(
+              '<span class="text-destructive">✗</span> <span class="text-muted-foreground">Aborted.</span>'
+            );
+            showRestart();
+          } else {
+            confirmInput.value = "";
+          }
+        });
+      }
+
+      async function submitForm() {
+        if (action) {
+          addLine(
+            '<span class="text-muted-foreground">Sending...</span>'
+          );
+
+          try {
+            var res = await fetch(action, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (!res.ok) {
+              var err = await res
+                .json()
+                .catch(function () {
+                  return { error: errorMsg };
+                });
+              addLine(
+                '<span class="text-destructive">✗ ' +
+                  escapeHtml(err.error || errorMsg) +
+                  "</span>"
+              );
+              showRestart();
+              return;
+            }
+          } catch (_e) {
+            addLine(
+              '<span class="text-destructive">✗ ' +
+                escapeHtml(errorMsg) +
+                "</span>"
+            );
+            showRestart();
+            return;
+          }
+        }
+
+        addLine(
+          '<span class="text-terminal-green">✓ ' +
+            escapeHtml(successMsg) +
+            "</span>"
+        );
+
+        // Dispatch submit event with the collected data
+        container.dispatchEvent(
+          new CustomEvent(id + ":submit", {
+            detail: Object.assign({}, data),
+            bubbles: true,
+          })
+        );
+      }
+
+      function showRestart() {
+        var restartDiv = document.createElement("div");
+        restartDiv.className = "mt-2";
+        restartDiv.innerHTML =
+          '<span class="text-muted-foreground">Press</span> ' +
+          '<kbd class="px-1.5 py-0.5 rounded bg-terminal-bg/60 border border-border text-terminal-cyan text-xs">Enter</kbd> ' +
+          '<span class="text-muted-foreground">to try again</span>';
+        container.appendChild(restartDiv);
+
+        function restart() {
+          current = 0;
+          Object.keys(data).forEach(function (k) {
+            delete data[k];
+          });
+          log.innerHTML = "";
+          restartDiv.remove();
+          document.removeEventListener("keydown", restartOnEnter);
+          label.textContent = steps[0].label;
+          input.type = steps[0].type || "text";
+          input.value = "";
+          input.style.width = "1ch";
+          prompt.classList.remove("hidden");
+          input.focus();
+        }
+
+        function restartOnEnter(e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            restart();
+          }
+        }
+
+        restartDiv.addEventListener("click", restart);
+        document.addEventListener("keydown", restartOnEnter);
+      }
+
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          advance();
+        }
+      });
+
+      input.addEventListener("input", function () {
+        autoSize(input);
+      });
+
+      container.addEventListener("click", function () {
+        var confirmInput = document.getElementById(id + "-confirm");
+        if (confirmInput) {
+          confirmInput.focus();
+        } else if (!prompt.classList.contains("hidden")) {
+          input.focus();
+        }
+      });
+    })();
+  </script>
+</div>
