@@ -39,7 +39,7 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
   const res = await fetch("https://api.postmarkapp.com/email", {
     method: "POST",
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
       "X-Postmark-Server-Token": env.POSTMARK_SERVER_API_TOKEN,
     },
@@ -56,10 +56,10 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
   if (!res.ok) {
     const errorBody = await res.text();
     console.error("Postmark error:", res.status, errorBody);
-    return new Response(
-      JSON.stringify({ error: "Failed to send message" }),
-      { status: 502, headers: { "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: "Failed to send message" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   return new Response(JSON.stringify({ ok: true }), {
