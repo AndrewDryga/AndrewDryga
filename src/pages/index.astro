@@ -385,7 +385,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
       </div>
 
       <div
-        class="relative overflow-hidden rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-sm animate-fade-in animate-delay-100"
+        class="relative overflow-hidden rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-base md:text-sm animate-fade-in animate-delay-100"
       >
         <!-- Terminal title bar -->
         <div
@@ -537,7 +537,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
             <span class="text-foreground">Send message? (y/n)</span>
             <span class="inline-flex items-center">
               <input id="confirm-input" type="text" size="1" autocomplete="off" spellcheck="false"
-                class="bg-transparent text-terminal-cyan outline-none caret-transparent w-0 py-0 pr-0 pl-px" /><span id="confirm-cursor" class="animate-pulse text-terminal-cyan hidden">▊</span>
+                class="bg-transparent text-terminal-cyan outline-none caret-transparent w-0 p-0 m-0 border-0 text-base md:text-sm" style="width:1ch;min-width:0" /><span id="confirm-cursor" class="animate-pulse text-terminal-cyan hidden relative -left-[1ch]">▊</span>
             </span>
           `;
             log.parentElement!.appendChild(confirmDiv);
