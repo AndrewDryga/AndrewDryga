@@ -408,7 +408,15 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
           },
         ]}
         action="/api/contact"
-        confirm={{ label: "Send message? (y/n)" }}
+        confirm={{
+          label: "Send message? (y/n)",
+          summary: [
+            { label: "From:", value: "name" },
+            { label: "Email:", value: "email" },
+            { label: "To:", value: "=andrew@dryga.com" },
+            { label: "Message:", value: "message" },
+          ],
+        }}
         successMessage="Message sent! Andrew will get back to you soon."
         errorMessage="Network error. Please try again or email andrew@dryga.com directly."
         class="animate-fade-in animate-delay-100"

@@ -12,14 +12,18 @@ export interface TerminalFormStep {
   error?: string;
 }
 
+export interface TerminalFormSummaryLine {
+  /** Label shown on the left */
+  label: string;
+  /** Data key to display, or a literal string if prefixed with "=" (e.g. "=andrew@dryga.com") */
+  value: string;
+}
+
 export interface TerminalFormConfirm {
   /** Label for the confirm prompt (default: "Confirm? (y/n)") */
   label?: string;
-  /**
-   * Callback that receives the collected data and returns a summary
-   * as an array of {label, value} pairs to display before confirming.
-   */
-  summary?: { label: string; value: string }[];
+  /** Summary lines to display before confirming. Use data keys or "=literal" values. */
+  summary?: TerminalFormSummaryLine[];
 }
 
 interface Props {
@@ -63,6 +67,11 @@ const confirmLabel =
   confirmConfig === false
     ? null
     : (confirmConfig?.label ?? "Confirm? (y/n)");
+
+const summaryLines =
+  confirmConfig !== false && confirmConfig?.summary
+    ? confirmConfig.summary
+    : [];
 ---
 
 <div
@@ -117,6 +126,7 @@ const confirmLabel =
     data-action={action ?? ""}
     data-confirm-label={confirmLabel ?? ""}
     data-skip-confirm={confirmConfig === false ? "true" : "false"}
+    data-summary={JSON.stringify(summaryLines)}
     data-success-message={successMessage}
     data-error-message={errorMessage}
   >
@@ -126,6 +136,7 @@ const confirmLabel =
       const steps = JSON.parse(script.getAttribute("data-steps"));
       const action = script.getAttribute("data-action");
       const skipConfirm = script.getAttribute("data-skip-confirm") === "true";
+      const summaryConfig = JSON.parse(script.getAttribute("data-summary") || "[]");
       const confirmLabel = script.getAttribute("data-confirm-label");
       const successMsg = script.getAttribute("data-success-message");
       const errorMsg = script.getAttribute("data-error-message");
@@ -216,12 +227,18 @@ const confirmLabel =
       function showConfirm() {
         prompt.classList.add("hidden");
 
-        // Dispatch event so consumers can render a custom summary
-        var summaryEvent = new CustomEvent(id + ":summary", {
-          detail: Object.assign({}, data),
-          bubbles: true,
-        });
-        container.dispatchEvent(summaryEvent);
+        if (summaryConfig.length > 0) {
+          addLine('<span class="text-muted-foreground">---</span>');
+          summaryConfig.forEach(function (line) {
+            var val = line.value.charAt(0) === "="
+              ? line.value.slice(1)
+              : (data[line.value] || "");
+            addLine(
+              '<span class="text-foreground">' + escapeHtml(line.label) + '</span> <span class="text-terminal-cyan">' + escapeHtml(val) + '</span>'
+            );
+          });
+          addLine('<span class="text-muted-foreground">---</span>');
+        }
 
         var confirmDiv = document.createElement("div");
         confirmDiv.className = "flex items-center gap-2 mt-2";
