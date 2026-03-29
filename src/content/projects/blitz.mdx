@@ -61,6 +61,12 @@ GCP CDN and Media CDN are **extremely expensive**, mostly due to traffic replica
 
 I initiated a migration to **BunnyCDN**, which saved **$500k/year**. BunnyCDN required a bit more hands-on work and interactions with support, but they responded within 10 minutes every time and were great to work with.
 
+### DataBricks Serving is Expensive
+
+We had our own caching layer in front of DataBricks but even with that and CDN in front of it some small percentage of requests still went to DataBricks leading to P99 latency being for data-requests being in seconds. I've rebuild caching layer to use DuckDB embedded in Elixir and our data engineer (shotout to Rafael) changed our pyspark codebase to export parquet files to GCS bucket. New data layer now watches for changes in those files, downloads them and atomically swaps tables making to never drop a single request during the update. The result was that we stopped paying for DataBricks native serving and P99 latency for data-requests dropped to <100ms.
+
+Additionally we've deployed a self-hosted Airflow instance and now we experiment with self-hosted Spark clusters that we spawn on demand to stop paying for DataBricks at all.
+
 ### Frontend Was Slow
 
 Built on a home-grown React-based framework that sometimes took **seconds to server-render a single page**. It was a constant struggle to add new features, and improving performance was even harder.
