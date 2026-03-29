@@ -28,6 +28,14 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
     );
   }
 
+  if (!env.POSTMARK_SERVER_API_TOKEN) {
+    console.error("POSTMARK_SERVER_API_TOKEN is not configured");
+    return new Response(
+      JSON.stringify({ error: "Email service is not configured" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const res = await fetch("https://api.postmarkapp.com/email", {
     method: "POST",
     headers: {
@@ -46,6 +54,8 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
   });
 
   if (!res.ok) {
+    const errorBody = await res.text();
+    console.error("Postmark error:", res.status, errorBody);
     return new Response(
       JSON.stringify({ error: "Failed to send message" }),
       { status: 502, headers: { "Content-Type": "application/json" } },
