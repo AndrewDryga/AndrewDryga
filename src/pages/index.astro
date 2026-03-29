@@ -319,43 +319,45 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestPosts.map((post, i) => {
-            const delays = ["animate-delay-0", "animate-delay-100", "animate-delay-200"];
-            return (
-              <article
-                class={`group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in ${delays[i]} relative`}
-              >
-                <a
-                  href={post.url}
-                  class="absolute inset-0 rounded-lg"
-                  aria-label={`Read more: ${post.title}`}
-                ></a>
-                <div class="flex h-full flex-col gap-4">
-                  <div class="flex items-center justify-between">
-                    <span
-                      class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono"
-                    >{post.category}</span>
-                    <div class="font-mono text-xs text-muted-foreground">
-                      {formatPublishDate(post.publishDate)}
+          {
+            latestPosts.map((post, i) => {
+              const delays = [
+                "animate-delay-0",
+                "animate-delay-100",
+                "animate-delay-200",
+              ];
+              return (
+                <article
+                  class={`group p-6 rounded-lg bg-card border border-border hover:border-terminal-yellow transition-all duration-300 shadow-card hover:shadow-glow animate-fade-in ${delays[i]} relative`}
+                >
+                  <a
+                    href={post.url}
+                    class="absolute inset-0 rounded-lg"
+                    aria-label={`Read more: ${post.title}`}
+                  />
+                  <div class="flex h-full flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                      <span class="px-3 py-1 rounded-full bg-terminal-yellow/10 text-terminal-yellow text-xs font-mono">
+                        {post.category}
+                      </span>
+                      <div class="font-mono text-xs text-muted-foreground">
+                        {formatPublishDate(post.publishDate)}
+                      </div>
                     </div>
+                    <h3 class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow">
+                      {post.title}
+                    </h3>
+                    <p class="text-muted-foreground text-sm leading-relaxed">
+                      {post.description}
+                    </p>
+                    <span class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3">
+                      Read more →
+                    </span>
                   </div>
-                  <h3
-                    class="text-xl font-bold font-sans text-foreground transition-colors group-hover:text-terminal-yellow"
-                  >
-                    {post.title}
-                  </h3>
-                  <p class="text-muted-foreground text-sm leading-relaxed">
-                    {post.description}
-                  </p>
-                  <span
-                    class="mt-auto inline-flex items-center gap-2 text-terminal-yellow font-mono text-sm transition-all group-hover:gap-3"
-                  >
-                    Read more →
-                  </span>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })
+          }
         </div>
 
         <div class="flex justify-center pt-8">
@@ -375,7 +377,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
     <div class="max-w-6xl mx-auto">
       <div class="mb-12 animate-fade-in animate-delay-0">
         <p class="font-mono text-terminal-green mb-2">
-          $ palantir persons find . -name "Andrew Dryga" {">"} contacts.txt
+          $ palantir persons find . -name "Andrew Dryga" > contacts.txt
         </p>
         <h2 class="text-3xl md:text-4xl font-bold mb-4">
           Get in <span class="text-terminal-green">Touch</span>
@@ -383,18 +385,295 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
       </div>
 
       <div
-        class="relative overflow-hidden p-6 rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-sm animate-fade-in animate-delay-100"
+        class="relative overflow-hidden rounded-lg bg-terminal-surface border border-terminal-cyan/30 font-mono text-sm animate-fade-in animate-delay-100"
       >
-        <div class="space-y-2">
-          <div class="text-terminal-green">$ cat contacts.txt | grep email</div>
+        <!-- Terminal title bar -->
+        <div
+          class="flex items-center gap-2 border-b border-border/40 px-4 py-3 bg-terminal-bg/40"
+        >
+          <span class="h-2.5 w-2.5 rounded-full bg-destructive/70"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-secondary/70"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-terminal-green/70"></span>
+          <span
+            class="ml-3 text-xs uppercase tracking-wide text-muted-foreground"
+            >contact.sh</span
+          >
+        </div>
+
+        <div id="contact-terminal" class="p-6 space-y-2">
+          <div class="text-terminal-green">
+            {
+              "$ EMAIL=$(grep '^email:' contacts.txt | awk '{print $2}') && echo $EMAIL"
+            }
+          </div>
           <div class="text-foreground/90">
-            Email: <a
+            <a
               href="mailto:andrew@dryga.com"
               class="text-terminal-cyan hover:text-terminal-green transition-colors"
               >andrew@dryga.com</a
             >
           </div>
+          <div class="text-terminal-green">
+            $ ./send-message.sh --to {'"${EMAIL}"'}
+          </div>
+          <div class="text-muted-foreground">
+            Starting interactive message composer...
+          </div>
+          <div class="text-muted-foreground">
+            Press Enter to confirm each step.
+          </div>
+
+          <!-- Log of completed steps + active prompt share the same space-y-2 flow -->
+          <div id="terminal-log" class="empty:hidden space-y-2"></div>
+          <div id="terminal-prompt" class="flex items-center gap-2 flex-wrap">
+            <span class="text-terminal-yellow shrink-0">?</span>
+            <span id="prompt-label" class="text-foreground shrink-0"
+              >What's your name?</span
+            >
+            <span class="inline-flex items-center">
+              <input
+                id="terminal-input"
+                type="text"
+                size="1"
+                autocomplete="off"
+                spellcheck="false"
+                class="bg-transparent text-terminal-cyan outline-none caret-transparent w-0"
+                autofocus
+              /><span
+                id="terminal-cursor"
+                class="animate-pulse text-terminal-cyan hidden">▊</span
+              >
+            </span>
+          </div>
         </div>
+
+        <script>
+          const steps = [
+            { key: "name", label: "What's your name?", type: "text" },
+            { key: "email", label: "Your email?", type: "email" },
+            { key: "message", label: "Your message:", type: "text" },
+          ];
+
+          let current = 0;
+          const data: Record<string, string> = {};
+
+          const log = document.getElementById("terminal-log")!;
+          const prompt = document.getElementById("terminal-prompt")!;
+          const label = document.getElementById("prompt-label")!;
+          const input = document.getElementById(
+            "terminal-input",
+          ) as HTMLInputElement;
+          const cursor = document.getElementById("terminal-cursor")!;
+
+          input.addEventListener("focus", () =>
+            cursor.classList.remove("hidden"),
+          );
+          input.addEventListener("blur", () => cursor.classList.add("hidden"));
+
+          function addLine(html: string) {
+            const div = document.createElement("div");
+            div.innerHTML = html;
+            log.appendChild(div);
+          }
+
+          function advance() {
+            const value = input.value.trim();
+            if (!value) return;
+
+            if (
+              steps[current].key === "email" &&
+              !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+            ) {
+              addLine(
+                '<span class="text-destructive">  ✗ Please enter a valid email address.</span>',
+              );
+              input.value = "";
+              input.style.width = "0";
+              input.focus();
+              return;
+            }
+
+            data[steps[current].key] = value;
+
+            addLine(
+              `<span class="text-terminal-green">✓</span> <span class="text-muted-foreground">${steps[current].label}</span> <span class="text-terminal-cyan">${escapeHtml(value)}</span>`,
+            );
+
+            current++;
+            input.value = "";
+            input.style.width = "1ch";
+
+            if (current < steps.length) {
+              label.textContent = steps[current].label;
+              input.type = steps[current].type;
+              input.focus();
+            } else {
+              showConfirm();
+            }
+          }
+
+          function showConfirm() {
+            prompt.classList.add("hidden");
+
+            addLine('<span class="text-muted-foreground mt-2">---</span>');
+            addLine(
+              `<span class="text-foreground">From:</span> <span class="text-terminal-cyan">${escapeHtml(data.name)} &lt;${escapeHtml(data.email)}&gt;</span>`,
+            );
+            addLine(
+              `<span class="text-foreground">To:</span> <span class="text-terminal-cyan">andrew@dryga.com</span>`,
+            );
+            addLine(
+              `<span class="text-foreground">Message:</span> <span class="text-terminal-cyan">${escapeHtml(data.message)}</span>`,
+            );
+            addLine('<span class="text-muted-foreground">---</span>');
+
+            const confirmDiv = document.createElement("div");
+            confirmDiv.className = "flex items-center gap-2 mt-2";
+            confirmDiv.id = "confirm-prompt";
+            confirmDiv.innerHTML = `
+            <span class="text-terminal-yellow">?</span>
+            <span class="text-foreground">Send message? (y/n)</span>
+            <span class="inline-flex items-center">
+              <input id="confirm-input" type="text" size="1" autocomplete="off" spellcheck="false"
+                class="bg-transparent text-terminal-cyan outline-none caret-transparent w-0" /><span id="confirm-cursor" class="animate-pulse text-terminal-cyan hidden">▊</span>
+            </span>
+          `;
+            log.parentElement!.appendChild(confirmDiv);
+
+            const confirmInput = document.getElementById(
+              "confirm-input",
+            ) as HTMLInputElement;
+            const confirmCursor = document.getElementById("confirm-cursor")!;
+            confirmInput.addEventListener("focus", () =>
+              confirmCursor.classList.remove("hidden"),
+            );
+            confirmInput.addEventListener("blur", () =>
+              confirmCursor.classList.add("hidden"),
+            );
+            confirmInput.focus();
+            confirmInput.addEventListener("input", () =>
+              autoSize(confirmInput),
+            );
+
+            confirmInput.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter") return;
+              const answer = confirmInput.value.trim().toLowerCase();
+              if (answer === "y" || answer === "yes") {
+                confirmDiv.remove();
+                addLine(
+                  `<span class="text-terminal-green">✓</span> <span class="text-muted-foreground">Send message?</span> <span class="text-terminal-cyan">yes</span>`,
+                );
+                sendMessage();
+              } else if (answer === "n" || answer === "no") {
+                confirmDiv.remove();
+                addLine(
+                  `<span class="text-destructive">✗</span> <span class="text-muted-foreground">Aborted.</span>`,
+                );
+                showRestart();
+              } else {
+                confirmInput.value = "";
+              }
+            });
+          }
+
+          async function sendMessage() {
+            addLine('<span class="text-muted-foreground">Sending...</span>');
+
+            try {
+              const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              });
+
+              if (!res.ok) {
+                const err = await res
+                  .json()
+                  .catch(() => ({ error: "Unknown error" }));
+                addLine(
+                  `<span class="text-destructive">✗ ${escapeHtml((err as { error: string }).error || "Failed to send message")}</span>`,
+                );
+              } else {
+                addLine(
+                  '<span class="text-terminal-green">✓ Message sent! Andrew will get back to you soon.</span>',
+                );
+              }
+            } catch {
+              addLine(
+                '<span class="text-destructive">✗ Network error. Please try again or email andrew@dryga.com directly.</span>',
+              );
+            }
+
+            showRestart();
+          }
+
+          function showRestart() {
+            const restartDiv = document.createElement("div");
+            restartDiv.className = "mt-2";
+            restartDiv.innerHTML = `
+            <span class="text-muted-foreground">Press</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-terminal-bg/60 border border-border text-terminal-cyan text-xs">Enter</kbd>
+            <span class="text-muted-foreground">to send another message</span>
+          `;
+            log.parentElement!.appendChild(restartDiv);
+
+            function restart() {
+              current = 0;
+              Object.keys(data).forEach((k) => delete data[k]);
+              log.innerHTML = "";
+              restartDiv.remove();
+              document.removeEventListener("keydown", restartOnEnter);
+              label.textContent = steps[0].label;
+              input.type = steps[0].type;
+              input.value = "";
+              input.style.width = "0";
+              prompt.classList.remove("hidden");
+              input.focus();
+            }
+
+            function restartOnEnter(e: KeyboardEvent) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                restart();
+              }
+            }
+
+            restartDiv.addEventListener("click", restart);
+            document.addEventListener("keydown", restartOnEnter);
+          }
+
+          function escapeHtml(str: string) {
+            const el = document.createElement("span");
+            el.textContent = str;
+            return el.innerHTML;
+          }
+
+          function autoSize(el: HTMLInputElement) {
+            el.style.width = el.value.length + "ch";
+          }
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              advance();
+            }
+          });
+
+          input.addEventListener("input", () => autoSize(input));
+
+          document
+            .getElementById("contact-terminal")!
+            .addEventListener("click", () => {
+              const confirmInput = document.getElementById(
+                "confirm-input",
+              ) as HTMLInputElement | null;
+              if (confirmInput) {
+                confirmInput.focus();
+              } else if (!prompt.classList.contains("hidden")) {
+                input.focus();
+              }
+            });
+        </script>
       </div>
 
       <div class="space-y-4 mt-12">
