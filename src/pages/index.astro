@@ -649,12 +649,8 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
             return el.innerHTML;
           }
 
-          const _canvas = document.createElement("canvas");
-          const _ctx = _canvas.getContext("2d")!;
-
           function autoSize(el: HTMLInputElement) {
-            _ctx.font = getComputedStyle(el).font;
-            el.style.width = (el.value.length === 0 ? 0 : _ctx.measureText(el.value).width) + "px";
+            el.style.width = el.value.length + 1 + "ch";
           }
 
           input.addEventListener("keydown", (e) => {
