@@ -2,7 +2,7 @@ const MIXPANEL_HOST = "https://api-js.mixpanel.com";
 
 interface Env {
   ASSETS: { fetch: typeof fetch };
-  POSTMARK_SERVER_API_TOKEN: string;
+  RESEND_API_KEY: string;
 }
 
 async function handleContact(request: Request, env: Env): Promise<Response> {
@@ -28,34 +28,32 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
     );
   }
 
-  if (!env.POSTMARK_SERVER_API_TOKEN) {
-    console.error("POSTMARK_SERVER_API_TOKEN is not configured");
+  if (!env.RESEND_API_KEY) {
+    console.error("RESEND_API_KEY is not configured");
     return new Response(
       JSON.stringify({ error: "Email service is not configured" }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const res = await fetch("https://api.postmarkapp.com/email", {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Accept: "application/json",
+      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
-      "X-Postmark-Server-Token": env.POSTMARK_SERVER_API_TOKEN,
     },
     body: JSON.stringify({
-      From: "website@dryga.com",
-      To: "andrew@dryga.com",
-      ReplyTo: email,
-      Subject: `Contact form: ${name}`,
-      TextBody: `From: ${name} <${email}>\n\n${message}`,
-      MessageStream: "outbound",
+      from: "website@dryga.com",
+      to: "andrew@dryga.com",
+      reply_to: email,
+      subject: `Contact form: ${name}`,
+      text: `From: ${name} <${email}>\n\n${message}`,
     }),
   });
 
   if (!res.ok) {
     const errorBody = await res.text();
-    console.error("Postmark error:", res.status, errorBody);
+    console.error("Resend error:", res.status, errorBody);
     return new Response(JSON.stringify({ error: "Failed to send message" }), {
       status: 502,
       headers: { "Content-Type": "application/json" },
