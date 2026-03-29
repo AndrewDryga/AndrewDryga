@@ -53,17 +53,16 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
     }),
   });
 
-  const responseBody = await res.text();
-  console.log("Postmark response:", res.status, responseBody);
-
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: "Failed to send message", detail: responseBody }), {
+    const errorBody = await res.text();
+    console.error("Postmark error:", res.status, errorBody);
+    return new Response(JSON.stringify({ error: "Failed to send message" }), {
       status: 502,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, postmark: JSON.parse(responseBody) }), {
+  return new Response(JSON.stringify({ ok: true }), {
     headers: { "Content-Type": "application/json" },
   });
 }
