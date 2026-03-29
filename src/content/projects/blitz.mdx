@@ -65,10 +65,12 @@ I initiated a migration to **BunnyCDN**, which saved **$500k/year**. BunnyCDN re
 
 Built on a home-grown React-based framework that sometimes took **seconds to server-render a single page**. It was a constant struggle to add new features, and improving performance was even harder.
 
-I didn't touch FE much, but I kept bringing up issues and need of taking proper care of it. The frontend team decided to rewrite everything in Svelte. A few thing I did change myself:
+I didn't touch FE much, but I kept bringing up issues and need of taking proper care of it. The frontend team decided to rewrite everything in Svelte. It ended up being a great success! 
+
+A few things I did change myself:
 - Removed large headers in generated JS chunks (at up to 700 JS chunks per page and our request volume, those headers were costing real money);
-- Pushed for reducing the number of chunks per page-some pages required **700 chunks** to render;
-- Migrated from Cloud Run to Compute Engine to reduce costs and have better control / easier debugging.
+- Migrated from Cloud Run to Compute Engine to reduce costs and have better control / easier debugging;
+- Pushed for reducing the number of chunks per page-some pages required **700 chunks** to render, with some components billing per-request this was a money burning machine.
 
 ### CI/CD Was a Gamble
 
