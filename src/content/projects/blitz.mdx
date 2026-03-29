@@ -69,6 +69,7 @@ I didn't touch FE much, but I kept bringing up issues and need of taking proper 
 
 A few small things I did change myself:
 - Removed large headers in generated JS chunks (at up to 700 JS chunks per page and our request volume, those headers were costing real money);
+- Internal routing to CDN assets was done on JavaScript side - it means we served way more traffic using node.js than we needed to, leading to latency spikes and high CPU/RAM usage. I've added HAProxy in front of the FE containers route that traffic cheaply with an additional level of CDN-like caching;
 - Migrated from Cloud Run to Compute Engine to reduce costs and have better control / easier debugging;
 
 ### CI/CD Was a Gamble
