@@ -430,14 +430,14 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
             <span id="prompt-label" class="text-foreground shrink-0"
               >What's your name?</span
             >
-            <span class="inline-flex items-center">
+            <span class="inline-flex items-center gap-0">
               <input
                 id="terminal-input"
                 type="text"
-                size="1"
                 autocomplete="off"
                 spellcheck="false"
-                class="bg-transparent text-terminal-cyan outline-none caret-transparent w-0 py-0 pr-0 pl-px"
+                class="bg-transparent text-terminal-cyan outline-none caret-transparent p-0 m-0 border-0"
+                style="width:0;min-width:0;font:inherit"
                 autofocus
               /><span
                 id="terminal-cursor"
@@ -501,7 +501,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 
             current++;
             input.value = "";
-            input.style.width = "1ch";
+            input.style.width = "0";
 
             if (current < steps.length) {
               label.textContent = steps[current].label;
@@ -649,8 +649,12 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
             return el.innerHTML;
           }
 
+          const _canvas = document.createElement("canvas");
+          const _ctx = _canvas.getContext("2d")!;
+
           function autoSize(el: HTMLInputElement) {
-            el.style.width = el.value.length + "ch";
+            _ctx.font = getComputedStyle(el).font;
+            el.style.width = (el.value.length === 0 ? 0 : _ctx.measureText(el.value).width) + "px";
           }
 
           input.addEventListener("keydown", (e) => {
