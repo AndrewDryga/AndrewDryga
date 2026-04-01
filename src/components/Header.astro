@@ -1,5 +1,8 @@
 ---
 import MobileNav from "./MobileNav.astro";
+import CommandPalette from "./ui/CommandPalette.astro";
+import { loadBlogSummaries } from "../lib/blog";
+import { allProjects } from "../data/projects";
 
 export interface Props {
   /**
@@ -16,6 +19,8 @@ const { variant = "header" } = Astro.props;
 const pathname = Astro.url.pathname ?? "/";
 const year = new Date().getFullYear();
 
+const blogPosts = await loadBlogSummaries();
+
 function isActive(href: string) {
   if (href === "/") return pathname === "/";
   if (href.startsWith("/blog")) return pathname.startsWith("/blog");
@@ -26,6 +31,31 @@ function isActive(href: string) {
   }
   return pathname === href;
 }
+
+import type { CommandGroup } from "./ui/CommandPalette.astro";
+
+const groupedPalette: CommandGroup[] = (() => {
+  const items: { label: string; href: string; group: string; description?: string; shortcut?: string }[] = [
+    { label: "Home", href: "/", group: "Navigation", shortcut: "g h" },
+    { label: "About", href: "/#about", group: "Navigation", shortcut: "g a" },
+    { label: "Projects", href: "/projects", group: "Navigation", shortcut: "g p" },
+    { label: "Blog", href: "/blog", group: "Navigation", shortcut: "g b" },
+    { label: "Contact", href: "/#contact", group: "Navigation", shortcut: "g c" },
+    ...allProjects.map((p) => ({
+      label: p.name,
+      href: `/projects/${p.id}/`,
+      group: "Projects",
+      description: p.description,
+    })),
+    ...blogPosts.map((p) => ({ label: p.title, href: p.url, group: "Blog", description: p.description })),
+  ];
+  const map = new Map<string, typeof items>();
+  for (const item of items) {
+    if (!map.has(item.group)) map.set(item.group, []);
+    map.get(item.group)!.push(item);
+  }
+  return Array.from(map.entries()).map(([group, items]) => ({ group, items }));
+})();
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -75,6 +105,14 @@ const navLinks = [
     import "../scripts/header-nav.ts";
   </script>
 )}
+
+<!-- Command Palette -->
+<CommandPalette
+  id="nav-palette"
+  placeholder="Search pages, posts, projects..."
+  groups={groupedPalette}
+  chords={{ h: "/", a: "/#about", p: "/projects", b: "/blog", c: "/#contact" }}
+/>
 
 {(variant === "footer" || variant === "both") && (
   <footer class="py-4 md:py-8 px-4 border-t border-border">

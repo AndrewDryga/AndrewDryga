@@ -29,10 +29,16 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
       >
         <!-- Terminal-style header -->
         <div class="font-mono text-sm text-terminal-green">
-          <div class="flex items-center gap-2 mb-2">
+          <button
+            class="flex items-center gap-2 mb-2 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus-visible:outline-none"
+            tabindex="-1"
+            data-open-palette
+            aria-label="Open command palette"
+            title="Press / to search"
+          >
             <span class="text-terminal-cyan">~</span>
             <span class="animate-pulse">▊</span>
-          </div>
+          </button>
         </div>
 
         <!-- Main heading -->
