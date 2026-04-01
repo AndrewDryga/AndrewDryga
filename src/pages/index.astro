@@ -373,6 +373,121 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
     </div>
   </section>
 
+  <!-- Personal -->
+  <section id="personal" class="py-14 md:py-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="motion-safe:animate-fade-in animate-delay-0">
+        <p class="font-mono text-terminal-green mb-2">$ whoami --personal</p>
+        <h2 class="text-3xl md:text-4xl font-bold">
+          Beyond <span class="text-terminal-green">Code</span>
+        </h2>
+
+        <p
+          class="text-lg text-muted-foreground leading-relaxed max-w-3xl mt-6 md:mt-8"
+        >
+          When I'm not shipping code, you'll find me on a squash or badminton
+          court, chasing wind on a kiteboard, driving with no destination in
+          mind, or deep into a gaming session. I love traveling to new places,
+          binge-watching good TV shows (especially Sci-Fi), and winding down
+          with a hookah. I also just like helping people.
+        </p>
+
+        <div
+          id="hobby-terminal"
+          class="bg-terminal-surface border border-terminal-green/30 rounded p-4 md:p-6 mt-6 md:mt-8 font-mono text-xs md:text-sm max-w-2xl select-none"
+        >
+          <div class="text-terminal-green">
+            $ watch -n 5 'ls ~/what-to-do/ | shuf -n 1'
+          </div>
+          <div class="flex items-center justify-between mt-1">
+            <div class="flex items-center">
+              <span id="hobby-output" class="text-terminal-cyan"></span><span
+                id="hobby-cursor"
+                class="text-terminal-cyan animate-pulse">▊</span
+              >
+            </div>
+            <span
+              id="hobby-countdown"
+              class="text-muted-foreground/40 text-[10px]"></span>
+          </div>
+        </div>
+
+        <script is:inline>
+          (function () {
+            var hobbies = [
+              "play-squash.sh",
+              "play-badminton.sh",
+              "go-kitesurfing.sh",
+              "drive-somewhere.sh",
+              "launch-a-game.sh",
+              "book-a-trip.sh",
+              "binge-a-show.sh",
+              "hookah-session.sh",
+            ];
+            var el = document.getElementById("hobby-output");
+            var countdown = document.getElementById("hobby-countdown");
+            if (!el || !countdown) return;
+
+            var last = -1;
+            var typing = false;
+            var secondsLeft = 5;
+            var interval = null;
+
+            function pick() {
+              var idx;
+              do {
+                idx = Math.floor(Math.random() * hobbies.length);
+              } while (idx === last && hobbies.length > 1);
+              last = idx;
+              return hobbies[idx];
+            }
+
+            function typeOut(text, cb) {
+              if (typing) return;
+              typing = true;
+              el.textContent = "";
+              var i = 0;
+              function tick() {
+                if (i < text.length) {
+                  el.textContent += text.charAt(i);
+                  i++;
+                  setTimeout(tick, 30 + Math.random() * 40);
+                } else {
+                  typing = false;
+                  if (cb) cb();
+                }
+              }
+              tick();
+            }
+
+            function updateCountdown() {
+              countdown.textContent = "next in " + secondsLeft + "s";
+            }
+
+            function run() {
+              if (typing) return;
+              el.textContent = "";
+              typeOut(pick(), function () {
+                secondsLeft = 5;
+                updateCountdown();
+                interval = setInterval(function () {
+                  secondsLeft--;
+                  updateCountdown();
+                  if (secondsLeft <= 0) {
+                    clearInterval(interval);
+                    run();
+                  }
+                }, 1000);
+              });
+            }
+
+            run();
+          })();
+        </script>
+      </div>
+    </div>
+  </section>
+
   <!-- Contact -->
   <section id="contact" class="py-16 md:py-24 px-4">
     <div class="max-w-6xl mx-auto">
@@ -423,7 +538,9 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
       >
         <Fragment slot="preamble">
           <div class="text-terminal-green">
-            {"$ EMAIL=$(grep '^email:' contacts.txt | awk '{print $2}') && echo $EMAIL"}
+            {
+              "$ EMAIL=$(grep '^email:' contacts.txt | awk '{print $2}') && echo $EMAIL"
+            }
           </div>
           <div class="text-foreground/90">
             <a
