@@ -8,23 +8,21 @@ export interface NavLink {
 export interface Props {
   links?: NavLink[];
   class?: string;
-  overlay?: boolean;
 }
 
-const { links = [], class: className = "", overlay = true } = Astro.props;
-const panelId = `mobile-nav-panel-${crypto.randomUUID()}`;
+const { links = [], class: className = "" } = Astro.props;
 ---
 
-<div class={["md:hidden", className].filter(Boolean).join(" ")} data-mobile-nav>
+<div class={["md:hidden", className].filter(Boolean).join(" ")}>
   <button
     type="button"
-    class="flex items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    id="mobile-nav-toggle"
+    class="flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-terminal-cyan focus:outline-none"
     aria-expanded="false"
-    aria-controls={panelId}
-    data-mobile-nav-toggle
+    aria-label="Toggle navigation"
   >
-    <span class="sr-only">Toggle navigation</span>
     <svg
+      id="mobile-nav-icon-open"
       class="h-5 w-5"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -38,128 +36,83 @@ const panelId = `mobile-nav-panel-${crypto.randomUUID()}`;
       <line x1="3" x2="21" y1="12" y2="12"></line>
       <line x1="3" x2="21" y1="18" y2="18"></line>
     </svg>
-    Menu
+    <svg
+      id="mobile-nav-icon-close"
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      style="display:none"
+    >
+      <line x1="18" x2="6" y1="6" y2="18"></line>
+      <line x1="6" x2="18" y1="6" y2="18"></line>
+    </svg>
   </button>
+</div>
 
-  {
-    overlay && (
-      <div
-        class="fixed inset-0 z-40 hidden bg-background/80 backdrop-blur-sm transition-opacity"
-        data-mobile-nav-overlay
-      />
-    )
-  }
-
-  <div
-    id={panelId}
-    class="fixed inset-x-4 top-16 z-50 hidden rounded-lg border border-border bg-card shadow-card"
-    data-mobile-nav-panel
-  >
-    <nav aria-label="Mobile" class="px-4 py-4">
-      <ul class="space-y-2">
-        {
-          links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                class="block rounded-md px-3 py-2 font-mono text-sm text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
-                {...(link.external
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
-              >
-                {link.name}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+<div id="mobile-nav-panel" style="display:none;position:fixed;top:65px;left:0;width:100%;height:calc(100vh - 65px);height:calc(100dvh - 65px);z-index:60;background:hsl(220,15%,8%);border-top:1px solid hsl(220,15%,18%);overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace">
+  <div style="padding:24px 24px 16px;font-size:13px;color:hsl(180,20%,50%,0.5)">
+    <span style="color:hsl(142,70%,60%)">$</span> ls ~/
+  </div>
+  <div style="padding:0 16px">
+    {links.map((link) => (
+      <a
+        href={link.href}
+        style="display:flex;align-items:center;gap:6px;padding:14px 12px;font-size:15px;color:hsl(34,211,238,0.9);text-decoration:none"
+        {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        <span style="color:hsl(142,70%,60%);font-size:13px">›</span>
+        <span>{link.name.toLowerCase()}/</span>
+      </a>
+    ))}
+  </div>
+  <div style="padding:8px 28px;font-size:12px;color:hsl(180,20%,50%,0.35)">
+    {links.length} directories
   </div>
 </div>
 
 <script is:inline>
-  (() => {
-    const navs = Array.from(document.querySelectorAll("[data-mobile-nav]"));
-    navs.forEach((nav) => {
-      const toggle = nav.querySelector("[data-mobile-nav-toggle]");
-      const panel = nav.querySelector("[data-mobile-nav-panel]");
-      const overlay = nav.querySelector("[data-mobile-nav-overlay]");
-      if (!toggle || !panel) return;
+(function() {
+  var toggle = document.getElementById("mobile-nav-toggle");
+  var panel = document.getElementById("mobile-nav-panel");
+  var iconOpen = document.getElementById("mobile-nav-icon-open");
+  var iconClose = document.getElementById("mobile-nav-icon-close");
+  if (!toggle || !panel) return;
 
-      let lastFocused = null;
-      const focusableSelectors =
-        'a[href], button:not([disabled]), textarea, input[type="text"], input[type="email"], input[type="url"], input[type="tel"], input[type="number"], input[type="search"], select, [tabindex]:not([tabindex="-1"])';
+  function open() {
+    panel.style.display = "block";
+    toggle.setAttribute("aria-expanded", "true");
+    if (iconOpen) iconOpen.style.display = "none";
+    if (iconClose) iconClose.style.display = "";
+    document.body.style.overflow = "hidden";
+  }
 
-      const getFocusableElements = () =>
-        Array.from(panel.querySelectorAll(focusableSelectors)).filter(
-          (el) =>
-            el instanceof HTMLElement &&
-            !el.hasAttribute("disabled") &&
-            !el.getAttribute("aria-hidden"),
-        );
+  function close() {
+    panel.style.display = "none";
+    toggle.setAttribute("aria-expanded", "false");
+    if (iconOpen) iconOpen.style.display = "";
+    if (iconClose) iconClose.style.display = "none";
+    document.body.style.overflow = "";
+  }
 
-      const trapFocus = (event) => {
-        if (event.key !== "Tab") return;
-        const focusable = getFocusableElements();
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
+  function isOpen() {
+    return panel.style.display !== "none";
+  }
 
-        if (event.shiftKey) {
-          if (document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-          }
-        }
-      };
+  toggle.addEventListener("click", function() {
+    if (isOpen()) close(); else open();
+  });
 
-      const open = () => {
-        lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        panel.classList.remove("hidden");
-        toggle.setAttribute("aria-expanded", "true");
-        overlay?.classList.remove("hidden");
-        document.body.classList.add("overflow-hidden");
-        panel.addEventListener("keydown", trapFocus);
-        const focusable = getFocusableElements();
-        const firstFocusable = focusable[0] ?? panel.querySelector("a, button");
-        if (firstFocusable instanceof HTMLElement) {
-          firstFocusable.focus();
-        }
-      };
+  panel.querySelectorAll("a").forEach(function(a) {
+    a.addEventListener("click", close);
+  });
 
-      const close = () => {
-        panel.classList.add("hidden");
-        toggle.setAttribute("aria-expanded", "false");
-        overlay?.classList.add("hidden");
-        document.body.classList.remove("overflow-hidden");
-        panel.removeEventListener("keydown", trapFocus);
-        if (lastFocused instanceof HTMLElement) {
-          lastFocused.focus();
-        } else {
-          toggle.focus();
-        }
-      };
-
-      toggle.addEventListener("click", () => {
-        const isHidden = panel.classList.contains("hidden");
-        if (isHidden) open();
-        else close();
-      });
-
-      overlay?.addEventListener("click", close);
-
-      panel
-        .querySelectorAll("a")
-        .forEach((anchor) => anchor.addEventListener("click", close));
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") close();
-      });
-    });
-  })();
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && isOpen()) close();
+  });
+})();
 </script>
