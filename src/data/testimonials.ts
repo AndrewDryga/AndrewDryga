@@ -22,13 +22,11 @@ function mapEntry(entry: TestimonialEntry): Testimonial {
   const { data, id } = entry;
   const commitDateISO = data.commitDate?.toISOString();
   const commitDateLabel = data.commitDate
-    ? data.commitDate.toLocaleString("en-US", {
+    ? data.commitDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZoneName: "short",
+        day: "numeric",
+        timeZone: "UTC",
       })
     : undefined;
 

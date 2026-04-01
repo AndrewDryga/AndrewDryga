@@ -27,8 +27,7 @@ const footerHref = "https://www.linkedin.com/in/andrew-dryga-bb382557/";
 
 function getBranchLabel(index: number): string | undefined {
   if (index === 0) return "(HEAD -> main, origin/main)";
-  if (index === 1) return "(origin/main)";
-  return undefined;
+  return "(origin/main)";
 }
 
 function getCommitDateLabel(testimonial: Testimonial): string | undefined {
@@ -39,7 +38,7 @@ function getCommitDateLabel(testimonial: Testimonial): string | undefined {
   if (testimonial.commitDateISO) {
     const date = new Date(testimonial.commitDateISO);
     if (!Number.isNaN(date.getTime())) {
-      return date.toUTCString();
+      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
     }
   }
 
