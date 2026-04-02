@@ -16,10 +16,50 @@ First thing I did was map everything - infrastructure, codebase, business domain
 
 Within **5 months** of my first day, we shipped new products that grew net revenue by **117%**. Within a year, the company was growing **3x annually** - Sales were outpacing even brutal churn rates by simply selling more than we lost. We went from 6- to 7-figure revenue rapidly.
 
-<figure style="max-width: 480px;">
-  <img src="/projects/hammer-revenue-expenses.jpg" style="width: 100%;" />
-  <figcaption style="text-align: center; font-size: 0.8em; opacity: 0.6; margin-top: 0.5em;">Purple is MRR. Try to guess what orange line means.</figcaption>
-</figure>
+<div class="rounded-lg border border-terminal-cyan/30 bg-terminal-surface overflow-hidden max-w-2xl">
+  <div class="flex items-center gap-2 border-b border-border/40 px-4 py-2.5 bg-terminal-bg/40">
+    <span class="h-2 w-2 rounded-full bg-destructive/70"></span>
+    <span class="h-2 w-2 rounded-full bg-secondary/70"></span>
+    <span class="h-2 w-2 rounded-full bg-terminal-green/70"></span>
+    <span class="ml-2 font-mono text-xs text-muted-foreground uppercase tracking-wide">plot mrr.json</span>
+  </div>
+  <div class="p-4 pb-2">
+    <svg viewBox="0 0 400 180" class="w-full" style="height:auto;max-height:220px" role="img" aria-label="MRR chart, 2018–2021">
+      {/* Grid lines */}
+      <line x1="40" y1="10" x2="40" y2="140" stroke="hsl(220,15%,18%)" stroke-width="0.5" />
+      <line x1="40" y1="140" x2="390" y2="140" stroke="hsl(220,15%,18%)" stroke-width="0.5" />
+      <line x1="40" y1="45" x2="390" y2="45" stroke="hsl(220,15%,18%)" stroke-width="0.3" stroke-dasharray="4,4" />
+      <line x1="40" y1="90" x2="390" y2="90" stroke="hsl(220,15%,18%)" stroke-width="0.3" stroke-dasharray="4,4" />
+
+      {/* "I joined" marker */}
+      <line x1="85" y1="10" x2="85" y2="140" stroke="hsl(142,70%,60%)" stroke-width="0.5" stroke-dasharray="3,3" />
+      <text x="85" y="155" fill="hsl(142,70%,60%)" font-size="7" font-family="monospace" text-anchor="middle">I joined</text>
+
+      {/* "COVID pivot" marker */}
+      <line x1="265" y1="10" x2="265" y2="140" stroke="hsl(220,15%,40%)" stroke-width="0.5" stroke-dasharray="3,3" />
+      <text x="265" y="155" fill="hsl(220,15%,40%)" font-size="7" font-family="monospace" text-anchor="middle">COVID pivot</text>
+
+      {/* MRR line (cyan) — starts low, grows steadily */}
+      <polyline
+        fill="none"
+        stroke="hsl(187,100%,75%)"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+        points="40,130 60,128 80,127 85,126 100,105 110,80 120,65 130,70 140,55 150,62 155,68 160,55 170,50 180,42 190,48 200,35 210,30 220,38 230,28 240,35 250,25 255,32 260,28 265,45 275,35 285,30 295,25 305,20 315,28 325,18 335,22 345,15 355,20 365,18 375,22 385,15 390,18"
+      />
+
+      {/* X axis labels */}
+      <text x="40" y="170" fill="hsl(220,15%,45%)" font-size="8" font-family="monospace">2018</text>
+      <text x="130" y="170" fill="hsl(220,15%,45%)" font-size="8" font-family="monospace">2019</text>
+      <text x="220" y="170" fill="hsl(220,15%,45%)" font-size="8" font-family="monospace">2020</text>
+      <text x="310" y="170" fill="hsl(220,15%,45%)" font-size="8" font-family="monospace">2021</text>
+
+      {/* Legend */}
+      <line x1="42" y1="8" x2="55" y2="8" stroke="hsl(187,100%,75%)" stroke-width="1.5" />
+      <text x="58" y="10" fill="hsl(187,100%,75%)" font-size="7" font-family="monospace">MRR</text>
+    </svg>
+  </div>
+</div>
 
 ## The Live Chat Problem
 
