@@ -1,6 +1,11 @@
 /// <reference path="./.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
+declare module "*.astro" {
+  const component: import("astro").AstroComponentFactory;
+  export default component;
+}
+
 /**
  * Extend Vite/ Astro environment variable types.
  *
