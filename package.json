@@ -22,6 +22,7 @@
     "@astrojs/sitemap": "^3.7.1",
     "@shikijs/twoslash": "^4.0.2",
     "astro": "^6.0.1",
+    "astro-critters": "^2.2.1",
     "sharp": "^0.34.5"
   },
   "overrides": {

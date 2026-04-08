@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
+import critters from "astro-critters";
 
 // Make @shikijs/twoslash optional to avoid crashes when the package isn't installed.
 // Use a dynamic import with a non-literal specifier to prevent build-time resolution.
@@ -21,7 +22,7 @@ export default defineConfig({
   prefetch: {
     prefetchAll: true,
   },
-  integrations: [mdx(), sitemap()],
+  integrations: [mdx(), sitemap(), critters()],
 
   markdown: {
     shikiConfig: {
