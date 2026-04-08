@@ -18,7 +18,9 @@ try {
 
 export default defineConfig({
   site: "https://dryga.com/",
-  prefetch: true,
+  prefetch: {
+    prefetchAll: true,
+  },
   integrations: [mdx(), sitemap()],
 
   markdown: {

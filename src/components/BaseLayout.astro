@@ -125,17 +125,10 @@ const personLd = JSON.stringify({
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Preload critical fonts (self-hosted WOFF2). Ensure files exist in /public/fonts -->
+    <!-- Preload critical font only; mono font loads on first use via font-display: swap -->
     <link
       rel="preload"
       href="/fonts/inter-var.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/jetbrains-mono.woff2"
       as="font"
       type="font/woff2"
       crossorigin

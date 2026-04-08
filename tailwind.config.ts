@@ -6,26 +6,14 @@ export default {
   darkMode: ["class"],
   content: ["./src/**/*.{astro,html,js,jsx,ts,tsx,md,mdx}"],
   safelist: [
-    // Gradients, shadows, and prose variants that might be generated dynamically
+    // Used in templates with dynamic class binding
     "bg-gradient-primary",
-    "bg-gradient-card",
     "shadow-glow",
     "shadow-card",
     "prose",
     "prose-invert",
-    // Terminal palette utilities used across components
-    "text-terminal-cyan",
-    "text-terminal-green",
-    "text-terminal-yellow",
-    "border-terminal-cyan",
-    "border-terminal-green",
-    "border-terminal-yellow",
-    // Common animations that may be toggled conditionally
     "animate-fade-in",
-    "animate-terminal-typing",
-    "animate-border-glow-pulse",
-    "animate-terminal-scanline-dot",
-    // Gradient utilities used by dataset-driven blog cards
+    // Gradient utilities used by dataset-driven blog card gradients
     "from-terminal-cyan",
     "to-terminal-green",
     "from-terminal-yellow",

@@ -67,13 +67,28 @@ async function initMixpanel() {
   }
 }
 
-// Defer analytics to avoid blocking rendering and LCP
-const schedule = typeof requestIdleCallback === "function"
-  ? requestIdleCallback
-  : (cb: () => void) => setTimeout(cb, 200);
+// Guard against re-execution on SPA navigations (Astro View Transitions)
+const win = window as unknown as Record<string, boolean>;
+if (!win.__mixpanelInited) {
+  win.__mixpanelInited = true;
+  scheduleInit();
+}
 
-schedule(() => {
-  initMixpanel().catch((error) => {
-    console.error("Mixpanel initialisation error", error);
+// Defer analytics until page is fully loaded and idle
+function scheduleInit() {
+  const idle = typeof requestIdleCallback === "function"
+    ? requestIdleCallback
+    : (cb: () => void) => setTimeout(cb, 500);
+
+  idle(() => {
+    initMixpanel().catch((error) => {
+      console.error("Mixpanel initialisation error", error);
+    });
   });
-});
+}
+
+if (document.readyState === "complete") {
+  scheduleInit();
+} else {
+  window.addEventListener("load", scheduleInit, { once: true });
+}
