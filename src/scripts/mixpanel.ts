@@ -15,7 +15,7 @@ function shouldRespectDNT(): boolean {
   );
 }
 
-async function initMixpanel() {
+function initMixpanel() {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return;
   }
@@ -29,9 +29,18 @@ async function initMixpanel() {
     return;
   }
 
-  try {
-    const mpMod = await import("mixpanel-browser");
-    const mixpanel = mpMod.default;
+  // Load Mixpanel via CDN snippet (async, ~15KB vs 91KB npm bundle)
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";
+  script.onload = () => {
+    const mixpanel = (window as unknown as Record<string, unknown>).mixpanel as {
+      init: (token: string, config: Record<string, unknown>) => void;
+      track: (event: string, props?: Record<string, unknown>) => void;
+    };
+
+    if (!mixpanel) return;
+
     mixpanel.init(token, {
       debug: !!isDev,
       track_pageview: true,
@@ -44,7 +53,7 @@ async function initMixpanel() {
       title: document.title,
     });
 
-    const onClick = (event: MouseEvent) => {
+    window.addEventListener("click", (event: MouseEvent) => {
       const anchor = (
         event.target as Element | null
       )?.closest<HTMLAnchorElement>("a[href]");
@@ -52,43 +61,36 @@ async function initMixpanel() {
       try {
         const sameOrigin = anchor.origin === location.origin;
         mixpanel.track("Link Click", { url: anchor.href, sameOrigin });
-      } catch (error) {
-        if (isDev) {
-          console.warn("Mixpanel link tracking failed", error);
-        }
+      } catch {
+        // silently ignore tracking errors
       }
-    };
+    }, { capture: true });
+  };
 
-    window.addEventListener("click", onClick, { capture: true });
-  } catch (error) {
-    if (isDev) {
-      console.warn("Mixpanel failed to initialise", error);
-    }
+  if (isDev) {
+    script.onerror = () => console.warn("Mixpanel CDN failed to load");
   }
+
+  document.head.appendChild(script);
 }
 
 // Guard against re-execution on SPA navigations (Astro View Transitions)
 const win = window as unknown as Record<string, boolean>;
 if (!win.__mixpanelInited) {
   win.__mixpanelInited = true;
-  scheduleInit();
-}
 
-// Defer analytics until page is fully loaded and idle
-function scheduleInit() {
-  const idle = typeof requestIdleCallback === "function"
-    ? requestIdleCallback
-    : (cb: () => void) => setTimeout(cb, 500);
+  // Defer until page is fully loaded and idle
+  function scheduleInit() {
+    const idle = typeof requestIdleCallback === "function"
+      ? requestIdleCallback
+      : (cb: () => void) => setTimeout(cb, 500);
 
-  idle(() => {
-    initMixpanel().catch((error) => {
-      console.error("Mixpanel initialisation error", error);
-    });
-  });
-}
+    idle(() => initMixpanel());
+  }
 
-if (document.readyState === "complete") {
-  scheduleInit();
-} else {
-  window.addEventListener("load", scheduleInit, { once: true });
+  if (document.readyState === "complete") {
+    scheduleInit();
+  } else {
+    window.addEventListener("load", scheduleInit, { once: true });
+  }
 }
