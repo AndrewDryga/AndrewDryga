@@ -69,6 +69,10 @@ export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
 
+    if (url.pathname === "/sitemap.xml") {
+      return Response.redirect(new URL("/sitemap-index.xml", url.origin).toString(), 301);
+    }
+
     if (url.pathname === "/api/contact") {
       return handleContact(request, env);
     }
