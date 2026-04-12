@@ -22,7 +22,7 @@ Literally, this means that if you have changed some code in your application, th
 
 But to run this command we still have to switch between a code editor and a console. Fortunately, mix test supports `--listen-on-stdin` flag that configures mix to read stdin and restart the tests after receiving a newline. Now we only need a way to watch for the file system events.
 
-Here is simple bash script for that (tested on macOS):
+Here is a simple bash script for that (tested on macOS):
 
 ```bash
 #!/bin/bash
@@ -67,6 +67,8 @@ ARGS="$@"
 
 fswatch $PWD | filter_ignored_paths | mix test --listen-on-stdin ${ARGS}
 ```
+
+It utilizes `fswatch` to read the file system events, it filters out the files ignored by git along with some common directories that we are not interested in. Then it writes a new line to stdout.
 
 If you run into odd dependency resolution (e.g., renames or large refactors), reset state with a full run: `mix test`.
 
