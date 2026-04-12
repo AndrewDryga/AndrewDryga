@@ -19,16 +19,16 @@ draft: false
 ---
 import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
-Right now we are building [a large project in a healthcare field](/blog/national-health-service) for our government. There are lots of interesting tasks and I want to share our ideas on one of them - making sure that it's cryptographically not possible to alter records in a database even if you own full access to the system.
+Right now we are building [a large project in the healthcare field](/blog/national-health-service) for our government. There are lots of interesting tasks and I want to share our ideas on one of them - making sure that it's cryptographically not possible to alter records in a database even if you own full access to the system.
 
-Why this matters? First of all, we want to make sure that it would not be possible to remove evidence of a medical treatment that led to a patient injury, whenever there is an investigation on such case. Second is that our government is going to reimburse all services that are recorded in this database and we don't want to leave a way to abuse this system and receive money which was not fairly earned.
+Why does this matter? First of all, we want to make sure that it would not be possible to remove evidence of a medical treatment that led to a patient injury whenever there is an investigation on such a case. Second is that our government is going to reimburse all services that are recorded in this database and we don't want to leave a way to abuse this system and receive money which was not fairly earned.
 
-Nowadays, when you want to solve "trust" problem, there is an existing wide-spread buzzword as a solution - blockchain. Full integration of the blockchain principles would require us to decentralize our database and come up with some proof algorithm to solve consensus problem (common ones are proof of work and proof of stake, and there are much more theoretical ones, e.g. proof of elapsed time) that is the best for our use-case.
+Nowadays, when you want to solve the "trust" problem, there is an existing wide-spread buzzword as a solution - blockchain. Full integration of the blockchain principles would require us to decentralize our database and come up with some proof algorithm to solve the consensus problem (common ones are proof of work and proof of stake, and there are many more theoretical ones, e.g. proof of elapsed time) that is the best for our use-case.
 
 But when working for the government there are some limitations that won't allow you to go this path:
 
 - This database stores extremely sensitive data (e.g. patients and prescriptions, country-wide), which, by both ethical and legislation reasons, cannot be shared with third-parties;
-- You can distribute encrypted data, but in the long-term, any kinds of encryption can be broken, bugs are found pretty often and quantum computing is knocking on the doors. We could lose lots of sensitive data and people won't be happy with that;
+- You can distribute encrypted data, but in the long-term, any kind of encryption can be broken, bugs are found pretty often and quantum computing is knocking on the doors. We could lose lots of sensitive data and people won't be happy with that;
 - All proven proof algorithms would require us to burn additional CPU time, skyrocketing the limited cost of infrastructure for this project.
 
 ## How can we get blockchain properties with an off-the-shelf database?
@@ -50,9 +50,9 @@ previous_block_hash      | string                      | not null
 physician_signature      | binary                      | not null
 ```
 
-`physician_signature` is a cryptographic signature for all columns in a row (this row is an actual document) which were added on behalf of physician.
+`physician_signature` is a cryptographic signature for all columns in a row (this row is an actual document) which were added on behalf of the physician.
 
-`previous_block_hash` is a Merkle tree root for a previous block or a genesis hash if we just started the system. Blocks can be created on any specific timeout with a tradeoff - you can alter all data within the last block so we don't want it to be too big and we would not accept any new records when new block is creating so we can't generate new blocks too often.
+`previous_block_hash` is a Merkle tree root for the previous block or a genesis hash if we just started the system. Blocks can be created on any specific timeout with a tradeoff - you can alter all data within the last block so we don't want it to be too big, and we would not accept any new records when a new block is created so we can't generate new blocks too often.
 
 <AsciiDiagram label="Architecture diagram showing API consumers, gateway, integration layer, and downstream services">{`
 ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────┐
@@ -72,11 +72,11 @@ physician_signature      | binary                      | not null
                                                          New transactions`}
 </AsciiDiagram>
 
-Let's go through few cases to make sure this would actually work.
+Let's go through a few cases to make sure this would actually work.
 
 ### Changes to the transactions that are not grouped in a block yet
 
-They are not possible to change unless you acquire physician private key. However, you can delete the record and it would be not easy to notice that it ever existed.
+It is not possible to change them unless you acquire the physician's private key. However, you can delete the record and it would not be easy to notice that it ever existed.
 
 This is similar to transactions in Bitcoin, they are not guaranteed to be mined and some merchants even wait for a few additional blocks on a chain, to start counting your payment as succeeded.
 
@@ -84,9 +84,9 @@ We are okay with that, this issue can be mitigated by very common security appro
 
 ### Changes to the transactions that are in the latest block
 
-Since all new-coming transactions include previous Block ID in a signed content, it is not possible to make any changes without corrupting the hash chain.
+Since all new-coming transactions include the previous Block ID in the signed content, it is not possible to make any changes without corrupting the hash chain.
 
-If you really want to do that, you need to either delete the fact of block existence and all records that were inserted after its creation or to acquire a private key of each single physician that submitted any data to the database to update previous block hash column for those records too. (Or to hack all certification centers that issued those keys.)
+If you really want to do that, you need to either delete the fact of the block's existence and all records that were inserted after its creation or acquire a private key of each physician that submitted any data to the database to update the previous block hash column for those records too. (Or to hack all certification centers that issued those keys.)
 
 ### When time starts to play on our side
 
@@ -96,24 +96,24 @@ Even more, we could publicly share the list of known blocks on a website or in a
 
 ## What are the implementation options?
 
-There are three that were able to come out from my mind:
+There are three that came to my mind:
 
-1. Pick a database that already gives that properties (anyone?);
+1. Pick a database that already gives those properties (anyone?);
 2. Native DB extension that enforces constraints when data is inserted and on demand;
-3. Database adapter for [Ecto](https://github.com/elixir-ecto/ecto) which encapsulates additional logic (may be good option if we going to use some rare database with built-in encryption, which we can't afford to modify);
+3. Database adapter for [Ecto](https://github.com/elixir-ecto/ecto) which encapsulates additional logic (may be a good option if we are going to use some rare database with built-in encryption, which we can't afford to modify);
 4. Custom Elixir application that fetches data from a database and enforces all this logic.
 
 Unless this approach exists in some database, the second one looks to be the most efficient since there would be no need to query for too much data each time we are doing inserts.
 
 ## Which database to pick if you want to implement this logic?
 
-At my opinion, databases that are inspired by [Amazon Dynamo white paper](http://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf) (Cassandra, Riak and much more), would be the best fit for our needs. When data is not tightly coupled, simple K/V lookups in combination with map/reduce for block generation and reports is more than enough. Those scale pretty well.
+In my opinion, databases that are inspired by [Amazon Dynamo white paper](http://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf) (Cassandra, Riak and much more) would be the best fit for our needs. When data is not tightly coupled, simple K/V lookups in combination with map/reduce for block generation and reports are more than enough. Those scale pretty well.
 
 ![Visual representation of a DHT ring, from official Riak documentation](/blog/blockchain-properties/dht-ring.png)
 
 Also, there are few solutions on top of PostgreSQL that are also making sharding easy (CitusDB and PostgreXL). However, I do not have an in-depth understanding of their internal concepts. Probably, they have built a new layer for query planning which aggregates results after querying all the shards.
 
-But for a while we would fit a single PostgreSQL instance and while we don't deal with a scale, we use HA PostgreSQL deployment as battle-tested tool we have experience dealing with.
+But for now we would fit on a single PostgreSQL instance and while we don't deal with scale, we use an HA PostgreSQL deployment as a battle-tested tool we have experience dealing with.
 
 ## Consistency model for read operations availability in NoSQL databases
 
@@ -123,13 +123,13 @@ CAP theorem states that there are no systems which can be both consistent (CP) a
 
 ![The CAP theorem](/blog/blockchain-properties/cap-theorem.png)
 
-Some people may say that there are CA systems, they are wrong. Partitions will happen in real life, you can't do anything with that.
+Some people may say that there are CA systems, but they are wrong. Partitions will happen in real life, you can't do anything with that.
 
 Databases on top of DHT rings tend to allow customizing N/W/R values for different types of queries. Where N is the data replication factor (on how many nodes we are storing a copy for a single document); W is a number of nodes that need to confirm write for an overall transaction to be completed; R is a number of nodes we are reading from.
 
-With their enforced at the table level, we can achieve the best consistency/availability tradeoff - to be strongly consistent for our system needs and highly available for API consumers.
+With these enforced at the table level, we can achieve the best consistency/availability tradeoff - to be strongly consistent for our system needs and highly available for API consumers.
 
-This can be done by writing transactions with eventual consistency; writing previous block hash with strong consistency (W=ALL, reading with R=ALL would hurt availability for new transactions); building block with strong read consistency (map/reduce with R=ALL properties).
+This can be done by writing transactions with eventual consistency; writing previous block hashes with strong consistency (W=ALL, reading with R=ALL would hurt availability for new transactions); building blocks with strong read consistency (map/reduce with R=ALL properties).
 
 ## Open questions
 

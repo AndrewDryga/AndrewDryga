@@ -32,11 +32,11 @@ import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
 import AsciiStackedBar from "@/components/ascii/StackedBar.astro";
 
-With this post, I want to share with you the design process on one of our latest projects - a P2P marketplace that was intended to be used by one of largest online lenders and all kinds of investors for securitization of their portfolios. _And almost insane stack change that turned out to be a great idea._
+With this post, I want to share with you the design process on one of our latest projects - a P2P marketplace that was intended to be used by one of the largest online lenders and all kinds of investors for securitization of their portfolios. _And almost insane stack change that turned out to be a great idea._
 
-Why? To attract new engineers and backers to Elixir community. I do not consider myself an enterprise guy, but I know that first question they tend to ask is “What is already done in Elixir?” and it’s really hard to find good examples on the Internet.
+Why? To attract new engineers and backers to the Elixir community. I do not consider myself an enterprise guy, but I know that first question they tend to ask is “What is already done in Elixir?” and it’s really hard to find good examples on the Internet.
 
-> Disclaimer: I will try to make sure that content in this post is close to original implementation from a technical point of view, but there are some business related details that I can not disclose.
+> Disclaimer: I will try to make sure that content in this post is close to original implementation from a technical point of view, but there are some business-related details that I can not disclose.
 
 ## Understanding business needs
 
@@ -44,30 +44,30 @@ Imagine that you have an online lending company. It means that on a daily basis 
 
 But at some point in time, you won’t be able to grow further, because, until repaid, each loan will drain your money and there will be none to issue new loans.
 
-Now you might start looking for investors who are willing to buy batches of your loans (portfolios) and, probably, share risks with you. You will receive less interest per each single loan, but you will be able to compensate that by future growth and reduced risks.
+Now you might start looking for investors who are willing to buy batches of your loans (portfolios) and, probably, share risks with you. You will receive less interest per single loan, but you will be able to compensate that by future growth and reduced risks.
 
 Investors might want to tell you what kind of portfolios they want to buy, based on their own “technical analysis”, “best practice” or a “gut feel”. For example, I want my portfolio to consist of 75% of loans with good scoring grade, but only issued in Spain for people in 28–35 age group with high income (low risk/low profit); and by 25% of loans issued to people with low scoring grade without other preferences (high risk/high profit).
 
-What is the best place where both parties can meet? On a marketplace! Originators can send information about their loans; investors can set their expectations; marketplace can enrich originators data with it’s own scoring, handle their matching and further lifecycle, protecting an interest of both parties for a small fee.
+What is the best place where both parties can meet? On a marketplace! Originators can send information about their loans; investors can set their expectations; marketplace can enrich originators data with its own scoring, handle their matching and further lifecycle, protecting an interest of both parties for a small fee.
 
 ## Additional requirements and context
 - From day one we should be ready to process hundreds of thousands of loans per day and updates for them. This is not a startup, big partner is already waiting to integrate;
-- Maintaining of project should be hand-offed after active development ends, so we could keep creating other projects;
+- Maintaining of the project should be handed off after active development ends, so we could keep creating other projects;
 - Configuration should be flexible enough so that business guys can experiment with products without additional coding;
 - Resource limits: 6 months, ~10 developers, few analysts and a few business guys;
 - We should make integration as simple as possible for originators and other parties. Changes are way more expensive to them, than our development cost;
-- We are in fintech field. No data can be lost. Everything should be traceable. Even problems with a floating number calculations can be a time-bomb for this kind of projects. Many legal regulations are applied;
+- We are in the fintech field. No data can be lost. Everything should be traceable. Even problems with floating-point number calculations can be a time-bomb for this kind of projects. Many legal regulations are applied;
 - Future plans: loans are one of many kinds of assets that can be traded, this extensibility should be kept in mind. (In this article loan and asset have equal meanings.)
 
 ## Insane stack change
 
 Prior to the marketplace development our team was completely in PHP, MongoDB, Puppet and Angular.js stack, but we decided to take all risks and instantly migrate to a completely new one - Elixir, PostgreSQL, RabbitMQ, Docker, Kubernetes and React.js+Redux.js, which turned out to be a great decision both for skills of all our team members and for many additional benefits that this stack brings by itself:
-- Code that much cleaner and easier to write and maintain;
+- Code that is much cleaner and easier to write and maintain;
 - Fault tolerance;
 - Concurrent processing;
 - Stream data processing;
 - Single released binary that is used across all environments;
-- No more dealing with server setup and it's differences between environments;
+- No more dealing with server setup and its differences between environments;
 - Well-structured front-end applications with server-side rendering;
 - Our analysis team used to produce specification in BPMN notation which perfectly matches on code thanks to pattern matching and lightweight processes.
 
@@ -80,20 +80,20 @@ Prior to the marketplace development our team was completely in PHP, MongoDB, Pu
 > I’ve read all the docs on the official site, watched a few videos on YouTube and started to write code. For the first few days, I felt like “this stuff is bad, why do I even consider it?”. Later - “ok, this stuff is great, but I’m not smart enough to use it”. In a week functional programming broke my mind and I was in love with Elixir.
 > 
 > 
-> Ecto 2.0 did not have an adapter for MongoDB, so I’ve installed PostgreSQL and decided to keep using it. This decision was also affected by [Aphyr’s blog post on how MongoDB can loose your data](https://aphyr.com/posts/322-jepsen-mongodb-stale-reads) and support of [JSONB indexes in PostgreSQL](https://www.postgresql.org/docs/9.4/static/datatype-json.html).
+> Ecto 2.0 did not have an adapter for MongoDB, so I’ve installed PostgreSQL and decided to keep using it. This decision was also affected by [Aphyr’s blog post on how MongoDB can lose your data](https://aphyr.com/posts/322-jepsen-mongodb-stale-reads) and support of [JSONB indexes in PostgreSQL](https://www.postgresql.org/docs/9.4/static/datatype-json.html).
 > 
 > 
 > Writing code became easy and I felt productive as never before, until I’ve tried to release my microservice. Compilation turned out to be platform-dependent. I’ve used to spin off a VM for this single purpose. Another option was to release a Docker container, which had friendlier delivering and development lifecycle. Also, I was able to write acceptance tests for containers to make sure that code would work in all environment after compiling it into OTP release - feature that I felt missing in my past “PHP” life.
 > 
 > 
-> Release configuration was another difficulty in dealing with. To use one container in all environment [it must be configurable at runtime](https://12factor.net/config), but Elixir itself does not allow you do to that (at least there is no easy way). You could set REPLACE_OS_VARS environment variable in a container and start using bash-style variables in configs, but what if you need some value to be an integer? [Confex](https://github.com/Nebo15/confex) was born to solve that problem. UPD: I’ve wrote [an article on this topic](/blog/runtime-configuration-migrations).
+> Release configuration was another difficulty in dealing with. To use one container in all environment [it must be configurable at runtime](https://12factor.net/config), but Elixir itself does not allow you to do that (at least there is no easy way). You could set REPLACE_OS_VARS environment variable in a container and start using bash-style variables in configs, but what if you need some value to be an integer? [Confex](https://github.com/Nebo15/confex) was born to solve that problem. UPD: I’ve wrote [an article on this topic](/blog/runtime-configuration-migrations).
 > 
 > 
 > Because I did not want to deal with server setups anymore, Kubernetes was picked to run these containers. Deploying and maintaining an application in it is a separate love story.
 
 ## Breaking up the requirements
 
-By analyzing all requirements marketplace can be broken into a separate components (domains?) by their purpose:
+By analyzing all requirements the marketplace can be broken into separate components (domains?) by their purpose:
 - **Asset Processor**, which was responsible for communication with originators, processing data from them and creating Sell Offers;
 - **Trader** that acts like a trading bot, which, by criteria that are set by investors, places Buy Offers;
 - **Matcher** that matches Sell Offers with Buy Offers and creates data to make an Investment;
@@ -126,40 +126,40 @@ Key responsibilities:
 - Persist and enrich the data;
 - Generate Sell Offers.
 
-To reduce integration cost for originators we don’t want them neither to remember the last state of the data that was sent to us nor to produce incremental updates. Instead, they can send the only subset that was changed after end-of-day (by last updated date) and we will find changes by ourselves. This means that we need to persist everything on our side.
+To reduce integration cost for originators we don’t want them to remember the last state of the data that was sent to us or to produce incremental updates. Instead, they can send the only subset that was changed after end-of-day (by last updated date) and we will find changes by ourselves. This means that we need to persist everything on our side.
 
-Because that data is not tightly coupled, scaling database is not an issue - we can shard by a customer (originator) ID and asset (loan) ID.
+Because this data is not tightly coupled, scaling the database is not an issue - we can shard by a customer (originator) ID and asset (loan) ID.
 
 ### Communication
 
-First of all, we should come up with an idea how to receive and process large datasets from originators. Simple REST JSON API won’t be the best fit, because:
-- Establishing connection for each single asset is an expensive operation. We can handle that, but for originators producing this load may be expensive because of all legacies in their systems. So we should receive data in batches;
+First of all, we should come up with an idea of how to receive and process large datasets from originators. Simple REST JSON API won’t be the best fit, because:
+- Establishing a connection for each single asset is an expensive operation. We can handle that, but for originators, producing this load may be expensive because of all legacies in their systems. So we should receive data in batches;
 - On an originator side most of the changes are not real-time, rather they are happening during their end-of-day procedure. These batches can be very large;
-- Intraday updates must be also supported, for example when originator want to call back the repaid loan before it is sold to an investor. We never know when their end-of-day actually happens;
-- JSON can not be parsed without loading whole document into memory.
+- Intraday updates must be also supported, for example when an originator wants to call back the repaid loan before it is sold to an investor. We never know when their end-of-day actually happens;
+- JSON can not be parsed without loading the whole document into memory.
 
-JSON was replaced with BSON. It allows to lazy-read documents one by one and easy to implement in Elixir. And there are plenty of libraries for most of other languages that can be a drop-in replacement for JSON encoders, which makes integration less painful.
+JSON was replaced with BSON. It allows us to lazy-read documents one by one and is easy to implement in Elixir. And there are plenty of libraries for most other languages that can be a drop-in replacement for JSON encoders, which makes integration less painful.
 
 We ended up providing a single endpoint for multipart file upload in a BSON format. Originator keeps track of what data was changed since the last upload, writes that data into BSON file and sends it to us.
 
-For backward communication we agreed to do a similar thing - create a simple microservice that reads messages from a queue and persist it to a file on a disk. After some timeout this file is sent to an originator, deleted and the process starts over again.
+For backward communication we agreed to do a similar thing - create a simple microservice that reads messages from a queue and persists them to a file on a disk. After some timeout this file is sent to an originator, deleted and the process starts over again.
 
 ### Persistence and processing
 
 After receiving upload we need to backup this batch to Amazon S3 and start processing a local copy of the data. (This backup can be used in event sourcing later).
 
 What needs to be done:
-- Find a difference for each asset and decide what to do (delete Sell Offer; create or update Sell Offer; notify Asset Management system about repayment).
+- Find a difference for each asset and decide what to do (delete Sell Offer; create or update Sell Offer; notify the Asset Management system about repayment).
 - Persist changes in the database;
 - Enrich the data - we need to predict cash flow and split all loans into a different risk groups based this prediction and other data from the originator.
 
-Our first implementation was recursively reading file contents, but database connection pool quickly started to drain. The best way to deal with this kind of problems is to [apply back-pressure while processing the data](http://ferd.ca/queues-don-t-fix-overload.html). Here comes [GenStage](https://github.com/elixir-lang/gen_stage) ([keynote](https://www.slideshare.net/Elixir-Meetup/genstage-and-flow-jose-valim)).
+Our first implementation was recursively reading file contents, but the database connection pool quickly started to drain. The best way to deal with this kind of problems is to [apply back-pressure while processing the data](http://ferd.ca/queues-don-t-fix-overload.html). Here comes [GenStage](https://github.com/elixir-lang/gen_stage) ([keynote](https://www.slideshare.net/Elixir-Meetup/genstage-and-flow-jose-valim)).
 
 ![A slide from the Jose Valim keynote on a GenStage](/blog/p2p-lending-platform/genstage-keynote.webp)
 
 It both reduced memory usage (from up to few Gb for a large dataset to almost constant 56 Mb) and stopped overloading connection pool. Eventually, we completely rewrote all parts of Asset Processor to use GenStages and used it few times in other places.
 
-Asset Processor could be split by few subparts:
+Asset Processor could be split by a few subparts:
 - **Integration Layer** - core component that receives this batches and decides how to process the data, routes it to appropriate queues. You can think about it as business process owner;
 - **Assessor** - predicts cash flow and classifies assets by risk groups;
 - **Merger** - [efficiently](https://www.depesz.com/2007/07/05/how-to-insert-data-to-database-as-fast-as-possible/) persists enriched data back to the database.
@@ -172,7 +172,7 @@ This is how data pipeline may look for new assets:
 5. **IL/Consumer**: Publish a message to the Assessor.In RabbitMQ queue;
 6. **Assessor/Consumer**: Read messages from Assessor.In queue;
 7. **Assessor/Producer-Consumer**: Send REST API call to a cash-flow prediction service (our other project) and enrich data with response;
-8. **Assessor/Producer-Consumer**: Send REST API call classificator (same) and enrich the data once more;
+8. **Assessor/Producer-Consumer**: Send REST API call to the classifier (same) and enrich the data once more;
 9. **Assessor/Producer**: Publish the message to Assessor.Out RabbitMQ queue and acknowledge it's processing in Assessor.In;
 10. **IL/Consumer-Producer:** Shovel messages from this Assessor.In to Merger.In queue (simply to keep control over the overall business process in the IL);
 11. **Merger:** Read a message from Merger.In queue, write data to the database and publish a message to Merger.Out queue;
@@ -182,9 +182,9 @@ This is how data pipeline may look for new assets:
 
 ### Handling external end-of-days
 
-For originators that are not able to be “always online” and perform a downtime on end-of-day, we may face an issue when EOD terminates an asset that we are selling at a same time.
+For originators that are not able to be “always online” and perform a downtime on end-of-day, we may face an issue when EOD terminates an asset that we are selling at the same time.
 
-To solve it we added an additional call that literally says “we are going to sell this, are you okay with that?” before creating an actual financial transactions. Callback url can be optionally sent by originator along with a data. This is inspired by two-phase commits in a distributed system.
+To solve it we added an additional call that literally says “we are going to sell this, are you okay with that?” before creating actual financial transactions. A callback URL can be optionally sent by originator along with the data. This is inspired by two-phase commits in a distributed system.
 
 Either we receive an error response or a timeout, we return all affected offers to the marketplace.
 
@@ -196,7 +196,7 @@ Thanks to this we can guarantee that asset from a single batch will be processed
 
 Also, we can safely restart batch processing with or without dropping data from the database, which may save you lots of brain cells in production.
 
-> There are good white paper on immutable data: [Immutability changes everything](http://cidrdb.org/cidr2015/Papers/CIDR15_Paper16.pdf). I am extremely happy when we have a project with immutable persistent store, it provides traceability in development and production; improves overall security; makes maintenance easier.
+> There are good white papers on immutable data: [Immutability changes everything](http://cidrdb.org/cidr2015/Papers/CIDR15_Paper16.pdf). I am extremely happy when we have a project with immutable persistent store, it provides traceability in development and production; improves overall security; makes maintenance easier.
 > 
 > 
 > Of course, you have a problem of fast growing database, but you can deal with it by moving old versions to the cold storage or by simply saving database snapshots and dropping everything that is not related to the business processes.
@@ -209,11 +209,11 @@ Key responsibilities:
 - Place Buy Offers by this criteria;
 - Do not violate portfolio structure.
 
-The Trader was one of simplest parts in our marketplace, along with Phoenix for API it also has a “Gap Analyzer” microservice that takes the current state of a portfolio and produces new Buy Offers.
+The Trader was one of the simplest parts in our marketplace, along with Phoenix for API it also has a “Gap Analyzer” microservice that takes the current state of a portfolio and produces new Buy Offers.
 
 ### Gap Analyzer
 
-When investor creates a portfolio with different kinds of assets (let’s call them “buckets”) we need to make sure that balance between them is not violated. Otherwise, by current market conditions, we might fill all demand for bucket with a high risk and never balance them with low-risk assets, thus portfolio itself will not match customers expectations and may lead to money loss.
+When an investor creates a portfolio with different kinds of assets (let’s call them “buckets”) we need to make sure that balance between them is not violated. Otherwise, by current market conditions, we might fill all demand for bucket with a high risk and never balance them with low-risk assets, thus portfolio itself will not match customers' expectations and may lead to money loss.
 
 To balance it we decided to create initial Buy Offers (one for each bucket) by a small amount of bucket volume (10%):
 
@@ -264,7 +264,7 @@ After Buy Offer is matched and portfolio balance is updated, eg. by filling the 
   ]} width={40} unit="k$" />
 </div>
 
-This cycle is repeated until all volume is utilized. If some bucket can not be filled we will wait, but never violate the structure by more than few percents of overall volume.
+This cycle is repeated until all volume is utilized. If some bucket can not be filled we will wait, but never violate the structure by more than a few percent of overall volume.
 
 ## Matcher
 
@@ -279,28 +279,28 @@ In most cases, an investor does not want to buy a whole asset. Usually, he wants
 
 It is important to notice that there are assets that can not be sold partially, for them investment is created when investors are bidden all Sell Offer volume. So, additionally, we want to match most filled assets first. Otherwise, investor money may hold for an asset that will be never bought by other investors.
 
-Each time Sell Offer comes we take its description and match versus all Buy Offers. On each match, we calculate sell and buy price (delta is our fee) and place a bid in a Sell Offer. When it's volume is filled by 100% or partial sale is allowed - a message to Investments queue is published with Sell Offer and information about all the bids.
+Each time a Sell Offer comes we take its description and match versus all Buy Offers. On each match, we calculate sell and buy price (delta is our fee) and place a bid in a Sell Offer. When its volume is filled by 100% or partial sale is allowed - a message to Investments queue is published with Sell Offer and information about all the bids.
 
-When Buy Offer comes everything works pretty much the same way - we are looking for all Sell Offers those match criteria and decrease Buy Offer volume by an amount of bids we placed. If all volume is bidden, Buy Offer becomes inactive and can not be matched anymore. Otherwise - we will keep it active to match against upcoming Sell Offers.
+When a Buy Offer comes everything works pretty much the same way - we are looking for all Sell Offers that match criteria and decrease Buy Offer volume by an amount of bids we placed. If all volume is bid, the Buy Offer becomes inactive and can not be matched anymore. Otherwise - we will keep it active to match against upcoming Sell Offers.
 
-When an offer update comes we need to rollback all the changes made for its previous version and run matching again. (This can be optimized later.)
+When an offer update comes we need to roll back all the changes made for its previous version and run matching again. (This can be optimized later.)
 
 ### Meet Mnesia
 
-Erlang and Elixir have a Mnesia database, which lives in same memory space and provides very low latency lookups.
+Erlang and Elixir have a Mnesia database, which lives in the same memory space and provides very low latency lookups.
 
 Since we were limited in time, we decided to start development with a PostgreSQL and to [write an Ecto adapter](https://github.com/nebo15/ecto_mnesia/) that can be a drop-in replacement when it’s ready.
 
 ## Asset Management System
 
 Key responsibilities:
-- Account investors money, investments;
+- Account for investors money, investments;
 - Comply with all regulations;
 - Notify Trader about balance changes.
 
 Instead of writing AMS by our own, we decided to buy a SaaS service that does what we need and created a wrapper around its API.
 
-Because marketplace works by running a frequent trading cycles and it becomes too expensive to run matching for each single asset purchase, so we delay balance change events by 30 seconds via simple GenServer, thus only accumulated data is sent to Trader.
+Because marketplace works by running frequent trading cycles and it becomes too expensive to run matching for each single asset purchase, we delay balance change events by 30 seconds via simple GenServer, thus only accumulated data is sent to Trader.
 
 
 <AsciiDiagram label="Architecture diagram showing marketplace components and their interactions">{`
@@ -332,7 +332,7 @@ When you develop a large project with microservice architecture, you might start
 {`                                [ Token-based Authentication /
                                     ACL by path + consumer scopes / 
                                     JSONSchema validation / 
-                                    Reqiest+response logging ]
+                                    Request+response logging ]
                                               │
                                               ▼
 ┌───────────┐ Access token and data  ┌───────────────┐ Client info and data
@@ -351,31 +351,31 @@ It’s documentation is pretty self-explanatory, so if you interested how it wor
 
 ### Don’t get too crazy with microservices
 
-Our first Asset Processor implementation consisted of ~10 microservices, which added too much traction. (For that small team!) Every change in the data model, CI scripts or other shared parts required us to re-apply this change over and over again.
+Our first Asset Processor implementation consisted of ~10 microservices, which added too much friction. (For that small team!) Every change in the data model, CI scripts or other shared parts required us to re-apply this change over and over again.
 
 To make it simpler, we moved out our Ecto-related code to a separate GitHub repo and included it as a dependency elsewhere. But business logic was spread out across all repos, so you still need to update it, and tests. Or, at least, rebuild all containers on each change in this dependency.
 
 After rewrite, we squashed everything to only 3 of them. (Most of them were replaced with a GenStage/Flow producer-consumers.)
 
-And hey, it’s Elixir! In most cases, you don’t need them at all! Take look at OTP applications! Rule of thumb:
+And hey, it’s Elixir! In most cases, you don’t need them at all! Take a look at OTP applications! Rule of thumb:
 
 > If you want to deploy something separately - it is a separate microservice, otherwise - keep it in a separate contexts/OTP applications in an umbrella project.
 
-Microservices is just a way to move out complexity to communication layer of your organization.
+Microservices are just a way to move out complexity to the communication layer of your organization.
 
 ### Avoid defensive programming and architecture
 
 This is another lesson learned by the development of Asset Processor.
 
-I was too defensive and expected RabbitMQ issues due to the volume of data that is passing though it. In some cases, heartbeat packet between replicas may be delayed because of a large amount of other data that is passed trough TCP protocol between nodes. RabbitMQ can experience “split brains” without network actually going down. And felt like some data may be lost.
+I was too defensive and expected RabbitMQ issues due to the volume of data that is passing through it. In some cases, heartbeat packet between replicas may be delayed because of a large amount of other data that is passed through TCP protocol between nodes. RabbitMQ can experience “split brains” without network actually going down. And it felt like some data may be lost.
 
 To deal with it, we built pretty complex persistence system. For each incoming batch, we created a new database (on a separate virtual host) that was used as temporary storage. Each change was persisted back to this database and RabbitMQ was used only to send jobs (temporary database ID and asset ID) between microservices. After processing is completed this database can be erased.
 
-This gave us few additional features:
+This gave us a few additional features:
 - we can know processing status for a whole batch (which is _hard_ when everything is asynchronous and you don’t know how much data you actually received);
 - we could drop the staging database and retry processing when sh*t happens.
 
-But overall, all this complexity was not worth the gains that we received, so we started to send all data trough RabbitMQ persistent queues and I don’t remember any actual issues that we faced with this approach.
+But overall, all this complexity was not worth the gains that we received, so we started to send all data through RabbitMQ persistent queues and I don’t remember any actual issues that we faced with this approach.
 
 ### **When workers supervisor fails it may take all children processes with it**
 
@@ -383,18 +383,18 @@ This part looks obvious, but we managed to screw with it.
 
 After receiving the message we started a new supervised GenServer process that was responsible for applying business logic. This process was holding acknowledgment tag along with the data. And when, by any reason, supervisor terminated its child’s - tags were irreversibly lost.
 
-Due that fact that we limited concurrency via prefetch count (maximum number of unacknowledged queue jobs per worker node), without tags RabbitMQ did not send any additional data waiting for old jobs to be completed. Sometimes, we ended up with a zombie nodes that took jobs that would never be processed until node restarts (RabbitMQ will reschedule delivery of all unacknowledged messages to another worker if the connection is lost).
+Due to the fact that we limited concurrency via prefetch count (maximum number of unacknowledged queue jobs per worker node), without the tags RabbitMQ did not send any additional data waiting for old jobs to be completed. Sometimes, we ended up with zombie nodes that took jobs that would never be processed until node restarts (RabbitMQ will reschedule delivery of all unacknowledged messages to another worker if the connection is lost).
 
-You can take look at [GenTask](https://github.com/Nebo15/gen_task) that addresses exactly this problem.
+You can take a look at [GenTask](https://github.com/Nebo15/gen_task) that addresses exactly this problem.
 
 ## Contribute
 
 Our community is not that big and you should not expect that there is a package for everything. Instead, Elixir gives you efficiency to create one in a matter of days.
 
-If you trying to do commercial projects on Elixir, plan some time for this kind of work. And, please, try to spend some additional time to contribute most valuable parts back to the community.
+If you are trying to do commercial projects on Elixir, plan some time for this kind of work. And, please, try to spend some additional time to contribute most valuable parts back to the community.
 
 ## Thanks
 
 I want to thank Alex for telling me about Elixir, my team for supporting me during this project and everybody who helped me by reviewing the article.
 
-And a special thank to Jose Valim, who was blazingly fast responding in GitHub issues and extremely supportive in all possible ways.
+And a special thanks to Jose Valim, who was blazingly fast responding in GitHub issues and extremely supportive in all possible ways.

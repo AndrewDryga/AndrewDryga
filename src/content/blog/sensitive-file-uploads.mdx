@@ -32,9 +32,9 @@ While working on a new project we faced a task where end-user needs to upload a 
 
 ## Picking the data store
 
-Since we are running our projects on Google Container Engine, we decided to keep using benefits of cloud services and store files in a Google Cloud Storage. There is no real vendor lock addition because of it, there are plenty of similar solutions that can replace existing implementation by only rewriting the API connector: Amazon S3, OpenStack Swift and even [some containerized open source solutions](https://github.com/minio/minio) with compatible API's.
+Since we are running our projects on Google Container Engine, we decided to keep using benefits of cloud services and store files in Google Cloud Storage. There is no real vendor lock addition because of it, there are plenty of similar solutions that can replace existing implementation by only rewriting the API connector: Amazon S3, OpenStack Swift and even [some containerized open source solutions](https://github.com/minio/minio) with compatible APIs.
 
-When you deploy to a Kubernetes you have an additional benefit by using cloud storages - you don't need to deal with persistent volumes and backups for the data.
+When you deploy to Kubernetes you have an additional benefit by using cloud storages - you don't need to deal with persistent volumes and backups for the data.
 
 And a security benefit is that cloud storage guarantees that there is no way to perform Unrestricted File Upload to Remote Code Execution attacks, which [PayPal faced recently](http://blog.pentestbegins.com/2017/07/21/hacking-into-paypal-server-remote-code-execution-2017/).
 
@@ -58,20 +58,20 @@ Most projects I've seen take a simple approach where API consumers upload files 
   <Note text="The common approach" />
 </SequenceDiagram>
 
-The main advantage of it is that is simple to understand and provides ability synchronously post process the data - crop the image, validate its mime-type, contents, etc and respond immediately to a client.
+The main advantage of it is that it is simple to understand and provides ability synchronously post process the data - crop the image, validate its mime-type, contents, etc and respond immediately to a client.
 
-But what's the disadvantages:
+But what are the disadvantages:
 
-- Sensitive data is temporarily stored in the application, which extends security perimeters. It can be intercepted, accidentally persisted along with a VM snapshot, you can simply forget to remove temporary copies. This problem is magnified in microservice architectures, where those requests hits multiple application services;
+- Sensitive data is temporarily stored in the application, which extends security perimeters. It can be intercepted, accidentally persisted along with a VM snapshot, you can simply forget to remove temporary copies. This problem is magnified in microservice architectures, where those requests hit multiple application services;
 - You can run out of disk space while processing large uploads;
-- [Increased RAM usage](https://github.com/stavro/arc/issues/105), some API clients is not able to perform chunk uploads;
+- [Increased RAM usage](https://github.com/stavro/arc/issues/105), some API clients are not able to perform chunk uploads;
 - Credentials for cloud storage are long-living. More credential lives, less secure it is because the probability of leaking it grows over time. In monolith, any parts of the code can use them. Any microservice that works with these files needs a copy or a separate service account.
 
 Can we do better?
 
 ## Signed URL's
 
-Most of the cloud storage providers ([1](https://cloud.google.com/storage/docs/access-control/create-signed-urls-program), [2](http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html), [3](https://docs.openstack.org/icehouse/config-reference/content/object-storage-tempurl.html)) allow signing a URL that can be used as temporary access token to send a file directly to the cloud storage. This URL can grant only a fraction of what application IAM role allows, limiting to only single file upload within limited time frame.
+Most of the cloud storage providers ([1](https://cloud.google.com/storage/docs/access-control/create-signed-urls-program), [2](http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html), [3](https://docs.openstack.org/icehouse/config-reference/content/object-storage-tempurl.html)) allow signing a URL that can be used as temporary access token to send a file directly to the cloud storage. This URL can grant only a fraction of what application IAM role allows, limiting to only a single file upload within a limited time frame.
 
 IAM role itself can allow only write access, thus even by holding a service account private key, it is not possible to read data from the storage.
 
@@ -91,7 +91,7 @@ IAM role itself can allow only write access, thus even by holding a service acco
   <Note text="Upload with a Signed URL" />
 </SequenceDiagram>
 
-There are plenty of options how to run a post processing for uploads:
+There are plenty of options for how to run post-processing for uploads:
 
 - Spin up a worker GenServer with a delayed message and timeout greater than signed URL TTL;
 - Depending on your storage provider you might also be able to define a callback (eg. with AWS lambda or Google Cloud pub/sub) that triggers file processing pipeline in your back-end;
@@ -117,9 +117,9 @@ There are plenty of options how to run a post processing for uploads:
   <Note text="Async job processing" />
 </SequenceDiagram>
 
-Do not go this direction when you have a monolith, without an isolated microservice your application would still share a secret with a full bucket permissions and it would be meaningless in terms of security.
+Do not go this direction when you have a monolith, without an isolated microservice your application would still share a secret with full bucket permissions and it would be meaningless in terms of security.
 
-Also, is negates most of the performance benefits we discussed above, but allows to queue jobs and spend this time asynchronously which requires us to have fewer resources up and running.
+Also, it negates most of the performance benefits we discussed above, but allows to queue jobs and spend this time asynchronously which requires us to have fewer resources up and running.
 
 ## Secret management for Cloud Storage
 
@@ -145,7 +145,7 @@ We took one more step further and built a Cloud Storage secret management around
   <Note text="Working via Storage Secret Manager" />
 </SequenceDiagram>
 
-This requests can be authorized based on service role and logged for a security tail.
+These requests can be authorized based on service role and logged for a security trail.
 
 ## Implementation
 

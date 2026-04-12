@@ -27,15 +27,15 @@ import {
 } from "@/components/mdx/SequenceDiagram";
 import AsciiDiagram from "@/components/mdx/AsciiDiagram.astro";
 
-By this post, I want to share a second awesome project that we built on Elixir, React.js+Redux.js and Kubernetes - eHealth for the National Health Service of Ukraine. It was born as one of the major steps in reforms occurring in our healthcare and would affect every single person in the country.
+With this post, I want to share a second awesome project that we built on Elixir, React.js+Redux.js and Kubernetes - eHealth for the National Health Service of Ukraine. It was born as one of the major steps in reforms occurring in our healthcare and would affect every single person in the country.
 
 **Edit, August 2018:** it is in production for more than a year, more than 22 million people (50% of the population) are signed up. Last time I went to a private clinic I was offered to use this system to get services for free, instead of paying pretty expensive bills. It works, grows and I’m proud of it.
 
-There is lots of space for features and improvements though. And it is completely open sourced under Apache license.
+There is a lot of space for features and improvements though. And it is completely open sourced under the Apache license.
 
-This article is close to the original implementation but contains features that were planned to be delivered in upcoming production releases. Also, I can miss some changes; it is not possible to remember all of them forever.
+This article is close to the original implementation but contains features that were planned to be delivered in upcoming production releases. Also, I may miss some changes; it is not possible to remember all of them forever.
 
-The goals section reveals things how I see them; this is not an official position of a development team or the project office.
+The goals section reveals things the way I see them; this is not an official position of a development team or the project office.
 
 ## Project goals
 
@@ -49,7 +49,7 @@ Each clinic has its own region (list of postal codes) that it is responsible for
 
 To change residence people need to do lots of paperwork (literally spend up to a few days) and almost always own an apartment in a city where they want to live. For most of the people I know, residence address doesn’t match their actual address. Because of this, reports are extremely inaccurate.
 
-Also, they can be faked by adding “dead souls” (not really existing people). On a country scale, it is extremely hard and expensive to find out that this happened. We do not have a centralized citizens database, and only inconsistent parts split across many separate government services. We do not even know the actual number of residents in the country! I know that people are working on this problem, but this task will take years to be accomplished.
+Also, they can be faked by adding “dead souls” (not really existing people). On a country-wide scale, it is extremely hard and expensive to find out that this happened. We do not have a centralized citizens database, and only inconsistent parts split across many separate government services. We do not even know the actual number of residents in the country! I know that people are working on this problem, but this task will take years to be accomplished.
 
 Some clinics would even refuse to accept residents from other country regions, even when they actually live nearby for years.
 
@@ -67,7 +67,7 @@ In theory, it will create true market conditions between medical service provide
 
 Private clinics with higher costs are also free to enter reform and reduce their prices by receiving part of the money from the government. All they need - sign an agreement and use software that is integrated with NHS API.
 
-Patient data must be securely stored in a centralized database and available only for authorized by a patient medical personnel.
+Patient data must be securely stored in a centralized database and available only to medical personnel authorized by a patient.
 
 Prescriptions should be digitalized so that it would be easy to apply data science to find and fight fraud. They would allow a patient to get some medicine for free, National Health Service compensates its cost to the drug store.
 
@@ -90,7 +90,7 @@ Drone® view of the architecture
 {`                [ Token-based Authentication /
                   ACL by path + consumer scopes / 
                   JSONSchema validation / 
-                  Reqiest+response logging ]
+                  Request+response logging ]
                              │
                              ▼
 ┌───────────────┐   ┌───────────────┐   ┌───────────────────┐
@@ -109,7 +109,7 @@ Drone® view of the architecture
 
 This is one of our architecture patterns that was extracted during P2P marketplace development. It’s nice to have a single component that is responsible for all business logic and uses all other microservices and SaaS APIs to achieve its goals.
 
-It stores temporary data for create/update requests. Eg. when you want to change password - we will send you an email and the reset code would be stored in the database that belongs to IL. But since the data has an explicit TTL, it could be truncated on a daily basis.
+It stores temporary data for create/update requests. E.g. when you want to change password - we will send you an email and the reset code would be stored in the database that belongs to IL. But since the data has an explicit TTL, it could be truncated on a daily basis.
 
 ### Master Patient Index (MPI)
 
@@ -136,7 +136,7 @@ This component allows performing a search query over patient data, but it return
   <Note text="MPI progressively narrows down patient matches through an interactive query refinement process, returning errors when too many matches exist and follow-up questions when disambiguation is needed." />
 </SequenceDiagram>
 
-In future, we could even give a few fake options to catch people that are surfing the database without practical reasons.
+In the future, we could even give a few fake options to catch people that are surfing the database without practical reasons.
 
 Record linkage is done by fetching all new records and matching them against the rest of the database with coefficients applied to each field. As a result, we are getting a probability that both records are matching a single actual patient. Duplicates are deactivated and a pointer to the parent record is added. Because of this, all other systems should expect to receive the parent entity even when they are fetching record by MPI ID.
 
@@ -165,7 +165,7 @@ Key responsibilities:
 
 We decided to start with PostgreSQL which is easier to integrate because of battle-tested Ecto adapter, and move to other storage that horizontally scales for writes in the future.
 
-To achieve the required level of trust, we planned to add a blockchain‑alike approach to the way we store data.
+To achieve the required level of trust, we planned to add a blockchain‑like approach to the way we store data.
 
 ### Media Content Storage (MCS)
 
@@ -201,7 +201,7 @@ I’ve built several bash helpers to simplify routine operations - connecting to
 
 Eventually, the team started to complain that this seems too complicated - there were issues when you simply forget to change some environment variables. And pod descriptions started to vary from environment to environment, so automatic merging does not work anymore.
 
-To address this issue our DevOps is working on replacing YAML configuration with Helm charts so that we can store everything in a single branch and review files side‑by‑side.
+To address this issue, our DevOps is working on replacing YAML configuration with Helm charts so that we can store everything in a single branch and review files side‑by‑side.
 
 Production secrets are encrypted with git‑crypt.
 
@@ -251,7 +251,7 @@ In my opinion, the first things the customer is looking for - trust, which is de
 
 Elixir is not a silver bullet and it does not fit any project, but when you are sure it really fits the customer’s needs - tell them why it is so great and what would be the main benefits of using it in this particular project.
 
-Avoid doing so by listing language properties from the official web site. Eg. availability is one of the core properties that are required by most of the people that are looking for development teams irrespective of the technology stack.
+Avoid doing so by listing language properties from the official web site. E.g. availability is one of the core properties that are required by most of the people that are looking for development teams irrespective of the technology stack.
 
 It is a great idea to provide references on the projects that already use Elixir. When they are in the same domain - it’s even better. That’s why I’m writing these articles - now you have a few additional references.
 

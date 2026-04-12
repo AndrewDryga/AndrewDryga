@@ -1,7 +1,7 @@
 ---
 title: "Run stale tests on file change in Elixir"
 shortTitle: "Run Stale Tests"
-description: "Mix is an awesome tool but most Elixir beginners not aware of all its features. mix test --stale is the one them and can make your workflow much better."
+description: "Mix is an awesome tool but most Elixir beginners are not aware of all its features. mix test --stale is one of them and can make your workflow much better."
 publishDate: 2017-11-12
 updatedDate: 2017-11-12
 category: "Engineering"
@@ -16,9 +16,9 @@ relatedProjects: []
 draft: false
 ---
 
-Mix is an awesome tool but most Elixir beginners not aware of all its features. `mix test --stale` is the one them and can make your workflow much smoother. It tells mix to run only tests which reference modules that changed from the latest test run.
+Mix is an awesome tool but most Elixir beginners are not aware of all its features. `mix test --stale` is one of them and can make your workflow much smoother. It tells mix to run only tests which reference modules that changed from the latest test run.
 
-Literally, this means that if you have changed some code in your application, the mix will run only the tests that touch this code or it’s dependents. This saves a lot of time if you trying to follow TDD in a mid-to-large sized project.
+Literally, this means that if you have changed some code in your application, the mix will run only the tests that touch this code or its dependents. This saves a lot of time if you are trying to follow TDD in a mid-to-large sized project.
 
 But to run this command we still have to switch between a code editor and a console. Fortunately, mix test supports `--listen-on-stdin` flag that configures mix to read stdin and restart the tests after receiving a newline. Now we only need a way to watch for the file system events.
 
