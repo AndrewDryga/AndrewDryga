@@ -19,6 +19,156 @@ relatedProjects:
 
 import { SagaDiagram, SagaStep, SagaArrow } from "../../components/mdx/SagaDiagram";
 
+# Introducing Sage - a Sagas pattern implementation in Elixir
+
+Distributed transactions are hard and expensive, if you wonder how to pragmatically handle them in a mid-size project- this article is for you. We will discuss how can we use the Sagas pattern to run a distributed transaction from Elixir on examples that leverage [Sage package](https://github.com/Nebo15/sage). As a bonus, you will see how to use Sagas to organize your domain contexts.
+
+## What problem are we trying to solve?
+
+Most projects I’ve built are integrated to external systems. It’s how modern development looks like - you implement your domain logic and outsource rest to SaaS services, nobody likes to reinvent the wheel.
+
+Good examples of those services are payment processors and CRMs. Microservices are another one. One can argue that every time you perform more than one state change when they are not covered by a single ACID database - you run a **distributed transaction**. And we are not talking about large projects that distribute because of scale or the ones people are doing to research, it’s pretty much any small- or mid-size project that uses Stripe (or anything else) to outsource the billing system.
+
+Sage itself was built whilst I was integrating Stripe with one of our projects, with Stripe you create a customer first and then you create a subscription for that customer. But when we failed to create subscription - we should not keep that customer in Stripe and need to delete it to get rid of side effects.
+
+### Booking website example
+
+To make the problem more approachable, imagine we are building a trip booking website and charge customer only once when the request is fulfilled.
+
+Here is the happy-case code that leverages `with` expression syntax:
+
+```elixir
+def book_trip(attrs) do
+  with {:ok, exchange_rates} <- BillingAPI.fetch_currency_exchange_rates(attrs),
+       {:ok, card_authorization} <- BillingAPI.authorize_card(exchange_rates, attrs),
+       {:ok, hotel_booking} <- HotelBookingAPI.book_hotel(attrs),
+       :ok <- Mailer.send_email_confirmation(card_authorization, hotel_booking, attrs),
+       {:ok, charge} <- BillingAPI.charge_card(card_authorization) do
+    {:ok, %{charge: charge, bookings: [hotel_booking]}}
+  end
+end
+```
+
+*Happy-case code for our trip booking website*
+
+Another requirement would be that we should not hold any bookings if we failed to charge the card, otherwise it would be a bad business for us because we would still pay for those bookings. So our code should be extended to handle that failure:
+
+```elixir
+def book_trip(attrs) do
+  with {:ok, exchange_rates} <- BillingAPI.fetch_currency_exchange_rates(attrs),
+       {:ok, card_authorization} <- BillingAPI.authorize_card(exchange_rates, attrs),
+       {:ok, hotel_booking} <- HotelsBookingAPI.book_hotel(attrs),
+       :ok <- Mailer.send_email_confirmation(card_authorization, hotel_booking, attrs),
+       {:charge, {:ok, charge}, _} <- {:charge, BillingAPI.charge_card(card_authorization), [hotel_booking]} do
+    {:ok, %{charge: charge, bookings: [hotel_booking]}}
+  else
+    {:charge, {:error, reason], [hotel_booking]} ->
+      :ok = send_excuse_email(authorization)
+      :ok = cancel_booking(hotel_booking)
+      {:error, reason}
+
+    other ->
+      other
+  end
+end
+```
+
+*Example where we use named stages to catch where we got an error*
+
+Here we used a simple trick - we wrapped charge call with a tuple, which has stage name and list of side effects which we must take care of if we failed on that stage.
+
+So when charge failed and booking is cancelled. But how it would look like if we want to book a car, a flight and a hotel within the same trip? If one of the bookings failed - we would need to cancel other ones and if we failed to charge a card - we should cancel all of them:
+
+```elixir
+def book_trip(attrs) do
+  with {:ok, exchange_rates} <- BillingAPI.fetch_currency_exchange_rates(attrs),
+       {:ok, card_authorization} <- BillingAPI.authorize_card(exchange_rates, attrs),
+       {:booking, {:ok, hotel_booking}, _} <- {:booking, HotelsBookingAPI.book_hotel(attrs), []},
+       {:booking, {:ok, car_booking}, _} <- {:booking, CarsBookingAPI.book_hotel(attrs), [hotel_booking]},
+       {:booking, {:ok, flight_booking}, _} <- {:booking, FlightsBookingAPI.book_hotel(attrs), [hotel_booking, car_booking]},
+       :ok <- Mailer.send_email_confirmation(card_authorization, hotel_booking, attrs),
+       {:charge, {:ok, charge}, _} <- {:charge, BillingAPI.charge_card(card_authorization), [...]} do
+    {:ok, %{charge: charge, bookings: [hotel_booking, car_booking, flight_booking]}}
+  else
+    {:charge, {:error, reason], bookings} ->
+      :ok = send_excuse_email(authorization)
+      :ok = cancel_bookings(bookings)
+      {:error, reason}
+
+    {:booking, {:error, reason}, bookings} ->
+      :ok = cancel_bookings(bookings)
+      {:error, reason}
+  end
+end
+```
+
+*Now we are creating multiple bookings within the same trip*
+
+So we get more named stages and we collect side effects manually, which makes error handling large and error prone. And this example doesn’t even handle scenarios were we made a successful booking request and did not receive the response (eg. because of timeout), so we hold the booking without knowing about it.
+
+To handle this edge-case we can’t think of bookings as of a single stage, we must split them and duplicate error handling:
+
+```elixir
+def book_trip(attrs) do
+  with {:ok, exchange_rates} <- BillingAPI.fetch_currency_exchange_rates(attrs),
+       {:ok, card_authorization} <- BillingAPI.authorize_card(exchange_rates, attrs),
+       {:hotel_booking, {:ok, hotel_booking}, _} <- {:hotel_booking, HotelsBookingAPI.book_hotel(attrs), []},
+       {:car_booking, {:ok, car_booking}, _} <- {:car_booking, CarsBookingAPI.book_hotel(attrs), [hotel_booking]},
+       {:flight_booking, {:ok, flight_booking}, _} <- {:flight_booking, FlightsBookingAPI.book_hotel(attrs), [hotel_booking, car_booking]},
+       :ok <- Mailer.send_email_confirmation(card_authorization, hotel_booking, attrs),
+       {:charge, {:ok, charge}, _} <- {:charge, BillingAPI.charge_card(card_authorization), [...]} do
+    {:ok, %{charge: charge, bookings: [hotel_booking, car_booking, flight_booking]}}
+  else
+    {:charge, {:error, reason], bookings} ->
+      :ok = send_excuse_email(authorization)
+      :ok = cancel_bookings(bookings)
+      {:error, reason}
+
+    {:hotel_booking, {:error, reason}, bookings} ->
+      :ok = cancel_bookings(bookings)
+      :ok = HotelsBookingAPI.maybe_ensure_deleted(reason, attrs)
+      {:error, reason}
+
+    {:car_booking, {:error, reason}, bookings} ->
+      :ok = cancel_bookings(bookings)
+      :ok = CarsBookingAPI.maybe_ensure_deleted(reason, attrs)
+      {:error, reason}
+
+    # ...
+    # TODO: 😅 😱 🤬
+  end
+end
+```
+
+> A common question here is how can we delete something if we get a timeout, one of the most common ways - is to search entity by data we have and then delete it. It can be simplified when service you using allows to search on metadata, so we would be able to generate transaction ID and then attribute created entities to make lookup easier.
+
+This code looks too complex, isn’t it? Now imagine how much bigger it would be if we want to explicitly release the authorization so that customers don’t have to wait for timeout to get their money back..
+
+I believe code gets worse because we are dealing with distributed transaction in ad-hoc fashion. And that’s not all downsides, let’s name a few:
+
+* Duplication makes code error prone, we may refactor it but it would be still easy to update the logic in one place forgetting about the other ones;
+* We can’t book concurrently which is bad for our latency;
+* The syntax to track step on which failure occurred is ugly;
+* To cover this code test you would need a lot of stubs that inject errors based on attribute values.
+
+One of solutions would be to use two-phase commits, but they don’t scale: in best case O(2n) messages are spawned (and up to O(n²) with retries); it hurts availability because of locks involved. And what is more important, vast majority of services simply don’t support it.
+
+In my opinion, good tool should not only address those issues, but take an additional step forward by giving you a new mental model. And if it makes code better organized - even better.
+
+## What is Saga?
+
+Saga is a very simple failure management pattern that originates from [1987’s paper](http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf) on long running transactions for databases. It’s original use case was implementing long lived transactions without locking the database. Those transactions, by name, can take a while because they should go through a large dataset and make the system unavailable due to various locks that needs to be placed, which is usually not desirable.
+
+> A long lived transaction is a Saga if it can be written as a sequence of transactions that can be interleaved with other transactions.
+>
+> The database management system guarantees that either all the transactions in a Saga are successfully completed or compensating transactions are run to amend a partial execution.
+
+What does that mean in practice? A saga is a distributed transaction which takes care of overall consistency of collection of steps that internally perform atomic transactions. Those steps consist of subtransaction and compensation to amend it’s effects.
+
+Compensations are **semantically**undoing the transaction effects, eg. if you sent an email confirmation you can not “unsend” it, instead - you can send a follow up email with an excuse for the error.
+
+Getting back to our booking website, here is a visualization showing how it would work with Sagas:
+
 <SagaDiagram title="Diagram 1 - Linear Saga with Compensations">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
   <SagaArrow showTx txLabel="1" />
@@ -35,86 +185,81 @@ import { SagaDiagram, SagaStep, SagaArrow } from "../../components/mdx/SagaDiagr
   <SagaStep tx="Charge card" txStatus="inactive" comp={"Refund payment"} compStatus="inactive" />
 </SagaDiagram>
 
-## What problem are we trying to solve?
+After error is occurred compensations are run to amend partial execution
 
-Most products integrate with external systems - payments, CRMs, email, microservices, etc. Any time your unit of work spans more than one atomic boundary (another service, another database, a third-party API), you’re running a distributed transaction.
+While collecting feedback I’ve received a very good quote by @jayjun from `#elixir-lang` Slack channel:
 
-Example: creating a user in your DB, provisioning a customer in Stripe, sending a welcome email, and writing an audit log. If any of those fail, you can’t magically roll back the rest with a single ACID transaction.
+> It’s like [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) but across business logic and third-party APIs.
 
-Naive error handling quickly becomes a rat’s nest:
-- Manual side-effect tracking
-- Lots of conditional cleanups
-- Coupled error paths
-- Poor concurrency and performance
-
-You need something simpler, explicit, and composable.
-
-## Booking website example
-
-Imagine a trip booking flow where you:
-1) Book a car
-2) Book a flight
-3) Book a hotel
-4) Charge the customer’s card
-
-If step 4 fails (payment), you must cancel steps 1–3. If step 2 fails (flight), you must cancel step 1 (car) before continuing. These compensations are not always perfect “undo” - they are business actions that reverse the effects semantically (e.g., send a follow-up email instead of “unsending” the original).
-
-Without structure, this logic becomes brittle and hard to evolve.
-
-### Conference Talk - Code BEAM STO
-
-<div class="relative w-full" style="padding-bottom: 56.25%;">
-  <iframe
-    class="absolute top-0 left-0 w-full h-full rounded-lg"
-    src="https://www.youtube.com/embed/excmcS6Id2E"
-    title="Code BEAM STO - Introducing Sage"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen
-  ></iframe>
-</div>
-
-## What is a Saga?
-
-<SagaDiagram title="Diagram 2 - Saga successful flow visualization">
-    <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
-    <SagaArrow showTx txLabel="1" />
-    <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="inactive" />
-    <SagaArrow showTx txLabel="2" />
-    <SagaStep tx={"Book hotel"} txStatus="success" comp={"Cancel hotel booking"} compStatus="inactive" />
-    <SagaArrow showTx txLabel="3" />
-    <SagaStep tx={"Book car"} txStatus="success" comp={"Cancel car booking"} compStatus="inactive" />
-    <SagaArrow showTx txLabel="4" />
-    <SagaStep tx={"Book flight"} txStatus="success" comp={"Ensure flight is not booked"} compStatus="inactive" />
-    <SagaArrow showTx txLabel="5" />
-    <SagaStep tx={"Send email confirmation"} txStatus="success" comp={"Send excuse letter"} compStatus="inactive" />
-    <SagaArrow showTx txLabel="6" />
-    <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
-</SagaDiagram>
-
-A Saga is a failure management pattern for long-lived, multi-step work that cannot be wrapped in a single database transaction.
-
-- The operation is decomposed into a sequence of steps (subtransactions).
-- Each step has a corresponding compensation that semantically reverses its effect.
-- On failure, previously completed steps are compensated in reverse order.
-
-Quoting the 1987 paper (paraphrased):
-- A long-lived transaction is a Saga if it’s a sequence of transactions that can be interleaved with others.
-- The system guarantees either all steps succeed or compensating transactions are run.
-
-In practice, you trade strict atomicity for availability and explicit compensation.
+**What are the tradeoffs?** With Saga you tradeoff atomicity for availability.
 
 ## Introducing Sage
 
-[Sage](https://github.com/Nebo15/sage) is a dependency-free Elixir library inspired by Sagas, designed for organizing distributed transactions across business logic and third‑party APIs.
+[Sage](https://github.com/Nebo15/sage) is a dependency-free pure Elixir library inspired by Sagas pattern. It provides set of additional features on top of steps, transactions and compensations defined by the original paper. Here is how Saga for our booking app might look like:
 
-Key goals:
-- Make multi-step workflows explicit and testable
-- Keep error handling and compensation rules close to the happy path
-- Support concurrency where appropriate
-- Provide hooks for instrumentation and persistence
+```elixir
+defmodule BookingApp.Sage do
+  import Sage
 
-> “It’s like Ecto.Multi but across business logic and third-party APIs.”
+  @spec book_trip(attrs :: map()) :: {:ok, last_effect :: any(), all_effects :: map()} | {:error, reason :: any()}
+  def book_trip(attrs) do
+    new()
+    |> run(:exchange_rate, &Billing.fetch_currency_exchange_rates/2, &Billing.currency_exchange_rates_circuit_breaker/4)
+    |> run(:authorization, &Billing.authorize_card/2, &Billing.cancel_card_authorization/4)
+    |> run_async(:book_hotel, &HotelsBooking.book/2, &HotelsBooking.cancel_booking/4)
+    |> run_async(:book_car, &CarsBooking.book/2, &CarsBooking.cancel_booking/4)
+    |> run_async(:book_flight, &FlightsBooking.book/2, &FlightsBooking.cancel_booking/4)
+    |> run(:email_confirmation, &Mailer.send_email_confirmation/2)
+    |> run(:charge, &Billing.charge_authorization/2, &Billing.refund_payment/4)
+    |> transaction(Repo, attrs)
+  end
+end
+```
+
+Transactions and compensations should implement these callbacks:
+
+```elixir
+@callback transaction(attrs :: map()) ::
+            {:ok, last_effect :: any(), all_effects :: map()} | {:error, reason :: any()}
+
+@callback compensation(effect_to_compensate :: any(), effects_so_far :: map(), attrs :: any()) ::
+            :ok
+            | :abort
+            | {:retry,
+               [
+                 {:retry_limit, pos_integer()},
+                 {:base_backoff, pos_integer() | nil},
+                 {:max_backoff, pos_integer()},
+                 {:enable_jitter, boolean()}
+               ]}
+            | {:continue, effect :: any()}
+```
+
+Visualization of this saga can be seen in the following diagram:
+
+<SagaDiagram title="Diagram 2 - Saga successful flow visualization">
+  <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
+  <SagaArrow showTx txLabel="1" />
+  <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="2" />
+  <SagaStep tx={"Book hotel"} txStatus="success" comp={"Cancel hotel booking"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="3" />
+  <SagaStep tx={"Book car"} txStatus="success" comp={"Cancel car booking"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="4" />
+  <SagaStep tx={"Book flight"} txStatus="success" comp={"Ensure flight is not booked"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="5" />
+  <SagaStep tx={"Send email confirmation"} txStatus="success" comp={"Send excuse letter"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="6" />
+  <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
+
+### Asynchronous transactions
+
+Sage allows to run stages asynchronously, next synchronous stage will await for them to return. This is because we want synchronous operations to have access to effects created by their predecessors when asynchronous ones don’t have access to the each others effects.
+
+However, they do have access to effects created by previous synchronous operation and it’s predecessors.
+
+Whenever there is an error in one of async stages - compensations would run sequentially to amend their executions.
 
 <SagaDiagram title="Diagram 3 - Parallel Bookings">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
@@ -128,9 +273,13 @@ Key goals:
   <SagaStep tx="Charge card" txStatus="inactive" comp={"Refund payment"} compStatus="inactive" />
 </SagaDiagram>
 
-<br />
+*Run three stages asynchronously*
 
-<SagaDiagram title="Diagram 3 - Retries">
+### Retries
+
+By default, transactions are executed at most once and compensations are executed at least once but retries allow you to define save points to execute **forward recovery** for a limited number of attempts.
+
+<SagaDiagram title="Diagram 4 - Retries">
   <SagaStep tx={"Fetch currency exchange rates"} txStatus="success" />
   <SagaArrow showTx txLabel="1" />
   <SagaStep tx={"Pre-authorize card"} txStatus="success" comp={"Cancel pre- authorization"} compStatus="inactive" />
@@ -146,64 +295,137 @@ Key goals:
   <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
 </SagaDiagram>
 
-### High-level example (pseudo-Elixir)
+*Retry execution from a savepoint*
+
+To implement a save point you write a compensation that still does it job and then tell Sage to apply forward recovery with limited number of retries, optionally with exponential backoff and a jitter:
 
 ```elixir
-Sage.new()
-|> Sage.step(:create_user, fn ctx -> Users.create(ctx.params) end,
-                         fn ctx, user -> Users.deactivate(user) end)
-|> Sage.step(:stripe_customer, fn ctx -> Stripe.create_customer(ctx.user) end,
-                              fn ctx, cust -> Stripe.delete_customer(cust.id) end)
-|> Sage.step(:provision, fn ctx -> Provisioner.setup(ctx.user, ctx.cust) end,
-                        fn ctx, ref -> Provisioner.teardown(ref) end)
-|> Sage.step(:welcome_email, fn ctx -> Mailer.send_welcome(ctx.user) end,
-                            fn ctx, _ -> Mailer.send_followup(ctx.user, :apology) end)
-|> Sage.run()
+def delete_subscription(_effect_to_compensate, %{user: user}, _name_and_reason, _attrs) do
+  :ok = SageExample.Billing.APIClient.delete_all_subscriptions_for_user(user)
+  # We want to apply forward recovery from :subscription stage for 5 times
+  {:retry, retry_limit: 5, base_backoff: 10, max_backoff: 30_000, enable_jitter: true}
+end
 ```
 
-- Each `step/3` defines a transaction function and a compensation.
-- On failure, Sage runs compensations in reverse order.
-- Steps can be synchronous or asynchronous depending on configuration.
+This applies additional requirements for your **transaction and compensation callbacks** - they **must be idempotent**.
 
-## Features that matter
+Internally Sage persists retry count for Sage execution, this is made because we don’t want to forward-retry indefinitely. So when there is another step that already retried the execution for 5 times, retry is no-op and we would continue running compensations.
 
-- Asynchronous execution
-  - Run independent stages concurrently for better latency.
-  - Automatically wait where dependencies exist.
+### Circuit breaking
 
-- Retries with backoff
-  - Define retry policies and save-points for forward recovery.
-  - Use exponential backoff and jitter to avoid thundering herds.
+Whenever there is a stage with transaction error, compensations that are executed at this stage can continue execution by providing some default effect. For example, you can cache response on successful executions and use that data when it’s not possible to retrieve it immediately.
 
-- Circuit breakers and fallbacks
-  - Continue execution with cached/default values when a service is flaky.
+<SagaDiagram title="Diagram 2 - Circuit breaking visualization">
+  <SagaStep tx={"Fetch currency exchange rates"} txStatus="fail" comp={"Use default exchange rates"} compStatus="success" vline vlineDir="updown" vlineLabel="1" />
+  <SagaArrow showTx txLabel="2" />
+  <SagaStep tx={"Pre-authorize\ncard"} txStatus="success" comp={"Cancel pre-authorization"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="3" />
+  <SagaStep tx={"Book hotel"} txStatus="success" comp={"Cancel hotel booking"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="4" />
+  <SagaStep tx={"Book car"} txStatus="success" comp={"Cancel car booking"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="5" />
+  <SagaStep tx={"Book flight"} txStatus="success" comp={"Ensure flight is not booked"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="6" />
+  <SagaStep tx={"Send email confirmation"} txStatus="success" comp={"Send excuse letter"} compStatus="inactive" />
+  <SagaArrow showTx txLabel="7" />
+  <SagaStep tx="Charge card" txStatus="success" comp={"Refund payment"} compStatus="inactive" />
+</SagaDiagram>
 
-- Ecto integration (optional)
-  - Wrap parts of Sage execution in DB transactions where it makes sense.
-  - Still compensate external effects when DB operations succeed but later steps fail.
+```elixir
+def currency_exchange_rates_circuit_breaker(_effect_to_compensate, _effects_so_far, %{"base_currency" => base_currency}) do
+  with {:ok, exchange_rates} <- BookingApp.Cache.fetch(:eur_exchange_rates, base_currency) do
+    {:continue, exchange_rates}
+  else
+    _ -> :ok
+  end
+end
+```
 
-- Observability hooks
-  - Instrument stages, timings, retries, and compensations.
+### Final callback
 
-## Tradeoffs and mental model
+It’s possible to attach callbacks that would be called whenever Sage execution is finished successfully or after all effects are amended. For more details see [`Sage.finally/2`](https://hexdocs.pm/sage/Sage.html#finally/2).
 
-- You’re not doing a single ACID transaction - you’re modeling a distributed, multi-step business process.
-- Compensations are business semantics, not magical inverse operations.
-- Embrace idempotency everywhere: steps and compensations should be safe to retry.
-- Build for partial failure as a first-class reality.
+### Tracing
 
-## Benefits
+Also, you can attach a module that would receive instrumentation events. See [`Sage.Tracer`](https://hexdocs.pm/sage/Sage.Tracer.html) behaviour.
 
-- Clear, declarative workflows that encapsulate multi-step business logic
-- Clean separation of “do” vs “undo” with minimal branching
-- Better concurrency and performance compared to naive sequential flows
-- Scales with complexity while staying testable and maintainable
-- Aligns with reliable, observable, cost-sane platform principles
+### Works with Ecto
 
-## Where to go next
+You don’t need to write compensations for local database that supports atomic transactions. Instead, wrap Sage execution in a transaction which is committed when execution succeeded or rollbacks otherwise.
 
-- Source: https://github.com/Nebo15/sage
-- Paper (Sagas, 1987): A key conceptual reference for long-running transactions
-- Start small: wrap one gnarly multi-step flow and add compensations where you already perform manual cleanups
+### Organizing your business login in Domain Driven Design contexts
 
-By organizing distributed transactions with Sagas, you keep systems reliably boring where they should be - while still shipping what matters.
+Lately we have seen the promotion of DDD practices in Elixir community, particularly it started when Phoenix Framework introduced contexts. When there is a lot of business logic spread out across contexts, the code which is responsible for their orchestration becomes pretty complex.
+
+One of ways to organize them is to rely heavily on [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) and compose transactions at high-level functions. Where [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) doesn’t solve the original problem, Sage can be used in a similar way.
+
+```elixir
+defmodule BookingApp.Booker do
+  alias BookingApp.{Billing, Users, Hotels, Cars, Flights, Repo}
+
+  def create_booking(attrs) do
+    Sage.new()
+    |> Billing.authorize_card(attrs)
+    |> Hotels.maybe_book_hotel(attrs)
+    |> Cars.maybe_book_car(attrs)
+    |> Flights.maybe_book_flight(attrs)
+    |> Users.sign_up()
+    |> Billing.charge_card()
+    |> Sage.transaction(Repo, attrs)
+  end
+end
+````
+
+```elixir
+defmodule BookingApp.Hotels do
+  def maybe_book_hotel(%Sage{} = sage, %{"hotel" => hotel}) do
+    Sage.run_async(sage, :book_hotel, &book/2, &cancel_booking/4)  
+  end
+  
+  def maybe_book_hotel(%Sage{} = sage, _attrs) do
+    sage
+  end
+  
+  # ...
+end
+```
+
+_This example is probably oversimplified 😅_
+
+### Error handling
+
+Let’s see what can go wrong?
+
+**Sage transaction abort.** This is very basic case when transaction can not be completed, we start backward recovery and amend all created effects.
+
+**Compensation failure.** This is something Sage does not generically handle for you. Whenever compensation can not amend the transaction Sage will raise an error and expect developer to manually investigate the issue. However, it’s possible to write an adapter that would handle those cases, eg. by retrying compensations indefinitely.
+
+**Bugs in Sage.** Currently not handled, but..
+
+### Things to come
+
+* [**Saga execution log**](https://github.com/Nebo15/sage/issues/9)**.** Persistence for Saga execution to tolerate failures in process or on the node where execution coordinator runs. Additionally, it would be possible to recover when there was a bug in Sage executor.
+* [**Plug-style module callbacks**](https://github.com/Nebo15/sage/issues/18)**.** Instead of passing anonymous functions you would be able to pass modules that implement common behaviour, which should make composing Sagas even more fun!
+* [**Compile-time type checking**](https://github.com/Nebo15/sage/issues/17)**.** Dialyzer should warn you when you compose Sagas with violating their dependencies on other stages.
+* [**Event collector**](https://github.com/Nebo15/sage/issues/23). No events should be emitted from within the transaction, instead they can be returned from it and fired only from final callback when the transaction is committed.
+
+## Short recap
+
+Sage is particularly useful when dealing with:
+
+* Microservices (_maybe not the best case because you have control over them and there are much more options to consider_).
+* Data which is split between multiple databases or partitions _, which is somewhat similar to microservices_.
+* When communicating with external services (_I think this one is where Sagas fit the best, because here we interacting with a system which is out of our control, has limited set of features exposed over API and unlikely to change on our demand_).
+
+Sage can help to elegantly organize logic in your domain contexts.
+
+It’s well-documented and covered with tests.
+
+## Related materials
+
+* [Original “Sagas” paper by Hector Garcia-Molina and Kenneth Salem](http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf);
+* [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) which is inspired by this paper and was source of inspiration for Sage.
+* [Compensating Transaction](https://docs.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction) from Azure Architecture Cloud Design Patterns.
+* Slides from my talk on CodeBeam STO:
+
+<iframe class="speakerdeck-iframe" frameborder="0" src="https://speakerdeck.com/player/0011f0aff70c43d99290857ea63393eb" title="sagas.pdf" allowfullscreen="true" allow="web-share" style="border: 0px; background: padding-box padding-box rgba(0, 0, 0, 0.1); margin: 0px; padding: 0px; border-radius: 6px; box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 40px; width: 100%; height: auto; aspect-ratio: 560 / 315;" data-ratio="1.7777777777777777"></iframe>

@@ -14,26 +14,28 @@ const {
 } = Astro.props as Props;
 
 const exampleId = `code-example-${crypto.randomUUID()}`;
+const displayLabel = label ?? language.toUpperCase();
 ---
 
 <div
-  class={`relative border border-border rounded-lg overflow-hidden bg-terminal-surface ${className}`.trim()}
+  class={`relative rounded-lg border border-terminal-cyan/35 bg-terminal-surface/80 p-4 ${className}`.trim()}
   data-code-example
 >
-  <div class="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
-    <span class="text-xs font-mono text-muted-foreground">
-      {label ?? language.toUpperCase()}
+  {displayLabel ? (
+    <span class="mb-3 inline-flex rounded-full border border-terminal-cyan/40 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-terminal-cyan/80">
+      {displayLabel}
     </span>
-    <button
-      type="button"
-      class="text-xs font-mono text-primary hover:text-primary/80 transition-colors"
-      data-copy-button
-      data-copy-target={exampleId}
-    >
-      Copy
-    </button>
-  </div>
-  <pre class="p-4 overflow-x-auto text-sm font-mono leading-relaxed">
+  ) : null}
+  <button
+    type="button"
+    aria-label="Copy code snippet"
+    class="absolute right-4 top-4 text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-terminal-cyan"
+    data-copy-button
+    data-copy-target={exampleId}
+  >
+    Copy
+  </button>
+  <pre class="m-0 overflow-x-auto font-mono text-sm leading-relaxed text-foreground">
     <code id={exampleId}>{code}</code>
   </pre>
 </div>

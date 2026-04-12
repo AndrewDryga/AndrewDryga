@@ -6,7 +6,7 @@ export interface Props {
   txStatus?: Status | Status[];
   compStatus?: Status | Status[];
   vline?: boolean;
-  vlineDir?: "down" | "up";
+  vlineDir?: "down" | "up" | "updown";
   vlineLabel?: string;
 }
 const {
@@ -120,6 +120,13 @@ const clipLeft = `polygon(${d}% 0%, 100% 0%, ${100 - d}% 50%, 100% 100%, ${d}% 1
             {vlineDir === "down" && (
               <span class="flex-1 border-l border-red-500/40" />
               <span class="text-[8px] leading-none text-red-400/60">▼</span>
+            )}
+
+            {vlineDir === "updown" && (
+              <span class="flex-1 border-l border-yellow-500/40" />
+              <span class="text-[8px] leading-none text-yellow-400/60">▲</span>
+              <span class="flex-1 border-l border-yellow-500/40" />
+              <span class="text-[8px] leading-none text-yellow-400/60">▼</span>
             )}
           </div>
           {vlineLabel && (
