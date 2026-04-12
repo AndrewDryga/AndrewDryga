@@ -10,7 +10,7 @@
   Cross-Origin-Resource-Policy: same-origin
 
   # Content Security Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https: blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self'; frame-src https://www.youtube.com https://youtube.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https: blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self'; frame-src https://www.youtube.com https://youtube.com https://speakerdeck.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 
   # HTML caching (short max-age at browser, cache at edge)
   Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
