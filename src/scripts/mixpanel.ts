@@ -24,6 +24,9 @@ function initMixpanel() {
     document.querySelector<HTMLMetaElement>(TOKEN_META)?.content ?? "";
   const isDev =
     document.querySelector<HTMLMetaElement>(DEV_META)?.content === "true";
+  const replayPercent = clampReplayPercent(
+    Number(import.meta.env.PUBLIC_MIXPANEL_REPLAY_PERCENT ?? "10"),
+  );
 
   if (!token || shouldRespectDNT()) {
     return;
@@ -47,6 +50,8 @@ function initMixpanel() {
     track_pageview: true,
     persistence: "localStorage",
     api_host: "/mp",
+    record_sessions_percent: replayPercent,
+    record_heatmap_data: replayPercent > 0,
   });
 
   mixpanel.track("Page View", {
@@ -105,6 +110,11 @@ function setupContactTracking(mixpanel: {
     },
     { passive: true },
   );
+}
+
+function clampReplayPercent(value: number) {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, value));
 }
 
 // Guard against re-execution on SPA navigations (Astro View Transitions)

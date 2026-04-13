@@ -19,6 +19,11 @@ interface ImportMetaEnv {
    * Provide via deployment environment variables.
    */
   readonly PUBLIC_MIXPANEL_TOKEN?: string;
+  /**
+   * Optional percentage (0-100) of sessions to record with Mixpanel Replay.
+   * Defaults to 10 when omitted.
+   */
+  readonly PUBLIC_MIXPANEL_REPLAY_PERCENT?: string;
 
   /**
    * Optional site base URL override, used server-side for feeds/robots when Astro.site
