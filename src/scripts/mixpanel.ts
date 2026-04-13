@@ -38,6 +38,8 @@ function initMixpanel() {
   const mixpanel = (window as unknown as { mixpanel: {
     init: (token: string, config: Record<string, unknown>) => void;
     track: (event: string, props?: Record<string, unknown>) => void;
+    identify?: (id: string) => void;
+    people?: { set?: (props: Record<string, unknown>) => void };
   } }).mixpanel;
 
   mixpanel.init(token, {
@@ -51,6 +53,7 @@ function initMixpanel() {
     path: `${location.pathname}${location.search}`,
     title: document.title,
   });
+  setupContactTracking(mixpanel);
 
   window.addEventListener("click", (event: MouseEvent) => {
     const anchor = (
@@ -64,6 +67,44 @@ function initMixpanel() {
       // silently ignore tracking errors
     }
   }, { capture: true });
+}
+
+function setupContactTracking(mixpanel: {
+  track: (event: string, props?: Record<string, unknown>) => void;
+  identify?: (id: string) => void;
+  people?: { set?: (props: Record<string, unknown>) => void };
+}) {
+  document.addEventListener(
+    "contact:submit",
+    (event) => {
+      const detail = (event as CustomEvent<Record<string, string>>).detail ?? {};
+      const email = detail.email?.trim();
+      const name = detail.name?.trim();
+      const message = detail.message?.trim();
+
+      if (!email) {
+        return;
+      }
+
+      try {
+        mixpanel.identify?.(email.toLowerCase());
+        mixpanel.people?.set?.({
+          $email: email,
+          $name: name,
+          contact_source: "contact_form",
+        });
+        mixpanel.track("Contact Form Submitted", {
+          email,
+          name,
+          message_length: message?.length ?? 0,
+          path: `${location.pathname}${location.hash}`,
+        });
+      } catch {
+        // Ignore tracking failures (e.g., user blocked Mixpanel)
+      }
+    },
+    { passive: true },
+  );
 }
 
 // Guard against re-execution on SPA navigations (Astro View Transitions)
