@@ -10,7 +10,7 @@
   "scripts": {
     "predev": "LLMS_BUILD_IF_MISSING=true LLMS_EXPORT_TARGETS=public/llms-full.txt node scripts/generate-llms-full.mjs .llms-cache",
     "dev": "astro dev",
-    "build": "astro build && node scripts/generate-llms-full.mjs",
+    "build": "astro build && LLMS_FORCE_REBUILD=true node scripts/generate-llms-full.mjs",
     "preview": "astro preview",
     "check": "astro check",
     "typecheck": "tsc --noEmit -p tsconfig.json",

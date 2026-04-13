@@ -67,7 +67,64 @@ function toPlainText(html) {
       { selector: "style", format: "skip" },
     ],
   });
-  return normalizeWhitespace(plain);
+  return sanitizeText(normalizeWhitespace(plain));
+}
+
+function sanitizeText(text) {
+  const replacements = new Map([
+    ["\u203a", ">"],
+    ["\u2039", "<"],
+    ["\u00a9", "(c)"],
+    ["\u00ae", "(r)"],
+    ["\u2013", "-"],
+    ["\u2014", "-"],
+    ["\u2011", "-"],
+    ["\u2018", "'"],
+    ["\u2019", "'"],
+    ["\u201c", '"'],
+    ["\u201d", '"'],
+    ["\u00b7", "-"],
+    ["\u00d7", "x"],
+    ["\u00b2", "^2"],
+    ["\u0142", "l"],
+    ["\u2212", "-"],
+    ["\u2022", "-"],
+    ["\u2190", "<-"],
+    ["\u2191", "^"],
+    ["\u2192", "->"],
+    ["\u2193", "v"],
+    ["\u2500", "-"],
+    ["\u2502", "|"],
+    ["\u250c", "+"],
+    ["\u2510", "+"],
+    ["\u2514", "+"],
+    ["\u2518", "+"],
+    ["\u251c", "+"],
+    ["\u252c", "+"],
+    ["\u2588", "#"],
+    ["\u258a", "#"],
+    ["\u2591", "."],
+    ["\u25b2", "^"],
+    ["\u25b6", ">"],
+    ["\u25bc", "v"],
+    ["\u25c0", "<"],
+    ["\u25cf", "*"],
+    ["\u2b22", "*"],
+    ["\ud83c\udfc6", "[trophy]"],
+    ["\ud83d\ude05", "[sweat_smile]"],
+    ["\ud83d\ude31", "[scream]"],
+    ["\ud83d\ude43", "[upside_down]"],
+    ["\ud83e\udd2c", "[rage]"],
+  ]);
+  let result = "";
+  for (const char of text) {
+    if (replacements.has(char)) {
+      result += replacements.get(char);
+    } else {
+      result += char;
+    }
+  }
+  return result;
 }
 
 async function main() {
@@ -96,15 +153,19 @@ async function main() {
   const sections = await Promise.all(
     htmlFiles.map(async (file) => {
       const html = await readFile(file, "utf8");
+      const stats = await stat(file);
       const text = toPlainText(html);
       if (!text) return "";
       const { rel, url } = routeFromFile(file);
       const chars = text.length;
       const words = text.split(/\s+/).filter(Boolean).length;
+      const title = extractTitle(html) ?? "Untitled";
+      const lastModified = stats.mtime.toISOString();
       return [
-        "-----",
         `URL: ${url}`,
         `Path: ${rel}`,
+        `Title: ${title}`,
+        `Last-Modified: ${lastModified}`,
         `Content-Length: ${chars} characters (~${words} words)`,
         "Content:",
         text,
@@ -114,19 +175,19 @@ async function main() {
 
   const filteredSections = sections.filter(Boolean);
   const header = [
-    "# dryga.com — Full Content Export",
+    "# dryga.com - Full Content Export",
     `Generated: ${new Date().toISOString()}`,
     `Source directory: ${distDir}`,
     `Base URL: ${baseUrl}`,
     "",
-    "Each section below starts with a line that contains five dashes (-----). Use it as a page delimiter.",
-    "Every section includes the canonical URL, relative path, character count, and the rendered text.",
+    "Each section below is delimited by a line containing exactly five dashes (-----).",
+    "Every section includes the canonical URL, relative path, title, last-modified timestamp, character count, and the rendered text.",
     "",
   ].join("\n");
 
   const footer = "\n-----\nExport generated from static build output.\n";
 
-  const finalContent = [header, filteredSections.join("\n\n"), footer].join("");
+  const finalContent = [header, "-----", filteredSections.join("\n-----\n"), footer].join("\n");
 
   async function writeWithDirs(path, content) {
     try {
@@ -152,6 +213,12 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
+
+function extractTitle(html) {
+  const match = html.match(/<title>([\s\S]*?)<\/title>/i);
+  if (!match) return undefined;
+  return match[1].replace(/\s+/g, " ").trim();
+}
 
 async function pathExists(path) {
   try {

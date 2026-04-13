@@ -47,6 +47,11 @@
   Cache-Control: public, max-age=3600, s-maxage=86400
   Content-Type: text/plain; charset=utf-8
 
+/llms*.txt
+  # LLM exports: treat as UTF-8 plain text
+  Cache-Control: public, max-age=0, s-maxage=600, stale-while-revalidate=600
+  Content-Type: text/plain; charset=utf-8
+
 /sitemap-index.xml
   # Sitemap: cache at edge for a day
   Cache-Control: public, max-age=3600, s-maxage=86400
