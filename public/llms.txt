@@ -11,6 +11,7 @@ Andrew Dryga is a multi-hat product-minded engineering leader with 17+ years of 
 - GitHub: https://github.com/andrewdryga
 - LinkedIn: https://www.linkedin.com/in/andrew-dryga-bb382557/
 - CV: https://dryga.com/downloads/cv.pdf
+- Full site export: https://dryga.com/llms-full.txt
 
 ## Key Achievements
 
