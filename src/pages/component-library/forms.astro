@@ -5,6 +5,16 @@ import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
 import Button from "@/components/ui/Button.astro";
 import ComboboxField from "@/components/ui/ComboboxField.astro";
 import TerminalForm from "@/components/ui/TerminalForm.astro";
+import Input from "@/components/ui/Input.astro";
+import Label from "@/components/ui/Label.astro";
+import Textarea from "@/components/ui/Textarea.astro";
+import Checkbox from "@/components/ui/Checkbox.astro";
+import RadioGroup from "@/components/ui/RadioGroup.astro";
+import Switch from "@/components/ui/Switch.astro";
+import Select from "@/components/ui/Select.astro";
+import Slider from "@/components/ui/Slider.astro";
+import InputOtp from "@/components/ui/InputOtp.astro";
+import FormField from "@/components/ui/FormField.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -210,26 +220,26 @@ const checklist = [
               >
                 Preferences
               </legend>
-              <label class="group flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="newsletter" class="sr-only" />
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="newsletter" class="peer sr-only" />
                 <span
-                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center group-has-[:checked]:border-terminal-cyan transition-colors"
+                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center peer-checked:border-terminal-cyan transition-colors"
                 >
                   <span
-                    class="w-3 h-3 bg-terminal-cyan rounded-sm opacity-0 group-has-[:checked]:opacity-100 transition-opacity"
+                    class="w-3 h-3 bg-terminal-cyan rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"
                   ></span>
                 </span>
                 <span class="text-foreground font-mono text-sm">
                   Subscribe to updates
                 </span>
               </label>
-              <label class="group flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="beta" class="sr-only" />
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="beta" class="peer sr-only" />
                 <span
-                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center group-has-[:checked]:border-terminal-cyan transition-colors"
+                  class="w-5 h-5 border-2 border-border rounded flex items-center justify-center peer-checked:border-terminal-cyan transition-colors"
                 >
                   <span
-                    class="w-3 h-3 bg-terminal-cyan rounded-sm opacity-0 group-has-[:checked]:opacity-100 transition-opacity"
+                    class="w-3 h-3 bg-terminal-cyan rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"
                   ></span>
                 </span>
                 <span class="text-foreground font-mono text-sm">
@@ -246,16 +256,16 @@ const checklist = [
               </legend>
               {
                 ["beginner", "intermediate", "advanced"].map((level) => (
-                  <label class="group flex items-center gap-3 cursor-pointer capitalize">
+                  <label class="flex items-center gap-3 cursor-pointer capitalize">
                     <input
                       type="radio"
                       name="experience"
                       value={level}
-                      class="sr-only"
+                      class="peer sr-only"
                       checked={level === "intermediate"}
                     />
-                    <span class="w-5 h-5 border-2 border-border rounded-full flex items-center justify-center group-has-[:checked]:border-terminal-cyan transition-colors">
-                      <span class="w-3 h-3 bg-terminal-cyan rounded-full opacity-0 group-has-[:checked]:opacity-100 transition-opacity" />
+                    <span class="w-5 h-5 border-2 border-border rounded-full flex items-center justify-center peer-checked:border-terminal-cyan transition-colors">
+                      <span class="w-3 h-3 bg-terminal-cyan rounded-full opacity-0 peer-checked:opacity-100 transition-opacity" />
                     </span>
                     <span class="text-foreground font-mono text-sm">
                       {level}
@@ -395,6 +405,136 @@ const checklist = [
                   Animate focus transitions with minimal easing.
                 </li>
               </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="primitives" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Form primitives
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Reusable building-block components for inputs, labels, selects,
+              and toggles. Each maps to a single Astro file with terminal
+              styling baked in.
+            </p>
+          </header>
+
+          <div class="space-y-8">
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">Input &amp; Label</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <FormField label="Full name" htmlFor="demo-name">
+                  <Input id="demo-name" name="demo-name" placeholder="Jane Doe" />
+                </FormField>
+                <FormField label="Email address" htmlFor="demo-email" description="We'll never share your email.">
+                  <Input id="demo-email" name="demo-email" type="email" placeholder="jane@example.com" />
+                </FormField>
+              </div>
+              <FormField label="Bio" htmlFor="demo-bio">
+                <Textarea id="demo-bio" name="demo-bio" placeholder="Tell us about yourself..." rows={3} />
+              </FormField>
+              <FormField label="API token" htmlFor="demo-token" error="Token has expired. Generate a new one.">
+                <Input id="demo-token" name="demo-token" value="sk_expired_abc123" class="border-destructive" />
+              </FormField>
+              <p class="text-xs text-muted-foreground font-mono">
+                FormField wraps Label + description + error messaging. Input and Textarea accept all native attributes.
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">Select</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <FormField label="Region" htmlFor="demo-region">
+                  <Select
+                    name="demo-region"
+                    options={[
+                      { label: "US East", value: "us-east-1" },
+                      { label: "US West", value: "us-west-2" },
+                      { label: "EU West", value: "eu-west-1" },
+                      { label: "AP Southeast", value: "ap-southeast-1" },
+                    ]}
+                    placeholder="Choose a region..."
+                  />
+                </FormField>
+                <FormField label="Environment" htmlFor="demo-env">
+                  <Select
+                    name="demo-env"
+                    options={[
+                      { label: "Development", value: "dev" },
+                      { label: "Staging", value: "staging" },
+                      { label: "Production", value: "production" },
+                    ]}
+                    placeholder="Target environment"
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">Checkbox &amp; Switch</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <div class="space-y-3">
+                  <Label class="text-sm font-mono">Notifications</Label>
+                  <div class="space-y-2">
+                    <Checkbox name="notify-email" checked>Email alerts</Checkbox>
+                    <Checkbox name="notify-slack">Slack messages</Checkbox>
+                    <Checkbox name="notify-sms" disabled>SMS (coming soon)</Checkbox>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <Label class="text-sm font-mono">Feature flags</Label>
+                  <div class="space-y-3">
+                    <Switch name="dark-mode" label="Dark mode" checked />
+                    <Switch name="analytics" label="Analytics" />
+                    <Switch name="beta" label="Beta features" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">Radio group</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <RadioGroup
+                  name="plan"
+                  defaultValue="pro"
+                  options={[
+                    { label: "Free", value: "free", description: "Up to 3 projects" },
+                    { label: "Pro", value: "pro", description: "Unlimited projects" },
+                    { label: "Enterprise", value: "enterprise", description: "Custom SLA & support" },
+                  ]}
+                />
+                <RadioGroup
+                  name="deploy-target"
+                  defaultValue="cloudflare"
+                  options={[
+                    { label: "Cloudflare Workers", value: "cloudflare" },
+                    { label: "Vercel Edge", value: "vercel" },
+                    { label: "Fly.io", value: "fly" },
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">Slider</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <FormField label="Replicas" htmlFor="demo-replicas">
+                  <Slider name="demo-replicas" min={1} max={10} step={1} value={3} />
+                </FormField>
+                <FormField label="CPU limit (%)" htmlFor="demo-cpu">
+                  <Slider name="demo-cpu" min={0} max={100} step={5} value={75} />
+                </FormField>
+              </div>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+              <h3 class="text-lg font-semibold text-foreground">OTP input</h3>
+              <FormField label="Verification code" description="Enter the 6-digit code from your authenticator app.">
+                <InputOtp name="demo-otp" length={6} />
+              </FormField>
             </div>
           </div>
         </section>

@@ -13,28 +13,32 @@ interface Props {
 const { slides, class: className = "" } = Astro.props as Props;
 ---
 
-<div class={['relative w-full overflow-hidden rounded-lg border border-border bg-terminal-surface/60', className].filter(Boolean).join(' ')} data-carousel>
-  <div class="flex transition-transform duration-500" data-carousel-track>
-    {slides.map((slide) => (
-      <div class="min-w-full flex-shrink-0 p-6">
-        {slide.image && (
-          <img src={slide.image} alt={slide.title ?? ''} class="mb-4 h-40 w-full rounded-md object-cover" loading="lazy" />
-        )}
-        {slide.title && (
-          <h3 class="font-mono text-sm uppercase tracking-wide text-terminal-cyan">{slide.title}</h3>
-        )}
-        {slide.description && (
-          <p class="mt-2 text-sm text-muted-foreground">{slide.description}</p>
-        )}
-      </div>
-    ))}
+<div class={['w-full rounded-lg border border-border bg-terminal-surface/60', className].filter(Boolean).join(' ')} data-carousel>
+  <div class="overflow-hidden">
+    <div class="flex transition-transform duration-500" data-carousel-track>
+      {slides.map((slide) => (
+        <div class="min-w-full flex-shrink-0 p-6">
+          {slide.image && (
+            <img src={slide.image} alt={slide.title ?? ''} class="mb-4 h-40 w-full rounded-md object-cover" loading="lazy" />
+          )}
+          {slide.title && (
+            <h3 class="font-mono text-sm uppercase tracking-wide text-terminal-cyan">{slide.title}</h3>
+          )}
+          {slide.description && (
+            <p class="mt-2 text-sm text-muted-foreground">{slide.description}</p>
+          )}
+        </div>
+      ))}
+    </div>
   </div>
-  <button type="button" data-carousel-prev class="absolute left-3 top-1/2 -translate-y-1/2 rounded border border-border bg-terminal-bg/80 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Prev</button>
-  <button type="button" data-carousel-next class="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-terminal-bg/80 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Next</button>
-  <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2" data-carousel-dots>
-    {slides.map((_, index) => (
-      <button type="button" data-carousel-dot={index} class="h-2 w-2 rounded-full bg-border transition-colors" aria-label={`Go to slide ${index + 1}`}></button>
-    ))}
+  <div class="flex items-center justify-between border-t border-border px-4 py-3">
+    <button type="button" data-carousel-prev class="rounded border border-border bg-terminal-bg/80 px-3 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">← Prev</button>
+    <div class="flex gap-2" data-carousel-dots>
+      {slides.map((_, index) => (
+        <button type="button" data-carousel-dot={index} class="h-2 w-2 rounded-full bg-border transition-colors" aria-label={`Go to slide ${index + 1}`}></button>
+      ))}
+    </div>
+    <button type="button" data-carousel-next class="rounded border border-border bg-terminal-bg/80 px-3 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-terminal-cyan hover:text-terminal-cyan">Next →</button>
   </div>
 </div>
 

@@ -29,3 +29,22 @@ const {
 >
   <slot />
 </button>
+
+<script is:inline>
+  (() => {
+    const btn = document.currentScript?.previousElementSibling;
+    if (!(btn instanceof HTMLElement) || btn.getAttribute("role") !== "switch") return;
+    btn.addEventListener("click", () => {
+      const current = btn.getAttribute("aria-checked") === "true";
+      const next = !current;
+      btn.setAttribute("aria-checked", String(next));
+      if (next) {
+        btn.classList.remove("border-border", "text-muted-foreground");
+        btn.classList.add("border-terminal-cyan", "bg-terminal-cyan/10", "text-terminal-cyan");
+      } else {
+        btn.classList.add("border-border", "text-muted-foreground");
+        btn.classList.remove("border-terminal-cyan", "bg-terminal-cyan/10", "text-terminal-cyan");
+      }
+    });
+  })();
+</script>

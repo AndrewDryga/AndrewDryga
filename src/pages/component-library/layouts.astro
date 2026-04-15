@@ -7,6 +7,9 @@ import Breadcrumb from "@/components/ui/Breadcrumb.astro";
 import BreadcrumbItem from "@/components/ui/BreadcrumbItem.astro";
 import Sidebar from "@/components/ui/Sidebar.astro";
 import HamburgerMenu from "@/components/ui/HamburgerMenu.astro";
+import AspectRatio from "@/components/ui/AspectRatio.astro";
+import NavigationMenu from "@/components/ui/NavigationMenu.astro";
+import ResizablePanel from "@/components/ui/ResizablePanel.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -209,6 +212,109 @@ const navigationLinks = [
                 Animated icon respects reduced motion and keeps 44px targets.
               </p>
             </div>
+          </div>
+        </section>
+
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground">
+              Aspect ratio
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Maintain consistent proportions for media and embedded content
+              across different container widths.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <div class="border border-border rounded-lg p-4 bg-card space-y-3">
+              <p class="font-mono text-xs text-muted-foreground">16:9</p>
+              <AspectRatio ratio={16 / 9}>
+                <div class="w-full h-full bg-terminal-surface rounded flex items-center justify-center font-mono text-sm text-terminal-cyan">
+                  16 : 9
+                </div>
+              </AspectRatio>
+            </div>
+            <div class="border border-border rounded-lg p-4 bg-card space-y-3">
+              <p class="font-mono text-xs text-muted-foreground">4:3</p>
+              <AspectRatio ratio={4 / 3}>
+                <div class="w-full h-full bg-terminal-surface rounded flex items-center justify-center font-mono text-sm text-terminal-green">
+                  4 : 3
+                </div>
+              </AspectRatio>
+            </div>
+            <div class="border border-border rounded-lg p-4 bg-card space-y-3">
+              <p class="font-mono text-xs text-muted-foreground">1:1</p>
+              <AspectRatio ratio={1}>
+                <div class="w-full h-full bg-terminal-surface rounded flex items-center justify-center font-mono text-sm text-terminal-yellow">
+                  1 : 1
+                </div>
+              </AspectRatio>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground">
+              Navigation menu
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Structured navigation with grouped sections and optional
+              descriptions for complex site maps.
+            </p>
+          </header>
+
+          <div class="border border-border rounded-lg p-6 bg-card">
+            <NavigationMenu
+              sections={[
+                {
+                  title: "Getting started",
+                  items: [
+                    { label: "Introduction", href: "#", description: "Overview of the component library" },
+                    { label: "Installation", href: "#", description: "Set up your development environment" },
+                    { label: "Configuration", href: "#", description: "Customize tokens and theme" },
+                  ],
+                },
+                {
+                  title: "Components",
+                  items: [
+                    { label: "Buttons", href: "#" },
+                    { label: "Cards", href: "#" },
+                    { label: "Forms", href: "#" },
+                    { label: "Dialogs", href: "#" },
+                  ],
+                },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground">
+              Resizable panel
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Drag-to-resize split pane for editor and dashboard layouts.
+            </p>
+          </header>
+
+          <div class="border border-border rounded-lg bg-card overflow-hidden">
+            <ResizablePanel min={180} max={500} initial={280} side="left">
+              <div class="h-48 p-4 font-mono text-sm">
+                <p class="text-terminal-cyan mb-2">Sidebar</p>
+                <div class="space-y-1 text-xs text-muted-foreground">
+                  <div>├── components/</div>
+                  <div>├── pages/</div>
+                  <div>├── lib/</div>
+                  <div>└── styles/</div>
+                </div>
+              </div>
+            </ResizablePanel>
+            <p class="text-xs text-muted-foreground font-mono p-4 border-t border-border">
+              Drag the handle to resize. Constrained between min and max pixel widths.
+            </p>
           </div>
         </section>
 

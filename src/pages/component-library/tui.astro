@@ -13,6 +13,7 @@ import TerminalWindow from "@/components/ui/TerminalWindow.astro";
 import TerminalTree from "@/components/ui/TerminalTree.astro";
 import TypingLooper from "@/components/ui/TypingLooper.astro";
 import TerminalPrompt from "@/components/TerminalPrompt.astro";
+import Sheet from "@/components/ui/Sheet.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -619,6 +620,57 @@ const asciiHeading = [
             </div>
           </div>
         </section>
+        <section id="sheet" class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Sheet</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Slide-out panel from the edge of the screen. Similar to Drawer
+              but designed for settings panels and auxiliary content.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Sheet
+                title="Notification preferences"
+                description="Choose which events trigger alerts."
+                triggerLabel="Open left sheet"
+                side="left"
+              >
+                <div class="space-y-3 font-mono text-sm text-muted-foreground">
+                  <div class="flex justify-between"><span>Deploy success</span><span class="text-terminal-green">On</span></div>
+                  <div class="flex justify-between"><span>Deploy failure</span><span class="text-terminal-green">On</span></div>
+                  <div class="flex justify-between"><span>PR comments</span><span class="text-muted-foreground">Off</span></div>
+                </div>
+                <div slot="footer" class="flex justify-end">
+                  <Button variant="outline-primary" size="sm">Save preferences</Button>
+                </div>
+              </Sheet>
+              <p class="text-xs font-mono text-muted-foreground">
+                Slides in from the left edge.
+              </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6 space-y-4">
+              <Sheet
+                title="Quick inspector"
+                description="Inspect element properties without leaving context."
+                triggerLabel="Open right sheet"
+                side="right"
+              >
+                <div class="space-y-2 font-mono text-xs text-muted-foreground">
+                  <div>Element: <span class="text-terminal-cyan">&lt;Button&gt;</span></div>
+                  <div>Variant: <span class="text-terminal-cyan">outline-primary</span></div>
+                  <div>Size: <span class="text-terminal-cyan">sm</span></div>
+                  <div>Classes: <span class="text-terminal-green">4 applied</span></div>
+                </div>
+              </Sheet>
+              <p class="text-xs font-mono text-muted-foreground">
+                Slides in from the right edge.
+              </p>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </section>

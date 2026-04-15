@@ -11,6 +11,22 @@ import Button from "@/components/ui/Button.astro";
 import DropdownMenu from "@/components/ui/DropdownMenu.astro";
 import Tabs from "@/components/ui/Tabs.astro";
 import Tooltip from "@/components/ui/Tooltip.astro";
+import Avatar from "@/components/ui/Avatar.astro";
+import Card from "@/components/ui/Card.astro";
+import CardHeader from "@/components/ui/CardHeader.astro";
+import CardTitle from "@/components/ui/CardTitle.astro";
+import CardDescription from "@/components/ui/CardDescription.astro";
+import CardContent from "@/components/ui/CardContent.astro";
+import CardFooter from "@/components/ui/CardFooter.astro";
+import Carousel from "@/components/ui/Carousel.astro";
+import Calendar from "@/components/ui/Calendar.astro";
+import Collapsible from "@/components/ui/Collapsible.astro";
+import HoverCard from "@/components/ui/HoverCard.astro";
+import Menubar from "@/components/ui/Menubar.astro";
+import Popover from "@/components/ui/Popover.astro";
+import ScrollArea from "@/components/ui/ScrollArea.astro";
+import Toggle from "@/components/ui/Toggle.astro";
+import ToggleGroup from "@/components/ui/ToggleGroup.astro";
 import CodeExample from "@/components/CodeExample.astro";
 import ProjectCard from "@/components/ProjectCard.astro";
 import { featuredProjects } from "@/data/projects";
@@ -564,6 +580,418 @@ import { formatPublishDate } from "@/lib/blog";
               <p class="text-xs font-mono text-muted-foreground">
                 Tabs swap panels with a light script that respects reduced
                 motion preferences.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Avatar -->
+        <section id="avatar" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Avatar</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              User profile pictures with image, initials, and size variants.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <div>
+              <div class="flex flex-wrap items-end gap-4 mb-2">
+                <Avatar src="/avatar.jpeg" alt="Andrew Dryga" size="lg" />
+                <Avatar src="/avatar.jpeg" alt="Andrew Dryga" size="md" />
+                <Avatar src="/avatar.jpeg" alt="Andrew Dryga" size="sm" />
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Image avatars — lg, md, sm
+              </p>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-end gap-4 mb-2">
+                <Avatar initials="AD" size="lg" />
+                <Avatar initials="JD" size="md" />
+                <Avatar initials="NK" size="sm" />
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Initials fallback when no image is available
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card primitives -->
+        <section id="card-primitives" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Card primitives</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Composable card sub-components for structured content surfaces.
+              Use these when ProjectCard or BlogCard don't fit your layout.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Deploy pipeline</CardTitle>
+                <CardDescription>CI/CD status for main branch</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div class="space-y-2 font-mono text-sm">
+                  <div class="text-terminal-green">✓ Build passed</div>
+                  <div class="text-terminal-green">✓ Tests passed</div>
+                  <div class="text-terminal-cyan">▸ Deploying...</div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <span class="text-xs text-muted-foreground font-mono">Last run · 3 min ago</span>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resource usage</CardTitle>
+                <CardDescription>Current cluster metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div class="space-y-2 font-mono text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-muted-foreground">CPU</span>
+                    <span class="text-terminal-cyan">42%</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-muted-foreground">Memory</span>
+                    <span class="text-terminal-yellow">78%</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-muted-foreground">Disk</span>
+                    <span class="text-terminal-green">23%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick note</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p class="text-sm text-muted-foreground">
+                  Cards compose from Header, Title, Description, Content, and Footer slots.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button size="sm" variant="outline-primary">View details</Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </section>
+
+        <!-- Carousel -->
+        <section id="carousel" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Carousel</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Slide through content with keyboard-navigable prev/next controls.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <Carousel
+              slides={[
+                { title: "Astro", description: "Static site generation with island architecture." },
+                { title: "Tailwind CSS", description: "Utility-first styling for rapid prototyping." },
+                { title: "TypeScript", description: "Type-safe development with excellent tooling." },
+                { title: "Cloudflare Workers", description: "Edge-first serverless deployment." },
+              ]}
+            />
+          </div>
+        </section>
+
+        <!-- Calendar -->
+        <section id="calendar" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Calendar</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Month-view date picker with keyboard navigation and terminal styling.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="bg-card border border-border rounded-lg p-6">
+              <Calendar />
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6 space-y-3">
+              <h3 class="font-mono text-xs uppercase tracking-wide text-terminal-cyan">
+                Usage
+              </h3>
+              <ul class="space-y-2 text-sm text-muted-foreground font-mono">
+                <li>• Arrow keys navigate between days.</li>
+                <li>• Click or Enter selects a date.</li>
+                <li>• Month navigation via chevron buttons.</li>
+                <li>• Pass <code class="bg-terminal-surface px-1 rounded">value</code> for a pre-selected date.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Collapsible -->
+        <section id="collapsible" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Collapsible</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Single expand/collapse trigger for progressive disclosure of content.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="bg-card border border-border rounded-lg p-6">
+              <Collapsible summary="View deployment logs" defaultOpen>
+                <div class="font-mono text-sm space-y-1 text-muted-foreground">
+                  <div class="text-terminal-green">✓ Dependencies installed (12s)</div>
+                  <div class="text-terminal-green">✓ Build completed (8s)</div>
+                  <div class="text-terminal-cyan">▸ Deployed to edge (3s)</div>
+                </div>
+              </Collapsible>
+            </div>
+            <div class="bg-card border border-border rounded-lg p-6">
+              <Collapsible summary="Environment variables">
+                <div class="font-mono text-sm space-y-1 text-muted-foreground">
+                  <div>DATABASE_URL=<span class="text-terminal-cyan">••••••</span></div>
+                  <div>API_KEY=<span class="text-terminal-cyan">••••••</span></div>
+                  <div>NODE_ENV=<span class="text-terminal-green">production</span></div>
+                </div>
+              </Collapsible>
+            </div>
+          </div>
+        </section>
+
+        <!-- HoverCard -->
+        <section id="hover-card" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Hover card</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Lightweight popover on hover for quick previews without navigation.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex flex-wrap gap-4">
+              <HoverCard>
+                <span slot="trigger" class="text-terminal-cyan underline underline-offset-4 cursor-pointer font-mono text-sm">
+                  @andrewdryga
+                </span>
+                <div class="space-y-2">
+                  <p class="font-mono text-sm text-foreground font-semibold">Andrew Dryga</p>
+                  <p class="text-xs text-muted-foreground">Staff engineer focused on Elixir, distributed systems, and developer tooling.</p>
+                </div>
+              </HoverCard>
+              <HoverCard>
+                <span slot="trigger" class="text-terminal-green underline underline-offset-4 cursor-pointer font-mono text-sm">
+                  elixir-lang
+                </span>
+                <div class="space-y-2">
+                  <p class="font-mono text-sm text-foreground font-semibold">Elixir</p>
+                  <p class="text-xs text-muted-foreground">Dynamic, functional language for building scalable and maintainable applications.</p>
+                </div>
+              </HoverCard>
+            </div>
+          </div>
+        </section>
+
+        <!-- Menubar -->
+        <section id="menubar" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Menubar</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Horizontal menu bar with grouped dropdown actions, inspired by
+              desktop editor menubars.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <Menubar
+              groups={[
+                {
+                  label: "File",
+                  items: [
+                    { label: "New file", shortcut: "⌘N" },
+                    { label: "Open", shortcut: "⌘O" },
+                    { label: "Save", shortcut: "⌘S" },
+                  ],
+                },
+                {
+                  label: "Edit",
+                  items: [
+                    { label: "Undo", shortcut: "⌘Z" },
+                    { label: "Redo", shortcut: "⇧⌘Z" },
+                    { label: "Find", shortcut: "⌘F" },
+                  ],
+                },
+                {
+                  label: "View",
+                  items: [
+                    { label: "Terminal", shortcut: "⌃`" },
+                    { label: "Sidebar", shortcut: "⌘B" },
+                    { label: "Zen mode", shortcut: "⌘K Z" },
+                  ],
+                },
+              ]}
+            />
+            <p class="text-xs text-muted-foreground font-mono mt-4">
+              Click a menu label to reveal actions with keyboard shortcuts.
+            </p>
+          </div>
+        </section>
+
+        <!-- Popover -->
+        <section id="popover" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Popover</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Click-triggered floating content panel for settings, filters, or
+              inline actions.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6">
+            <div class="flex flex-wrap gap-4">
+              <Popover triggerLabel="Filter options">
+                <div class="space-y-3 font-mono text-sm">
+                  <p class="text-foreground font-semibold">Filters</p>
+                  <div class="space-y-2 text-muted-foreground">
+                    <div>Status: <span class="text-terminal-green">Active</span></div>
+                    <div>Region: <span class="text-terminal-cyan">All</span></div>
+                    <div>Type: <span class="text-terminal-yellow">Production</span></div>
+                  </div>
+                </div>
+              </Popover>
+              <Popover triggerLabel="Quick settings">
+                <div class="space-y-2 font-mono text-sm text-muted-foreground">
+                  <p class="text-foreground font-semibold">Settings</p>
+                  <p>Theme: <span class="text-terminal-cyan">Terminal dark</span></p>
+                  <p>Font: <span class="text-terminal-cyan">JetBrains Mono</span></p>
+                </div>
+              </Popover>
+            </div>
+          </div>
+        </section>
+
+        <!-- ScrollArea -->
+        <section id="scroll-area" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Scroll area</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Styled scrollable container with consistent overflow treatment
+              across browsers.
+            </p>
+          </header>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="bg-card border border-border rounded-lg p-6">
+              <p class="font-mono text-sm text-muted-foreground mb-3">Log output</p>
+              <ScrollArea height="200px">
+                <div class="font-mono text-xs space-y-1 text-muted-foreground pr-4">
+                  {[
+                    "[00:01] Starting build...",
+                    "[00:02] Compiling TypeScript",
+                    "[00:03] Processing 42 routes",
+                    "[00:04] Optimizing images",
+                    "[00:05] Generating sitemap",
+                    "[00:06] Building CSS bundle",
+                    "[00:07] Tree-shaking unused code",
+                    "[00:08] Minifying HTML output",
+                    "[00:09] Compressing assets",
+                    "[00:10] Writing to dist/",
+                    "[00:11] Build complete!",
+                    "[00:12] Starting deploy...",
+                    "[00:13] Uploading to edge",
+                    "[00:14] Purging CDN cache",
+                    "[00:15] Deploy successful!",
+                  ].map((line) => <div>{line}</div>)}
+                </div>
+              </ScrollArea>
+            </div>
+            <div class="bg-card border border-border rounded-lg p-6">
+              <p class="font-mono text-sm text-muted-foreground mb-3">File list</p>
+              <ScrollArea height="200px">
+                <div class="font-mono text-xs space-y-1 pr-4">
+                  {[
+                    "src/components/BaseLayout.astro",
+                    "src/components/Header.astro",
+                    "src/components/BlogCard.astro",
+                    "src/components/ProjectCard.astro",
+                    "src/components/ui/Button.astro",
+                    "src/components/ui/Badge.astro",
+                    "src/components/ui/Tabs.astro",
+                    "src/components/ui/Dialog.astro",
+                    "src/components/ui/Drawer.astro",
+                    "src/pages/index.astro",
+                    "src/pages/blog/index.astro",
+                    "src/pages/projects/index.astro",
+                    "src/lib/blog.ts",
+                    "src/data/projects.ts",
+                    "src/styles/global.css",
+                  ].map((file) => (
+                    <div class="text-terminal-cyan hover:text-foreground transition-colors cursor-pointer">{file}</div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Toggle & ToggleGroup -->
+        <section id="toggle" class="space-y-8">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">
+              Toggle &amp; toggle group
+            </h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Binary on/off buttons and exclusive or multi-select button groups.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <div>
+              <div class="flex flex-wrap gap-3 mb-2">
+                <Toggle pressed>Bold</Toggle>
+                <Toggle>Italic</Toggle>
+                <Toggle>Underline</Toggle>
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Individual toggles — click to change state
+              </p>
+            </div>
+            <div>
+              <div class="mb-2">
+                <ToggleGroup
+                  type="single"
+                  value="list"
+                  options={[
+                    { label: "Grid", value: "grid" },
+                    { label: "List", value: "list" },
+                    { label: "Board", value: "board" },
+                  ]}
+                />
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Single-select group — only one option active at a time
+              </p>
+            </div>
+            <div>
+              <div class="mb-2">
+                <ToggleGroup
+                  type="multiple"
+                  value={["ts", "css"]}
+                  options={[
+                    { label: "TypeScript", value: "ts" },
+                    { label: "CSS", value: "css" },
+                    { label: "HTML", value: "html" },
+                    { label: "MDX", value: "mdx" },
+                  ]}
+                />
+              </div>
+              <p class="text-xs text-muted-foreground font-mono">
+                Multi-select group — combine multiple options
               </p>
             </div>
           </div>

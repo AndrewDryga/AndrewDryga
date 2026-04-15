@@ -54,6 +54,7 @@ const descriptionId = description ? `${id}-description` : undefined;
   aria-describedby={descriptionId}
   data-dialog-root
 >
+  <div class="dialog-backdrop" data-dialog-backdrop></div>
   <div
     class={`dialog-panel ${panelSizeClass} w-full font-mono text-sm text-foreground`}
     data-dialog-content
@@ -147,6 +148,7 @@ const descriptionId = description ? `${id}-description` : undefined;
     if (!(trigger instanceof HTMLElement)) return;
 
     const panel = dialog.querySelector("[data-dialog-content]");
+    const backdrop = dialog.querySelector("[data-dialog-backdrop]");
     const closeButtons = dialog.querySelectorAll("[data-dialog-close]");
     const defaultButton = dialog.querySelector("[data-dialog-default]");
 
@@ -155,6 +157,10 @@ const descriptionId = description ? `${id}-description` : undefined;
     }
 
     const open = () => {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.documentElement.style.paddingRight = scrollbarWidth + "px";
+      }
       if (!dialog.open) {
         try {
           dialog.showModal();
@@ -165,6 +171,7 @@ const descriptionId = description ? `${id}-description` : undefined;
       requestAnimationFrame(() => {
         dialog.setAttribute("data-open", "true");
         document.documentElement.classList.add("dialog-open");
+        backdrop?.setAttribute("data-open", "true");
         panel?.setAttribute("data-open", "true");
         if (panel instanceof HTMLElement) {
           panel.focus({ preventScroll: true });
@@ -174,24 +181,38 @@ const descriptionId = description ? `${id}-description` : undefined;
       });
     };
 
+    let closing = false;
     const close = () => {
-      if (dialog.open) {
-        if (typeof dialog.close === "function") {
-          dialog.close();
-        } else {
-          dialog.removeAttribute("open");
-        }
-      }
+      if (closing) return;
+      closing = true;
       dialog.removeAttribute("data-open");
       document.documentElement.classList.remove("dialog-open");
+      document.documentElement.style.paddingRight = "";
+      backdrop?.removeAttribute("data-open");
       panel?.removeAttribute("data-open");
-      trigger.focus();
+      const finish = () => {
+        closing = false;
+        if (dialog.open) {
+          if (typeof dialog.close === "function") {
+            dialog.close();
+          } else {
+            dialog.removeAttribute("open");
+          }
+        }
+        trigger.focus();
+      };
+      if (panel) {
+        panel.addEventListener("transitionend", (e) => {
+          if (e.target === panel && e.propertyName === "opacity") finish();
+        }, { once: true });
+      }
+      setTimeout(finish, 300);
     };
 
     trigger.addEventListener("click", open);
     closeButtons.forEach((btn) => btn.addEventListener("click", close));
     dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) {
+      if (event.target === dialog || event.target === backdrop) {
         close();
       }
     });
@@ -221,8 +242,6 @@ const descriptionId = description ? `${id}-description` : undefined;
     border: 0;
     background: transparent;
     color: inherit;
-    opacity: 0;
-    transition: opacity 180ms ease-out;
     z-index: 50;
     width: 100vw;
     min-height: 100dvh;
@@ -234,22 +253,33 @@ const descriptionId = description ? `${id}-description` : undefined;
   }
 
   dialog.dialog-root::backdrop {
-    background: hsl(var(--terminal-bg) / 0.7);
-    backdrop-filter: blur(12px);
+    background: transparent;
   }
 
-  dialog.dialog-root[data-open="true"] {
+  .dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    background: hsl(var(--terminal-bg) / 0.7);
+    backdrop-filter: blur(12px);
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 250ms ease-in-out;
+  }
+
+  .dialog-backdrop[data-open="true"] {
     opacity: 1;
   }
 
   .dialog-panel {
+    position: relative;
+    z-index: 1;
     border-radius: 0.75rem;
     border: 1px solid hsl(var(--border));
     background: hsl(var(--terminal-bg));
     box-shadow: 0 0 20px hsl(var(--terminal-cyan) / 0.2);
     transition:
-      transform 180ms ease-out,
-      opacity 180ms ease-out;
+      transform 250ms ease-in-out,
+      opacity 250ms ease-in-out;
     transform: translateY(-6px) scale(0.98);
     opacity: 0;
     outline: none;

@@ -14,26 +14,82 @@ const { groups, class: className = "" } = Astro.props as Props;
 
 <div
   class={[
-    "inline-flex items-center gap-2 rounded-md border border-border bg-terminal-surface/80 p-1 font-mono text-xs",
+    "inline-flex items-center rounded-md border border-border bg-terminal-surface/80 p-1 font-mono text-xs",
     className,
   ].filter(Boolean).join(" ")}
+  data-menubar
 >
   {groups.map((group) => (
-    <div class="flex items-center gap-2">
-      <span class="px-2 py-1 text-muted-foreground uppercase tracking-wide">
+    <div class="relative" data-menubar-group>
+      <button
+        type="button"
+        class="rounded px-3 py-1.5 text-muted-foreground uppercase tracking-wide transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan/40"
+        data-menubar-trigger
+      >
         {group.label}
-      </span>
-      {group.items.map((item) => (
-        <a
-          href={item.href ?? "#"}
-          class="rounded px-2 py-1 text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
-        >
-          {item.label}
-          {item.shortcut && (
-            <span class="ml-2 text-[10px] text-muted-foreground">{item.shortcut}</span>
-          )}
-        </a>
-      ))}
+      </button>
+      <div
+        class="absolute left-0 top-full mt-1 z-50 min-w-[12rem] rounded-md border border-border bg-terminal-bg p-1 shadow-lg hidden"
+        data-menubar-menu
+      >
+        {group.items.map((item) => (
+          <a
+            href={item.href ?? "#"}
+            class="flex items-center justify-between gap-4 rounded px-3 py-2 text-foreground transition-colors hover:bg-terminal-cyan/10 hover:text-terminal-cyan"
+          >
+            <span>{item.label}</span>
+            {item.shortcut && (
+              <kbd class="text-[10px] text-muted-foreground bg-muted border border-border rounded px-1.5 py-0.5 leading-tight">{item.shortcut}</kbd>
+            )}
+          </a>
+        ))}
+      </div>
     </div>
   ))}
 </div>
+
+<script is:inline>
+  (() => {
+    const bar = document.currentScript?.previousElementSibling;
+    if (!bar) return;
+    const groups = bar.querySelectorAll("[data-menubar-group]");
+
+    const closeAll = () => {
+      groups.forEach((g) => {
+        const menu = g.querySelector("[data-menubar-menu]");
+        if (menu) menu.classList.add("hidden");
+      });
+    };
+
+    groups.forEach((group) => {
+      const trigger = group.querySelector("[data-menubar-trigger]");
+      const menu = group.querySelector("[data-menubar-menu]");
+      if (!trigger || !menu) return;
+
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = !menu.classList.contains("hidden");
+        closeAll();
+        if (!isOpen) menu.classList.remove("hidden");
+      });
+
+      group.addEventListener("mouseenter", () => {
+        const anyOpen = Array.from(groups).some(
+          (g) => !g.querySelector("[data-menubar-menu]")?.classList.contains("hidden")
+        );
+        if (anyOpen) {
+          closeAll();
+          menu.classList.remove("hidden");
+        }
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!bar.contains(e.target)) closeAll();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAll();
+    });
+  })();
+</script>

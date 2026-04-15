@@ -5,6 +5,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
 import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
 import Button from "@/components/ui/Button.astro";
 import BreakpointCard from "@/components/ui/BreakpointCard.astro";
+import Separator from "@/components/ui/Separator.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -317,6 +318,34 @@ const surfacePalette = [
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section class="space-y-6" id="separator">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold text-foreground">Separator</h2>
+            <p class="text-sm text-muted-foreground max-w-2xl">
+              Visual divider for splitting content sections, available in
+              horizontal and vertical orientations.
+            </p>
+          </header>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <div class="space-y-4">
+              <p class="text-sm text-foreground">Horizontal separator</p>
+              <Separator />
+              <p class="text-sm text-muted-foreground">Content below the divider.</p>
+            </div>
+            <div class="flex items-center gap-4 h-8">
+              <span class="text-sm text-foreground">Left</span>
+              <Separator orientation="vertical" />
+              <span class="text-sm text-foreground">Center</span>
+              <Separator orientation="vertical" />
+              <span class="text-sm text-foreground">Right</span>
+            </div>
+            <p class="text-xs text-muted-foreground font-mono">
+              Use orientation="vertical" for inline dividers between sibling elements.
+            </p>
           </div>
         </section>
 

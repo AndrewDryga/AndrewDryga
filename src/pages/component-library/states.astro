@@ -6,6 +6,7 @@ import ComponentLibraryNav from "@/components/ComponentLibraryNav.astro";
 import Alert from "@/components/ui/Alert.astro";
 import Button from "@/components/ui/Button.astro";
 import Skeleton from "@/components/ui/Skeleton.astro";
+import Progress from "@/components/ui/Progress.astro";
 import TerminalSpinner from "@/components/TerminalSpinner.astro";
 import TerminalProgressBar from "@/components/TerminalProgressBar.astro";
 import EmptyState from "@/components/EmptyState.astro";
@@ -126,6 +127,36 @@ const canonical = new URL("/component-library/states/", site).toString();
                 <div class="text-muted-foreground">○ Deploy to production</div>
               </div>
             </div>
+          </div>
+
+          <div class="bg-card border border-border rounded-lg p-6 space-y-6">
+            <h3 class="text-lg font-semibold text-foreground">Progress bar</h3>
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <div class="flex justify-between font-mono text-xs text-muted-foreground">
+                  <span>Upload</span>
+                  <span>25%</span>
+                </div>
+                <Progress value={25} />
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between font-mono text-xs text-muted-foreground">
+                  <span>Build</span>
+                  <span>67%</span>
+                </div>
+                <Progress value={67} />
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between font-mono text-xs text-muted-foreground">
+                  <span>Deploy</span>
+                  <span>100%</span>
+                </div>
+                <Progress value={100} />
+              </div>
+            </div>
+            <p class="text-xs text-muted-foreground font-mono">
+              Semantic progress bar with value and max props. Renders with ARIA attributes.
+            </p>
           </div>
 
           <DoAndDont

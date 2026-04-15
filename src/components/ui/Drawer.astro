@@ -174,6 +174,10 @@ const descriptionId = description ? `${id}-description` : undefined;
           ? document.activeElement
           : null;
       root.hidden = false;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.documentElement.style.paddingRight = scrollbarWidth + "px";
+      }
       requestAnimationFrame(() => {
         document.documentElement.classList.add("drawer-open");
         overlay.classList.add("drawer-overlay--visible");
@@ -196,22 +200,14 @@ const descriptionId = description ? `${id}-description` : undefined;
       panel.removeAttribute("data-open");
       trigger.setAttribute("aria-expanded", "false");
       document.documentElement.classList.remove("drawer-open");
-      const afterTransition = () => {
-        root.hidden = true;
-        overlay.removeEventListener("transitionend", afterTransition);
-      };
-      const computed = window.getComputedStyle(overlay);
-      const durations = computed.transitionDuration
-        .split(",")
-        .map((value) => Number.parseFloat(value));
-      const hasTransition = durations.some((value) => value > 0);
-      if (hasTransition) {
-        overlay.addEventListener("transitionend", afterTransition, {
-          once: true,
-        });
-      } else {
-        root.hidden = true;
-      }
+      document.documentElement.style.paddingRight = "";
+      const afterTransition = () => { root.hidden = true; };
+      panel.addEventListener("transitionend", (e) => {
+        if (e.target === panel && e.propertyName === "transform") {
+          afterTransition();
+        }
+      }, { once: true });
+      setTimeout(afterTransition, 300);
       if (lastFocused instanceof HTMLElement) {
         lastFocused.focus({ preventScroll: true });
       } else {
@@ -258,8 +254,6 @@ const descriptionId = description ? `${id}-description` : undefined;
     padding-block: clamp(1rem, 3vw, 2rem);
     padding-inline: clamp(1.25rem, 3vw, 2rem);
     background: transparent;
-    opacity: 0;
-    transition: opacity 200ms ease-out;
     box-sizing: border-box;
     width: 100vw;
     min-height: 100dvh;
@@ -272,6 +266,12 @@ const descriptionId = description ? `${id}-description` : undefined;
     background: hsl(var(--terminal-bg) / 0.7);
     backdrop-filter: blur(12px);
     z-index: 0;
+    opacity: 0;
+    transition: opacity 250ms ease-in-out;
+  }
+
+  .drawer-overlay--visible::before {
+    opacity: 1;
   }
 
   .drawer-overlay > * {
@@ -287,10 +287,6 @@ const descriptionId = description ? `${id}-description` : undefined;
     justify-content: flex-end;
   }
 
-  .drawer-overlay--visible {
-    opacity: 1;
-  }
-
   .drawer-panel {
     position: relative;
     width: min(100vw - clamp(2rem, 8vw, 6rem), var(--drawer-max-width, 24rem));
@@ -302,8 +298,8 @@ const descriptionId = description ? `${id}-description` : undefined;
     padding: 1.5rem;
     transform: translateX(100%);
     transition:
-      transform 220ms ease-out,
-      opacity 200ms ease-out;
+      transform 250ms ease-in-out,
+      opacity 250ms ease-in-out;
     opacity: 0;
     display: flex;
     flex-direction: column;
@@ -319,7 +315,8 @@ const descriptionId = description ? `${id}-description` : undefined;
     align-self: flex-start;
   }
 
-  .drawer-panel[data-open="true"] {
+  .drawer-panel[data-open="true"],
+  .drawer-root[data-side="left"] .drawer-panel[data-open="true"] {
     transform: translateX(0);
     opacity: 1;
   }
