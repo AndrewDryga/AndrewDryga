@@ -1,0 +1,140 @@
+---
+title: "Design APIs with CDN in mind"
+shortTitle: "Scalable APIs with CDN"
+description: "Most APIs are designed for developer convenience, not cacheability. A few structural changes can make CDN do the heavy lifting for you."
+publishDate: 2026-04-16
+updatedDate: 2026-04-16
+category: "Architecture"
+readTime: "4 min read"
+cardGradient: "from-terminal-green to-terminal-yellow"
+tags:
+  - Architecture
+  - APIs
+  - Caching
+  - Performance
+  - Engineering
+draft: false
+
+---
+
+You've been building your product for a year. Most of the time you had 4 active users, but then ThePrimeagen tweeted about it and suddenly you have this new cool problem - how do you handle all this traffic?
+
+There are many answers to that question, but one of your best options is CDN caching. Some of the most popular apps in the world don't spend a ton on servers - they defer the spend to CDN instead. When you can pull that off, handling high load feels almost simple. One silver bullet that solves your scaling problems and makes them cheaper too.
+
+But APIs designed without caching in mind get an awful cache hit rate. And it's usually because you return lists of objects everywhere. The payloads are huge. One tiny update invalidates an entire response. Fresh data keeps arriving so you can't set high TTLs without hurting user experience. The frontend expects one convenient blob. Origin load stays high. Database utilization keeps creeping up. And you start thinking about adding one more Redis cache layer.
+
+Instead of doing that, look at each of your API endpoints and ask yourself:
+
+* What exactly causes this response to change?
+* Does the whole payload really need to be regenerated when one small thing changes?
+* If traffic doubled tomorrow, would CDN absorb it or would origin feel all of it?
+
+If the answer to any of those is uncomfortable, you have an API design problem, not a caching problem.
+
+## The most common mistake: returning convenient blobs
+
+Imagine we need to return a list of matches that a user played. A very common API shape looks like this:
+
+```
+GET /users/:user_id/matches
+```
+
+And the response is a giant JSON blob:
+
+```json
+{
+  "data": [
+    { "id": "1", "..." : "..." },
+    { "id": "2", "..." : "..." },
+    { "id": "3", "..." : "..." }
+  ],
+  "pagination": { "...": "..." }
+}
+```
+
+Convenient for the client, terrible for caching. This one response mixes data with very different lifecycles: the list itself changes whenever a new match appears, the order changes, pagination state changes, but each individual match object may be old and stable. The whole thing is user-specific.
+
+One new match forces you to invalidate the entire personalized response, even though 95% of the bytes inside it were identical to yesterday.
+
+## The fix: split mutable pointers from immutable resources
+
+Instead of serving a full list of match objects, serve a lightweight index of IDs:
+
+```
+GET /users/:user_id/matches/index
+```
+
+```json
+{
+  "match_ids": ["103", "102", "101"]
+}
+```
+
+Then serve each match independently:
+
+```
+GET /matches/:match_id
+```
+
+Now the caching story is dramatically better. The per-user index is small and changes often - give it a short TTL. The match objects are heavier, but once finalized they're immutable or close enough. Cache them aggressively.
+
+Yes it will make more requests, but on modern infrastructure HTTP/2 and HTTP/3 multiplex requests over a single connection, so the overhead per request is negligible - no head-of-line blocking, no new TCP handshakes, and each of those small requests can be served from CDN edge cache independently so the total bytes transferred actually *decrease* because you stop re-sending unchanged data.
+
+That one split alone often gets you more than any heroic cache tuning ever will.
+
+## Even better: make the list immutable too
+
+Once you see the index/object split, the next step is obvious - version the index. Instead of treating the user's match list as a mutable resource, treat it as a sequence of immutable snapshots:
+
+```
+GET /users/:user_id/matches/version
+GET /users/:user_id/matches/index?version=:version
+GET /matches/:match_id
+```
+
+`/version` is tiny and changes often. Give it a very short cache lifetime, or no cache at all - it can be a single Redis key. When the key is missing, return the current version (e.g. a timestamp) and write it back.
+
+The `?version=:version` parameter is perfect for cache-busting. When the version changes, the URL changes, and the CDN sees it as a brand new resource. `GET /users/:user_id/matches/index?version=8421` becomes immutable - once created, it never changes.
+
+`/matches/:match_id` is immutable too.
+
+At that point, your "dynamic" API starts looking like static content with a tiny mutable pointer in front of it. That is exactly what CDNs love. A CDN-friendly API usually has this structure:
+
+```
+pointer   → tiny, frequently changing, cheap to revalidate
+snapshot  → versioned, immutable, cache forever
+entities  → immutable or near-immutable, cache forever
+```
+
+Your goal should be this more often than people realize: not to make dynamic systems fast, but to make dynamic systems **look static** wherever possible.
+
+## Tell the CDN what to do
+
+The architecture above is useless if you don't set the right `Cache-Control` headers. Here's what each layer should look like:
+
+```
+# Pointer — changes often, revalidate quickly
+Cache-Control: public, max-age=5, stale-while-revalidate=30
+
+# Snapshot — versioned URL, never changes
+Cache-Control: public, max-age=31536000, immutable
+
+# Entity — stable once created
+Cache-Control: public, max-age=31536000, immutable
+```
+
+The `immutable` directive tells the CDN (and the browser) to never revalidate - the resource at this URL will not change, period. That's only safe when the version or ID is baked into the URL, which is exactly what the pointer/snapshot split gives you.
+
+`stale-while-revalidate` is the one that saves you during incidents. It says "serve the cached copy immediately, revalidate in the background." Your origin goes down for 5 minutes? Users don't notice - CDN keeps serving the last known pointer while it retries. When you come back up, the cache fills gradually instead of everything hitting origin at once.
+
+### Watch out for `Vary`
+
+One thing that quietly kills CDN caching is the `Vary` header. If your responses include `Vary: Authorization` or `Vary: Cookie`, most CDN providers will either cache a separate copy per unique header value (explosion of cache entries, terrible hit rate) or just skip caching entirely.
+
+The pointer/snapshot split helps here too. Your snapshots and entities don't need auth information to vary on - the user ID is already in the URL path. Keep `Vary` off those responses entirely and let the URL do the work.
+
+## Conclusions
+
+A good cache hit rate changes the behavior of the whole system. It reduces origin request volume, database reads, serialization work, CPU usage, egress costs, failure amplification during spikes, tail latency under load, and your perceived downtime.
+
+Stop thinking "What JSON is convenient to return?" and start asking "What shape of API lets the CDN do the most work?".
