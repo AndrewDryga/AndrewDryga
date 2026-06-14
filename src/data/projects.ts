@@ -174,7 +174,7 @@ export const allProjects: Project[] = [
     id: "coop",
     name: "Coop",
     description:
-      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach, mounts the repo at its real path, and drives a disk-backed task queue so a fleet can run to completion. In fusion mode one model governs, consults the other two read-only, and synthesizes the result - beating any single model on its own. A single static Go binary.",
+      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach and drives a disk-backed task queue so a fleet can run to completion.",
     impact: [
       "Secret shadowing: .env, keys, and secret dirs are empty and unwritable inside the box",
       "Unattended loop and fleet dispatch over a TASKS.md work queue",
