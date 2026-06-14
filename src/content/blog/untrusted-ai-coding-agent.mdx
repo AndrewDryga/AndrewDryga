@@ -1,0 +1,229 @@
+---
+title: "Running an AI coding agent you can't trust"
+shortTitle: "Untrusted AI agents"
+description: "You can't trust an AI coding agent, and you shouldn't have to. Put it in a sandbox where the worst case is boring: one repo damaged, no secrets exposed, and a VM you can rebuild in a minute."
+publishDate: 2026-06-11
+updatedDate: 2026-06-11
+category: "Engineering"
+readTime: "10 min read"
+cardGradient: "from-terminal-cyan to-terminal-green"
+tags:
+  - AI
+  - Agents
+  - Security
+  - Claude Code
+  - Gemini
+  - Codex
+  - Sandbox
+draft: true
+
+---
+
+I was a vibe-coding skeptic for a long time. Recently the models got good enough that I actually trust them to do what I want - under pretty pedantic supervision, but still.
+
+And isn't it annoying? You finally have something that can do the work for you, and you're still stuck at the computer babysitting every approval it asks for.
+
+I want it to just work so I can go focus on something else, without being interrupted every ten minutes. But I work on a lot of sensitive infrastructure, so I can't run these things in YOLO mode either. I genuinely don't enjoy the little adrenaline hit I get every time I let even the best model run unattended, knowing it can hallucinate its way into dropping a production database or taking something down.
+
+By default you get one of two extremes. Either the agent asks permission for everything and you spend the day as a human OK-button, or you pass `--dangerously-skip-permissions` and hand a shell on your laptop to a stochastic process.
+
+It's **safe but useless, or useful but terrifying.** At least for me.
+
+Some people frame this as a trust problem: can I trust the model? Wrong question. You can't, and you shouldn't have to. **Trust is not a property of the model. It's a property of the system around it.** Put the agent in a box where the worst thing it can do is cheap to undo, and whether you trust the model stops mattering.
+
+This article builds that box. A follow-up - [an OS for autonomous coding agents](/blog/os-for-coding-agents/) - is about what you do once you have it: leave it running for hours without babysitting it. You need the box first.
+
+One shortcut before we start: I packaged this whole setup as a single Go binary, [coop](https://github.com/AndrewDryga/coop). If you just want the box and not the theory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AndrewDryga/coop/main/install.sh | sh
+```
+
+The rest of this article is what `coop` does under the hood, written out as plain shell so nothing is hidden - because the point is the idea. Once you've seen it, you can roll your own in an afternoon or just run the tool.
+
+## Trust the sandbox, not the model
+
+Here's the thing about how agents fail: it's almost never malice. It's statistics. An `rm -rf` where a variable expanded to the wrong path. A helpful `git push --force` because the remote "looked stale". Your `.env` pasted into a bug report because the agent wanted to show you the failing config. Ask around - everyone has a story.
+
+You're not going to fix that with prompting. "Please be careful" is not a security boundary. The fix is the oldest idea in the book: least privilege, enforced by something the agent can't talk its way around. The agent should see exactly one thing - the repo it's working on. Not your home directory, not your SSH keys, not your browser profile, not the rest of your disk.
+
+"But don't the CLIs sandbox themselves now?" They do, and the built-in sandboxes are genuinely useful - [Claude Code's `/sandbox`](https://code.claude.com/docs/en/sandboxing) wraps bash in Seatbelt on macOS and bubblewrap on Linux, [Gemini CLI ships the same idea](https://geminicli.com/docs/cli/sandbox/) with configurable profiles. Turn them on. They're free.
+
+But read the fine print before you bet an unattended run on one. Claude Code's sandbox blocks *writes* outside the working directory - but *reads* of your entire disk, `~/.ssh` and `~/.aws/credentials` included, are allowed by default until you go and deny-list them yourself. So nothing actually stops the agent from SSHing into production to "investigate" something and breaking it. And if you use Tailscale SSH or Teleport, it's worse - the model can reach your whole fleet through them, and you might not even notice it happened.
+
+The sandbox also only covers bash subprocesses - not the harness itself, not the other tools. And every developer-friendly sandbox ships escape hatches on purpose: a retry-outside-the-sandbox flag, an excluded-commands list, a documented "if it gets in your way, turn it off" toggle. All of that is reasonable for interactive use, when you're sitting there watching. But for eight unattended hours I want the opposite default: nothing readable, nothing reachable, unless I explicitly put it there. That's a VM.
+
+Anthropic basically says this themselves - their docs recommend running `--dangerously-skip-permissions` only inside an isolated container. So let's build one.
+
+## A VM with one door
+
+On a Mac, the nicest option right now is Apple's [container](https://github.com/apple/container). It's open source, written in Swift, and runs every container as its own lightweight VM on Apple silicon - a real hypervisor boundary instead of a shared kernel, and it still boots in about a second. It needs macOS 26 and installs from a signed package on the releases page. On Docker or Podman everything below works the same; only the flags change.
+
+The image is four lines:
+
+```dockerfile
+FROM node:22
+RUN npm install -g @anthropic-ai/claude-code
+USER node
+WORKDIR /workspace
+```
+
+That `USER node` matters. Claude Code refuses to skip permissions as root - one of the rare cases where a tool protects you from yourself - so run as the unprivileged user the base image already ships.
+
+Build it and start an agent:
+
+```bash
+container system start
+container build -t agent-box .
+
+container run -it \
+  -v "$HOME/projects/myapp:/workspace" \
+  -v claude-home:/home/node/.claude \
+  agent-box \
+  claude --dangerously-skip-permissions
+```
+
+Two mounts, each doing one job:
+
+- The repo is bind-mounted at `/workspace`. That's the door. The agent edits real files, and you see the changes in your editor instantly.
+- `claude-home` is a named volume so you log in once and your credentials survive restarts. Prefer not to? Skip it and pass `ANTHROPIC_API_KEY` instead.
+
+Now do the honest thing and walk through the worst case - it's the only real way to judge a sandbox. The agent loses its mind and runs `rm -rf /`. What actually dies? A VM that rebuilds from a four-line Dockerfile, and the working copy of one repo - which is a `git clone` and a reflog away from coming back. Your OS isn't reachable. Your home directory isn't mounted. The blast radius is a directory you can restore in a minute.
+
+Want it even tighter? Don't mount anything. `git clone` inside the container and let the agent work on the copy. Now git is the only door between the agent and your world. I find the bind mount more practical day to day, but the clone is the right default for anything you'd call risky - and it closes the secret problem for free, which we'll get to.
+
+One hole first, though: that bind mount carried the whole repo into the VM - `.env` and all. Let's close it.
+
+## Keeping secrets out of reach
+
+"Give it the repo" almost always means "give it the repo except a few files": `.env`, `secrets/`, deploy keys, `terraform.tfvars`, `*.tfstate`.
+
+You'd think there's a setting for this. There isn't. The built-in sandboxes and the popular Seatbelt wrappers guard secrets in your *home* directory and leave a nested `project/.env` perfectly readable - masking secrets inside the working tree is a gap every tool I tried leaves to you. So we close it ourselves.
+
+There are two layers here, and they're not equally strong. The strong one is the filesystem. A path that was never mounted into the VM simply can't be read by anything inside it - not the file tools, not a clever bash one-liner, not a little python script the agent writes to "debug the config". The bytes aren't there.
+
+You could shadow those paths by hand, one `--tmpfs` flag at a time. But that's a demo, not a policy - it depends on you remembering every secret in every repo, every single time, and it breaks the first time you forget one. So let the launcher find them for you. Mine matches known names and extensions:
+
+```bash
+#!/bin/bash
+# bin/agent - start a sandboxed agent; secrets never enter the VM
+set -euo pipefail
+
+repo="$(git rev-parse --show-toplevel)"
+
+# Anything matching these never enters the VM.
+secrets=(
+  '.env' '.env.*' '*.secret' '*.secrets'
+  '*.tfvars' '*.tfstate' '*.tfstate.*'
+  '*.pem' '*.key' '*.p12' '*.pfx' '*.jks'
+  'id_rsa*' 'id_ed25519*' 'id_ecdsa*'
+  '.netrc' '.npmrc' '.pypirc' '.git-credentials'
+  'secrets' '.secrets' 'credentials' '.aws' '.kube' '.ssh' '.gnupg'
+)
+# Templates are fine to show the agent.
+allow=('*.example' '*.sample' '*.template')
+
+match=(-name "${secrets[0]}")
+for n in "${secrets[@]:1}"; do match+=(-o -name "$n"); done
+skip=()
+for n in "${allow[@]}"; do skip+=(! -name "$n"); done
+
+decoy="$(mktemp)"
+mounts=(-v "$repo:/workspace")
+count=0
+
+while IFS= read -r -d '' path; do
+  rel="${path#"$repo"/}"
+  if [ -d "$path" ]; then
+    mounts+=(--tmpfs "/workspace/$rel")
+  else
+    mounts+=(-v "$decoy:/workspace/$rel:ro")
+  fi
+  count=$((count + 1))
+done < <(find "$repo" -name .git -prune -o \( "${match[@]}" \) "${skip[@]}" -print0 -prune)
+
+echo "shadowed $count secret paths" >&2
+
+# Assemble the whole run as one array, then expand it once.
+run=(run --rm)
+[ -t 0 ] && run+=(-it)          # a tty only when we have one; headless runs skip it
+run+=("${mounts[@]}" -v claude-home:/home/node/.claude agent-box)
+exec container "${run[@]}" claude --dangerously-skip-permissions "$@"
+```
+
+(On Docker, replace `container` with `docker` - the flags are identical.)
+
+The mechanics are simple. Directories on the list get an empty tmpfs mounted over them, so inside the VM the path exists but is empty. Files get a read-only empty decoy on top, so `cat /workspace/.env` returns nothing and writing to it fails. `find` lists parents before children, so a `secrets/` tmpfs always lands before any decoy inside it. And the `allow` list handles the obvious false positive - `.env.example` is documentation, the agent *should* see it.
+
+Then verify it the way you verify any security control: try to break it. Drop `SECRET=hunter2` into `.env`, start the agent, and ask it to print the file any way it can. I did exactly that before writing this section - `cat`, `dd`, reading it from a script - and inside the VM every road leads to an empty file, and the write attempt dies with "Read-only file system".
+
+One honest limit before you lean on this: `find` runs once, at launch. It shadows what's on disk the moment the agent starts - it can't see a secret that shows up *later*, like a `git pull` that drags in a tracked config file, or a build step that writes a fresh `secrets/` halfway through the run. For a live working tree, that's the price of watching the agent's edits land in your editor in real time. The durable fix gives that convenience up - and it's the clone I keep promising you.
+
+Keep Claude Code's deny rules as a second layer, mirroring the same list in `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./**/*.tfvars)",
+      "Read(./**/*.pem)"
+    ]
+  }
+}
+```
+
+But be honest about the order of trust here. Deny rules stop the polite tools - they're great at keeping the agent from *accidentally* pulling config into its context and leaking it into a commit message. They are not the boundary. A deny rule stops the `Read` tool, not a creative shell command. If the bytes are in the mount and only a deny rule guards them, assume a long enough session finds them. The mounts are the lock; the deny rules are the "please don't" sign you put up anyway.
+
+Which leads to the boring conclusion: secrets shouldn't live in the repo directory at all. Load them from outside - direnv, 1Password, whatever you already use - and the whole problem just disappears. The launcher is for the codebases where that ship has sailed, which is most of them.
+
+And one disclaimer - honestly the most important paragraph in this article: **a sandbox limits blast radius, it doesn't guarantee containment.**
+
+The filesystem boundary is real. It decides what the agent can *damage*, and we've locked that down hard. It says much less about what the agent can *send*. A coding agent isn't a box you can unplug - it has to reach the model endpoint to think at all, so the network is never fully off. Which means if it reads a malicious repo and gets prompt-injected, anything still readable inside the VM can leave over that same connection - including the Claude credentials in the `claude-home` volume, which Anthropic's own dev-container docs warn a hostile project can lift. That's not an argument against the filesystem work - it's the reason the filesystem work is the *real* defense. The only thing that can't be exfiltrated is the secret that was never reachable in the first place.
+
+You can tighten the network side too - put a filtering proxy in front of the box (Squid, say) and whitelist the handful of hosts the agent is allowed to reach. I don't, because the nature of my work has agents reading a ton of docs - sometimes over `curl` - to write reliable infrastructure code, and a strict allowlist turns that into an approval mess. So real egress filtering - what to let in, and why even a good allowlist leaks - is its own article.
+
+## The safest handoff: give it a clone
+
+The launcher shadows secrets out of a tree you still own. The cleaner move - the one I reach for the moment a repo is anything but my own - is to never hand over the real tree at all. Give the agent a throwaway clone:
+
+```bash
+git clone . ../myapp-agent
+```
+
+Two nice things fall out of that one command, both for free.
+
+**The clone has no secrets in it.** `git clone` only copies committed state, and your real secrets - `.env`, `secrets/`, tfvars - are gitignored, so they never make it into the clone. A gitignored `.env` can't reappear, because it was never committed: nothing to enumerate, nothing for a mid-session `git pull` to drag back in. (Run the shadow launcher on the clone too, for anything secret-shaped that *is* tracked. And if a real secret made it into git history at some point, no mount will save you - it's one `git show` away. That's not a sandbox problem, that's a rotate-the-key problem.)
+
+**The agent has nowhere to push.** A local clone's `origin` is a filesystem path that only exists on the host - inside the VM it points at nothing. No GitHub token, no `~/.ssh`, no `.gitconfig` is ever mounted. The agent gets full local git - branches, commits, history, everything it actually needs - and the work only comes back when *you* pull it, from the host:
+
+```bash
+git fetch ../myapp-agent agent-branch:review/agent
+git diff main...review/agent
+```
+
+You review the branch like a contractor's PR, merge what's good, and delete the directory. The agent never touched your remotes, never saw your credentials, never had a way off the machine that you didn't walk yourself.
+
+## But my project needs a database
+
+So far the box is a four-line image: Node and one CLI. The obvious objection writes itself - *my app is Elixir, it talks to Postgres and Redis, that box can't run a thing.* So can't the agent just install what it needs? It can try, and you shouldn't let it. It runs as a non-root user (Claude won't skip permissions any other way), the container gets thrown away on exit, and "let the agent `apt-get` whatever it wants" is exactly how you end up with an environment nobody can reproduce and every run rebuilds from scratch. Installing at runtime is the wrong layer.
+
+Two rules, each putting a dependency where it belongs.
+
+**The toolchain goes in the image.** You're already building one - put the language in it. `FROM elixir:1.18` instead of `FROM node:22`, add the agent CLI on top, build once. When the agent hits a missing system package, it doesn't install it at runtime; it adds a line to the Dockerfile and rebuilds. The dependency *graduates into the image* - reproducible, reviewable, and warm on the next run instead of re-downloaded. Keep build caches (hex, npm, whatever) in a named volume so a fresh disposable container still starts fast.
+
+**Stateful services run beside the box, not inside it.** Postgres and Redis are their own containers on a shared network; the box joins it and reaches them by name. The agent gets a `DATABASE_URL=postgres://postgres:postgres@db:5432/app_dev`, not root on a database - it can't corrupt what it only reaches through a socket. The data lives in a volume *you* own, so you can wipe and reseed it between runs. This is just `docker compose`: the agent box is one more service on the network, the one with its secrets shadowed out.
+
+None of this is exotic - it's the dev-container-plus-compose setup half your team already uses. If you describe your environment with a `devcontainer.json`, reuse it: `FROM your-devcontainer-image`, add the agent layer, done. The devcontainer decides *what's in the box*; everything in this article decides *whether an untrusted agent can walk off with your disk*. Just don't confuse the two - a stock devcontainer mounts your whole tree, `.env` and all, and is not a security boundary.
+
+And notice what just joined the blast radius: a database. That's fine - it's throwaway dev data in a volume you can rebuild in seconds, the same trade you already make running Postgres locally. Your host, your real data, your other projects: still out of reach.
+
+## So, can you trust it?
+
+Notice that nothing here makes the model any safer to trust - and nothing needs it to be. The container doesn't trust it with your machine. The mounts don't trust it with your secrets. The clone doesn't trust it with your remotes. And precisely because nothing trusts it, you can finally stop hovering.
+
+So stop asking "can I trust the agent?" and start asking "what's the worst this system lets it do?". When the honest answer is "lose one commit of work inside a VM I can rebuild in a minute" - the fear just goes away, and you've got a box that's safe to walk away from.
+
+And walking away is the fun part. An agent that can't wreck your laptop is still an agent that loses its context, stops before the job's done, and quietly skips half of it. Turning this safe box into something that runs your repo for eight hours straight - and actually finishes every task - is the next article: [an OS for autonomous coding agents](/blog/os-for-coding-agents/).

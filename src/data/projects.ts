@@ -174,19 +174,38 @@ export const allProjects: Project[] = [
     id: "coop",
     name: "Coop",
     description:
-      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach, mounts the repo at its real path, and drives a disk-backed task queue so a fleet can run to completion. A single static Go binary.",
+      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach, mounts the repo at its real path, and drives a disk-backed task queue so a fleet can run to completion. In fusion mode one model governs, consults the other two read-only, and synthesizes the result - beating any single model on its own. A single static Go binary.",
     impact: [
       "Secret shadowing: .env, keys, and secret dirs are empty and unwritable inside the box",
       "Unattended loop and fleet dispatch over a TASKS.md work queue",
+      "Fusion mode: a governor model consults the others, anonymizes responses and synthesizes them, outperforming any single model - Fable 5 included",
       "Drop-in ACP server for Zed, with per-repo toolchain and services",
     ],
-    tech: ["Go", "Docker", "Apple Container", "Claude Code", "Codex", "Gemini", "ACP"],
+    tech: [
+      "Go",
+      "Docker",
+      "Apple Container",
+      "Claude Code",
+      "Codex",
+      "Gemini",
+      "ACP",
+    ],
     categories: ["AI", "Security", "Open Source"],
     links: [
       {
         type: "github",
         url: "https://github.com/AndrewDryga/coop",
         label: "GitHub",
+      },
+      {
+        type: "article",
+        url: "/blog/untrusted-ai-coding-agent",
+        label: "Untrusted AI agents",
+      },
+      {
+        type: "article",
+        url: "/blog/os-for-coding-agents",
+        label: "An OS for your agents",
       },
     ],
     period: "2026 - Present",
