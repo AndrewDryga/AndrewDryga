@@ -2,8 +2,8 @@
 title: "One brain, two agents: an OS for autonomous coding agents"
 shortTitle: "An OS for your agents"
 description: "AI agents lose context, stop early, and skip work. The fix is not a smarter prompt. It is a small, file-based operating system: a queue they cannot abandon, hooks they cannot ignore, and one shared source of truth."
-publishDate: 2026-06-12
-updatedDate: 2026-06-12
+publishDate: 2026-06-14
+updatedDate: 2026-06-14
 category: "Engineering"
 readTime: "11 min read"
 cardGradient: "from-terminal-green to-terminal-cyan"
@@ -13,7 +13,6 @@ tags:
   - Claude Code
   - Automation
   - Engineering
-draft: true
 
 ---
 
@@ -127,7 +126,7 @@ Here's how the thing learns to write code like *me* instead of like the average 
 3. **Sweep** the codebase for other instances of the old shape - one correction usually has siblings.
 4. **Graduate** it - if it's mechanically checkable, add a real check: a custom lint, an AST rule, a hook. Now it can't regress.
 
-The `Sweep` step is the one most people skip, and it leads to a model re-discovering code that does not follow your taste in the repo and think that style is okay, replicating it over and over again. (I've noticed it doesn't do a great job keeping "in mind" all your rules while it works on large files.)
+The `Sweep` step is the one most people skip, and skipping it bites you later: the model wanders back into the old, off-taste code still in the repo, decides that style must be fine, and copies it again. (I've found it just doesn't keep all your rules in its head while it's deep in a big file.)
 
 The `Graduate` step is the endpoint: the goal of "learning my taste" was never the model *remembering* - it's the violation becoming *impossible to commit*. A dozen of my rules have graduated into real static-analysis checks (Credo AST rules, on the Elixir side); the rest live as worked examples the agent reads on demand from `rules/`. Memory drifts. A static-analysis rule doesn't.
 
@@ -164,7 +163,7 @@ Because everything lives in those shared files, nothing is duplicated per tool -
 
 ## The foreman is a while loop
 
-The `Stop` hook keeps a single session alive. It does nothing for the session that *dies* - the laptop sleeps, the API hiccups, the context degrades into mush after the fourth compaction. The industry's answer to this is an orchestration framework. The actual answer is twenty lines of bash:
+The `Stop` hook keeps a single session honest. It does nothing for the session that *dies* - the laptop sleeps, the API hiccups, the context degrades into mush after the fourth compaction. The industry's answer to this is an orchestration framework. The actual answer is twenty lines of bash:
 
 ```bash
 #!/bin/bash
@@ -194,7 +193,7 @@ The audit pass at the end is where the quality comes from: a *fresh* agent that 
 
 ## What a day looks like
 
-In the morning I write the queue by using Claude - I point it at various issues, throw ideas at it and tell it to work them down to `TASKS.md`, deciding what to do and what "done" means is the real work - then start the foreman and close the tab. Around lunch I skim `PENDING_DECISIONS.md` and unblock a couple of items with a sentence each. In the evening I review the branch like a contractor's PR. The agents worked eight hours and interrupted me twice, both times for calls that were genuinely yours.
+In the morning I write the queue - I point Claude at the open issues, throw ideas at it, and have it draft everything down into `.agent/TASKS.md`. Deciding what to build and what "done" means is the real work; once that's settled I start the foreman and close the tab. Around lunch I skim `PENDING_DECISIONS.md` and unblock a couple of items with a sentence each. In the evening I review the branch like a contractor's PR. The agents worked eight hours and interrupted me twice, both times for calls that were genuinely mine.
 
 ## Final thoughts
 
