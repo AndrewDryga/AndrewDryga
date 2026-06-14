@@ -143,6 +143,55 @@ export const featuredProjects: Project[] = [
 export const allProjects: Project[] = [
   ...featuredProjects,
 
+  // AI
+  {
+    id: "emisar",
+    name: "Emisar",
+    description:
+      "A control plane for AI-safe infrastructure actions: operators - and LLMs via MCP - dispatch gated, audited actions to a fleet of on-host runners. Every action is policy-checked, approval-gated where it's risky, redacted, and logged - so you can let agents touch real infrastructure without handing them a root shell.",
+    impact: [
+      "Per-account policy and human approval gates on every risky action",
+      "A declared action-pack catalog instead of raw shell: argv execution, redaction, full audit trail",
+      "MCP bridge so LLM clients run only what they're permitted to",
+    ],
+    tech: ["Elixir", "Phoenix", "Go", "MCP", "PostgreSQL", "YAML"],
+    categories: ["AI", "Security"],
+    links: [
+      {
+        type: "website",
+        url: "https://emisar.dev/",
+        label: "Website",
+      },
+      {
+        type: "github",
+        url: "https://github.com/AndrewDryga/emisar",
+        label: "GitHub",
+      },
+    ],
+    period: "2026 - Present",
+  },
+  {
+    id: "coop",
+    name: "Coop",
+    description:
+      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach, mounts the repo at its real path, and drives a disk-backed task queue so a fleet can run to completion. A single static Go binary.",
+    impact: [
+      "Secret shadowing: .env, keys, and secret dirs are empty and unwritable inside the box",
+      "Unattended loop and fleet dispatch over a TASKS.md work queue",
+      "Drop-in ACP server for Zed, with per-repo toolchain and services",
+    ],
+    tech: ["Go", "Docker", "Apple Container", "Claude Code", "Codex", "Gemini", "ACP"],
+    categories: ["AI", "Security", "Open Source"],
+    links: [
+      {
+        type: "github",
+        url: "https://github.com/AndrewDryga/coop",
+        label: "GitHub",
+      },
+    ],
+    period: "2026 - Present",
+  },
+
   // AdTech
   {
     id: "bullpen",
