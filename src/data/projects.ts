@@ -193,6 +193,11 @@ export const allProjects: Project[] = [
     categories: ["AI", "Security", "Open Source"],
     links: [
       {
+        type: "website",
+        url: "https://coop.dryga.com/",
+        label: "Website",
+      },
+      {
         type: "github",
         url: "https://github.com/AndrewDryga/coop",
         label: "GitHub",
