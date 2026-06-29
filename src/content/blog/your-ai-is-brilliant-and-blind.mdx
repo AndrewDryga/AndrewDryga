@@ -1,0 +1,82 @@
+---
+title: "Your AI is brilliant. And blind"
+shortTitle: "Brilliant and blind LLMs"
+description: "AI agents got good at writing code - and they're still flying blind on your infrastructure, guessing at problems they can't see. The obvious fix is to hand them SSH and let them run wild. Here's why I didn't, and what I built instead."
+publishDate: 2026-06-29
+updatedDate: 2026-06-29
+category: "DevOps"
+readTime: "6 min read"
+cardGradient: "from-terminal-cyan to-primary"
+tags:
+  - DevOps
+  - AI
+  - Agents
+  - Infrastructure
+  - Security
+relatedProjects:
+  - emisar
+---
+
+I keep a fair amount of production running. A GCP environment with 100+ VMs, a couple of bare-metal racks, pfSense firewalls, Arista switches, a 30TB Cassandra cluster, PostgreSQL and Redis here and there, Nomad scheduling the workloads, TrueNAS Enterprise with MinIO, a few Pure FlashArrays, and plenty of other moving parts. VictoriaMetrics, VictoriaLogs, and Grafana watch all of it. It's the kind of setup where when a disk fills up or a service starts flapping at 2am, there's no platform team to page. It's me, an SSH session, and `journalctl` _(yeah I'm solo on-call for all of this 24/7)_.
+
+So I've been keen to hand some of that off. Over the last year the coding agents got good - good enough, at least, that I let them write real code as long as I review it. But there's a wall they hit every single time, the moment the work leaves my editor and touches the actual infrastructure.
+
+## Brilliant at code, blind on the host
+
+Ask an agent why a Nomad job keeps restarting and you'll get a beautiful answer. Five plausible theories, ranked, with the right vocabulary and a confident tone. And every one of them is a guess, because it has never seen the allocation, never read the logs, never noticed the host is out of inodes. It's diagnosing a patient it has only had described to it over the phone.
+
+That's the thing people miss about why agents are bad at ops. It isn't intelligence - the model can reason about your stack better than most humans can. It's that it's missing the two things that make an engineer useful on infrastructure: context and access. 
+
+**Context** is the live state: what's actually running, what the logs say, the fact that a disk filled up ten minutes ago. **Access** is being allowed to go look, and then to do something about what you find. 
+
+In your editor the agent has both - the code is right there and it can change it. On your infrastructure it has neither, so it does the only thing left to it: it pattern-matches from training data and whatever you've pasted into the chat, and writes you a very articulate guess.
+
+For a while you just bridge the gap by hand. It asks what `nomad alloc status` says, you paste the output in. It asks for the logs, you paste those too. You're its eyes and hands while it does the thinking - and it works, right up until you realize you've become a copy-paste relay between a chatbot and a terminal. Nobody stays there long.
+
+## So you give it a shell
+
+There's an obvious fix, and most people reach for it within about five minutes: give it a shell.
+
+Drop it onto the box over SSH. Tell it about `tailscale ssh` once and it'll shell into production on its own, including the times you'd rather it didn't. Wire up an MCP server that runs `bash`. Point it at `gcloud ssh` or your kubeconfig. Pick your poison - the effect is the same, and the blindness just evaporates. Now it can look. It runs the status command, tails the logs, greps the config, spots the full disk in thirty seconds flat, and proposes the fix. The first time you watch it track down the problem and apply the fix on its own, it lands like a trick - and you catch yourself thinking you might actually sleep through the next incident.
+
+And then, if you've run infrastructure for any length of time, you start to feel slightly sick. Because you think about what you just did.
+
+## You just handed root to a guessing machine
+
+You gave a process that hallucinates - confidently, in fluent complete sentences - a root shell on production and permission to run anything in it.
+
+Walk through what that actually means:
+
+- It can run *anything*. Nothing is declared, nothing is bounded. The destructive command and the harmless one look identical right up until one of them executes.
+- It guesses, and the guesses are well-formed. It won't make a syntax error. It'll make a `nomad job stop` on the wrong job, or an `rm` where a variable quietly expanded to nothing, because the context was a little ambiguous and it filled the gap. A perfectly valid command pointed at the wrong thing.
+- It leaks. The fastest way for an agent to "help you debug" an auth problem is to print the environment, or cat the kubeconfig, straight into the chat. Now your production credentials are in your scrollback and in some model provider's logs.
+- There's no record. When it goes sideways, the entire forensic story is "scroll up and hope you can reconstruct what happened."
+- An SSH key is a skeleton key. One box becomes lateral movement into all of them.
+
+You can try to fence the shell instead - an allowlist, a block on `rm -rf`, a wrapper that strips the obviously dangerous commands. It's the same lesson I keep relearning with agents: you cannot write enough rules against free-form text produced by something whose entire job is to find a phrasing that works. The shell is the problem, not the agent holding it.
+
+On my laptop I solved the other half of this by [sandboxing the agent](/blog/untrusted-ai-coding-agent) so a bad command can't escape the repo. But you can't sandbox production - production is the thing you're trying to protect.
+
+And one thing no amount of gating will fix: the model's judgment. It'll still occasionally ask to do something dumb in a flawless, valid way. What you can change is whether that mistake shows up as a typed request waiting for a yes, or as a free-text command that already ran.
+
+And that's the whole reason I want this to work. I'd happily hand the infra babysitting to an LLM - it buys back the hours I'd rather spend on code I actually like writing. What I won't do is buy those hours by closing the laptop with a model still loose on production, hoping I come back to find everything where I left it. I just do not enjoy that mix if anxiety fueled by the adrenaline hit when stepping away.
+
+## What I built instead
+
+So I stopped trying to fence the shell and took it away. That's [emisar](https://emisar.dev) - the reason I let an agent near my infrastructure at all.
+
+The idea is simple: **give it eyes, not a shell.**
+
+The agent gets a catalog of declared actions - a fixed allowlist, each entry a specific operation with typed, validated arguments rather than free-form text. "Tail this service's logs." "List the failed allocations." "Stop this job." It connects over an MCP server, so Claude, Cursor, or ChatGPT can drive it directly, and the runner that does the work sits on your host and dials out over TLS - emisar opens no inbound port.
+
+Every action carries a risk tier. When the agent wants to read something - tail a log, list allocations - it just runs, so investigation stays fast. When it reaches for something destructive - stop a job, restart a database - the action freezes and waits for me: I see who asked, the exact arguments, the target host, and the policy rule that tripped the gate, and nothing executes until I say yes. Policy is default-deny, so anything not explicitly allowed is simply refused. And every call - allowed, approved, or denied - lands in a hash-chained journal on the host and a searchable audit in the cloud, with known secret patterns scrubbed from the output before it leaves the box.
+
+A few months ago a storage driver bug wiped a chunk of my telemetry - a CSI driver raced the kernel and ran `mkfs` over a live volume during a node drain. The agent worked the incident through declared actions across half a dozen packs, traced it to a multipath path-group race, and when it wanted to stop the affected allocation - a high-risk action - it stopped and asked me first. 
+
+I want to be precise about what that did and didn't do: emisar would not have prevented the wipe. That was a driver fighting the kernel, nothing to do with the agent. What it changed was everything *around* the failure - the agent could see the whole system through actions I'd approved in advance, and the one destructive step it reached for, it had to ask for.
+
+## How does it feel?
+
+I've been running it for a few months now, and the thing I notice most is what's missing: that little stomach-drop when an agent starts poking at something that matters. I finally can trust it run while I'm away knowing it will be fine when I'm back at the computer. 
+
+Just try it. It's at [emisar.dev](https://emisar.dev) - source-available, and free for a few runners, which is plenty for a home lab or a staging setup. It's early, so go break it, and tell me what broke.
