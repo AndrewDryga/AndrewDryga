@@ -24,7 +24,7 @@ I was a vibe-coding skeptic for a long time. Recently the models got good enough
 
 And isn't it annoying? You finally have something that can do the work for you, and you're still stuck at the computer babysitting every approval it asks for.
 
-I want it to just work so I can go focus on something else, without being interrupted every ten minutes. But I work on a lot of sensitive infrastructure, so I can't run these things in YOLO mode either. I genuinely don't enjoy the little adrenaline hit I get every time I let even the best model run unattended, knowing it can hallucinate its way into dropping a production database or taking something down.
+I want it to just work so I can go focus on something else, without being interrupted every ten minutes. But I work on a lot of sensitive infrastructure, so I can't run these things in YOLO mode either. I genuinely don't enjoy the little adrenaline hit I get every time I let even the best model run unattended, knowing it can hallucinate its way into dropping a production database.
 
 By default you get one of two extremes. Either the agent asks permission for everything and you spend the day as a human OK-button, or you pass `--dangerously-skip-permissions` and hand a shell on your laptop to a stochastic process.
 
@@ -223,7 +223,7 @@ And notice what just joined the blast radius: a database. That's fine - it's thr
 
 ## So, can you trust it?
 
-Notice that nothing here makes the model any safer to trust - and nothing needs it to be. The container doesn't trust it with your machine. The mounts don't trust it with your secrets. The clone doesn't trust it with your remotes. And precisely because nothing trusts it, you can finally stop hovering.
+Nothing here makes the model any safer to trust - and nothing needs it to be. The container doesn't trust it with your machine. The mounts don't trust it with your secrets. The clone doesn't trust it with your remotes. And precisely because nothing trusts it, you can finally stop hovering.
 
 So stop asking "can I trust the agent?" and start asking "what's the worst this system lets it do?". When the honest answer is "lose one commit of work inside a VM I can rebuild in a minute" - the fear just goes away, and you've got a box that's safe to walk away from.
 

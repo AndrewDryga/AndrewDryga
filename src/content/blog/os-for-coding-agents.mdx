@@ -18,9 +18,9 @@ relatedProjects:
 
 ---
 
-I gave my AI coding agents three complaints and one demand. The complaints: *they lose context constantly, they stop before the work is done, and they skip work.* The demand: run my repo semi-autonomously, around eight hours a day, and when I hand it 300 tasks, finish **every single one** - to my taste, not some generic one, which is very important for me.
+I gave my AI coding agents three complaints and one demand. The complaints: *they lose context constantly, they stop before the work is done, and they skip work.* The demand: run my repo semi-autonomously, around eight hours a day, and when I hand it 300 tasks, finish **every single one** - to my taste, not a generic average. That part matters to me.
 
-My first instinct was to fix this with a better prompt. A longer `CLAUDE.md`. A sterner "do not stop until you are finished." Using queue of `/goal`'s. I tried all of it.
+My first instinct was to fix this with a better prompt. A longer `CLAUDE.md`. A sterner "do not stop until you are finished." A queue of `/goal`s. I tried all of it.
 
 So I stopped treating the agent like a chat window and built it an operating system instead. It's boring, file-based, and almost entirely made of markdown and three shell hooks. It refuses to stop while there's work left, it learns my style and turns my corrections into checks the model *can't* slip past, and - the part I'm quietly smug about - it runs on **both Claude Code and Codex from a single source of truth**. A Codex agent started using it on its own while I was still building it.
 
@@ -45,7 +45,7 @@ Let's start with context loss, because it's the one everybody misreads as the mo
 So treat the root file as a survival kernel - the forty lines that have to outlive any compaction. The first thing it defines is a **BOOT protocol**: the exact order to re-read whenever the context is fresh or freshly compacted.
 
 ```markdown
-# BOOT — read these, in order, before touching code:
+# BOOT - read these, in order, before touching code:
 1. this file
 2. the project's AGENTS.md, in full
 3. .agent/LOG.md      (what I was doing and why)
@@ -87,7 +87,7 @@ Here's the work loop every entry point follows:
 
 > Take the first `[ ]`, flip it to `[w]` to claim it → do it → run the gate → commit → log it → flip to `[x]`. Blocked? `[B]` plus a decision entry. Spot unrelated work? Drop it in `BACKLOG.md` and **stay on task**. Never stop holding a `[w]`, and never stop while a `[ ]` remains.
 
-That `BACKLOG.md` line is doing quiet but important work. The *other* failure mode of an autonomous agent isn't skipping - it's the opposite. It wanders off to refactor something it noticed three files over and never comes back to the actual task. "Capture it, don't do it" gives the distraction a home, so the agent never has to choose between losing the idea and losing the plot because it was discovered by an autonomous agent 4 hours ago - something you will have a hard time spotting with your eyes otherwise.
+That `BACKLOG.md` line is doing quiet but important work. The *other* failure mode of an autonomous agent isn't skipping - it's the opposite. It wanders off to refactor something it noticed three files over and never comes back to the actual task. "Capture it, don't do it" gives the distraction a home, so the agent doesn't have to choose between losing the idea and losing the plot. It also spares you the nastiest kind of review: an unrelated change the agent slipped in four hours ago, buried in a diff you'd never have caught by eye.
 
 And "done" has to mean evidence, not the agent's say-so. The first real batch I ran through this had 269 items. My first pass was grep-driven and missed work. The second forced reading every touched function and caught what grep missed. The third was a mechanical sweep that re-checked every `[x]` against the git log - and caught what my eyeballs had quietly normalized away. Final score 269/269, but only because the protocol stopped trusting the model's self-reports at every step. That third pass is permanent now; you'll see it wired into the loop near the end.
 
@@ -99,7 +99,7 @@ The one that changes everything for unattended runs is the **`Stop` hook**. It f
 
 ```bash
 #!/bin/bash
-# .claude/hooks/stop-guard.sh — refuse to stop while work remains
+# .claude/hooks/stop-guard.sh - refuse to stop while work remains
 [ -f "$CLAUDE_PROJECT_DIR/.agent/active" ] || exit 0     # only during a batch
 queue="$CLAUDE_PROJECT_DIR/.agent/TASKS.md"
 
@@ -136,7 +136,7 @@ The `Graduate` step is the endpoint: the goal of "learning my taste" was never t
 
 This is the part I'll happily bore you about at parties.
 
-The whole design follows one rule: **all durable knowledge and state live in tool-neutral files at fixed paths; each tool's own config is thin wiring that points at them, never a copy.**
+The whole design follows one rule: all durable knowledge and state live in tool-neutral files at fixed paths. Each tool's own config is thin wiring that points at them, never a copy.
 
 The spine is one file - `AGENTS.md` - the canonical, tool-neutral manual, at the repo root and in each project. `CLAUDE.md` is just a *symlink* to it. Claude reads through the symlink; Codex reads `AGENTS.md` natively. One source, zero duplication.
 
@@ -169,7 +169,7 @@ The `Stop` hook keeps a single session honest. It does nothing for the session t
 
 ```bash
 #!/bin/bash
-# bin/foreman — run disposable agents until the queue is provably done
+# bin/foreman - run disposable agents until the queue is provably done
 set -euo pipefail
 
 touch .agent/active && trap 'rm -f .agent/active' EXIT
@@ -181,7 +181,7 @@ while true; do
   done
 
   bin/agent -p "Audit: for every [x] in .agent/TASKS.md, verify its gate passes and a commit
-    implementing it exists in the git log. Reopen any that fail — flip [x] back to [ ]
+    implementing it exists in the git log. Reopen any that fail - flip [x] back to [ ]
     and note what's missing. Do not fix anything yourself." </dev/null || continue
 
   work_remains || break
@@ -201,4 +201,4 @@ In the morning I write the queue - I point Claude at the open issues, throw idea
 
 None of this makes the model smarter - it just stops depending on the model being smart, which is the only thing that's held up for me. There's no framework here either: an instruction file, a folder of markdown, three shell hooks, and a `while` loop. I packaged it all as a single binary, [coop](https://github.com/AndrewDryga/coop), so you can `coop loop` instead of copying scripts around - but it's the same boring markdown underneath.
 
-It's file-based and almost entirely made of markdown. *It's simple - that's exactly why it works.*
+*It's simple - that's exactly why it works.*
