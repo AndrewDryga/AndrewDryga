@@ -148,11 +148,11 @@ export const allProjects: Project[] = [
     id: "emisar",
     name: "Emisar",
     description:
-      "A control plane for AI-safe infrastructure actions: operators - and LLMs via MCP - dispatch gated, audited actions to a fleet of on-host runners. Every action is policy-checked, approval-gated where it's risky, redacted, and logged - so you can let agents touch real infrastructure without handing them a root shell.",
+      "Lets AI agents work on real production infrastructure without handing them an SSH key. Instead of a shell, an agent gets a fixed catalog of declared actions over MCP: read-only ones run on their own, anything risky stops for a human to approve, and every call lands in an audit you can search. A typed request you can still say no to, instead of a free-text command that already ran.",
     impact: [
-      "Per-account policy and human approval gates on every risky action",
-      "A declared action-pack catalog instead of raw shell: argv execution, redaction, full audit trail",
-      "MCP bridge so LLM clients run only what they're permitted to",
+      "Swaps raw SSH for a catalog of 70+ action packs (1,200+ declared operations) run as argv arrays, never shell strings",
+      "Default-deny policy with low/medium/high/critical risk tiers - risky actions block until a human approves",
+      "Hash-chained host journal and searchable cloud audit; 20+ secret patterns scrubbed before output leaves the box",
     ],
     tech: ["Elixir", "Phoenix", "Go", "MCP", "PostgreSQL", "YAML"],
     categories: ["AI", "Security"],
@@ -177,7 +177,7 @@ export const allProjects: Project[] = [
       "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach and drives a disk-backed task queue so a fleet can run to completion.",
     impact: [
       "Secret shadowing: .env, keys, and secret dirs are empty and unwritable inside the box",
-      "Unattended loop and fleet dispatch over a TASKS.md work queue",
+      "Unattended loop and fleet dispatch over a markdown work queue",
       "Fusion mode: a governor model consults the others, anonymizes responses and synthesizes them, outperforming any single model - Fable 5 included",
       "Drop-in ACP server for Zed, with per-repo toolchain and services",
     ],
@@ -201,16 +201,6 @@ export const allProjects: Project[] = [
         type: "github",
         url: "https://github.com/AndrewDryga/coop",
         label: "GitHub",
-      },
-      {
-        type: "article",
-        url: "/blog/untrusted-ai-coding-agent",
-        label: "Untrusted AI agents",
-      },
-      {
-        type: "article",
-        url: "/blog/os-for-coding-agents",
-        label: "An OS for your agents",
       },
     ],
     period: "2026 - Present",
