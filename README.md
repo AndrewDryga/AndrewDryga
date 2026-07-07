@@ -15,10 +15,10 @@ Engineering leader & hands-on Elixir/infra engineer who turns messy systems into
 Elixir · Phoenix/LiveView
 
 **Frontend / Design**
-HTML * JavaScript * Tailwind · UX
+HTML · JavaScript · Tailwind · UX
 
 **Data & Messaging**
-PostgreSQL · RabbitMQ · TypeSense · Redis · Cassandra
+PostgreSQL · RabbitMQ · TypeSense · Redis · Cassandra · ScyllaDB
 
 **Infra & Cloud**
 Terraform · Kubernetes · GCP · AWS · Nomad · Bare-Metal
