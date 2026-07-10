@@ -206,6 +206,34 @@ export const allProjects: Project[] = [
     period: "2026 - Present",
   },
 
+  // Data
+  {
+    id: "offloader",
+    name: "Offloader",
+    description:
+      "Customer-facing dashboards run the same expensive warehouse query on every page load. Offloader serves those reads from cheap pre-computed DuckDB snapshots on infra you already run instead - so the warehouse is only hit by a scheduled export, and your data never leaves your environment.",
+    impact: [
+      "First cutover: ~136M req/mo, ~$3,000/mo of warehouse serving down to ~$440/mo on two small VMs (~94% cached)",
+      "Snapshots swap in atomically with zero downtime; tenant filters pinned to the API key, never the request",
+      "Source-available (FSL, becomes Apache-2.0 after two years); priced at 20% of measured savings - no saving, no fee",
+    ],
+    tech: ["Elixir", "Phoenix", "DuckDB", "Parquet", "Docker", "S3", "GCS"],
+    categories: ["Data", "Infrastructure"],
+    links: [
+      {
+        type: "website",
+        url: "https://offloader.dryga.com/",
+        label: "Website",
+      },
+      {
+        type: "github",
+        url: "https://github.com/AndrewDryga/offloader",
+        label: "GitHub",
+      },
+    ],
+    period: "2026 - Present",
+  },
+
   // AdTech
   {
     id: "bullpen",

@@ -43,7 +43,7 @@ export const techCategories: TechCategory[] = [
     color: "green",
     items: [
       { name: "Terraform, GCP/AWS", years: 8, barColor: "cyan" },
-      { name: "Kubernetes/Helm", years: 5 },
+      { name: "Kubernetes/Helm/Nomad", years: 5 },
       { name: "Linux, Nginx/HAProxy, CI/CD", years: 12 },
       { name: "Prometheus, Metabase", years: 8 },
     ],
