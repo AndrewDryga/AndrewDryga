@@ -17,9 +17,9 @@ relatedProjects:
   - emisar
 ---
 
-I keep a fair amount of production running. A GCP environment with 100+ VMs, a couple of bare-metal racks, pfSense firewalls, Arista switches, a 30TB Cassandra cluster, PostgreSQL and Redis here and there, Nomad scheduling the workloads, TrueNAS Enterprise with MinIO, a few Pure FlashArrays, and plenty of other moving parts. VictoriaMetrics, VictoriaLogs, and Grafana watch all of it. It's the kind of setup where when a disk fills up or a service starts flapping at 2am, there's no platform team to page. It's me, an SSH session, and `journalctl` _(yeah I'm solo on-call for all of this 24/7)_.
+I keep a fair amount of production running. A GCP environment with 100+ VMs, a couple of bare-metal racks, pfSense firewalls, Arista switches, a 30TB Cassandra cluster, PostgreSQL and Redis here and there, Nomad scheduling the workloads, TrueNAS Enterprise with MinIO, a few Pure FlashArrays, and plenty of other moving parts. VictoriaMetrics, VictoriaLogs, and Grafana watch all of it. It's the kind of setup where when a disk fills up or a service starts flapping at 2am, there's no platform team to page. It's me, an SSH session, and `journalctl`.
 
-So I've been keen to hand some of that off. Over the last year the coding agents got good - good enough, at least, that I let them write real code as long as I review it. But there's a wall they hit every single time, the moment the work leaves my editor and touches the actual infrastructure.
+And since _I'm the only person on call 24/7_ and generally responsible for keeping it all running, I've been keen to hand some of that off. Over the last year the coding agents got good - good enough, at least, that I let them write real code as long as I review it. But there's a wall they hit every single time, the moment the work leaves my editor and touches the actual infrastructure.
 
 ## Brilliant at code, blind on the host
 
