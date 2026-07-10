@@ -54,10 +54,6 @@ function initMixpanel() {
     record_heatmap_data: replayPercent > 0,
   });
 
-  mixpanel.track("Page View", {
-    path: `${location.pathname}${location.search}`,
-    title: document.title,
-  });
   setupContactTracking(mixpanel);
 
   window.addEventListener("click", (event: MouseEvent) => {
