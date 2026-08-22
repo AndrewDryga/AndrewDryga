@@ -616,9 +616,13 @@ export const allProjects: Project[] = [
     id: "vagrant-box-osx",
     name: "Vagrant Box OS X",
     description:
-      "macOS Vagrant boxes for VirtualBox. Run UX tests or build iOS/Mac applications on any machine with a few CLI commands. Used by many teams worldwide, including Boxen.",
-    impact: ["980+ GitHub stars"],
-    tech: ["Vagrant", "VirtualBox"],
+      "macOS Vagrant boxes for VirtualBox. Run UX tests or build iOS/Mac applications on any machine with a few CLI commands. Used by many teams worldwide, including Boxen. Got a $50k S3 bill in month one, was sponsored by Cloudflare for a while, and eventually taken down over Apple licensing.",
+    impact: [
+      "976 GitHub stars",
+      "~$50k S3 bill in the first month (AWS forgave it)",
+      "Hosting sponsored by Cloudflare",
+    ],
+    tech: ["Vagrant", "VirtualBox", "macOS", "S3"],
     categories: ["Open Source"],
     links: [
       {
@@ -628,6 +632,7 @@ export const allProjects: Project[] = [
       },
     ],
     period: "Mar 2014",
+    hasDetailPage: true,
   },
 
   // Other

@@ -1,0 +1,37 @@
+---
+projectId: "vagrant-box-osx"
+title: "Vagrant Box OS X - how a 14 GB file nearly cost me $50,000"
+draft: false
+---
+
+## One command, a whole Mac
+
+In 2014, building iOS apps on CI meant buying a Mac, putting it somewhere, and babysitting it. I wanted the boring version instead: `vagrant init AndrewDryga/vagrant-box-osx`, `vagrant up`, and you have a macOS VM with Xcode, Homebrew, and the command line tools already in it. Yosemite with Xcode 6.4 first, macOS Sierra with Xcode 8.2 later.
+
+The engineering was a weekend of swearing. VirtualBox has no Guest Additions for macOS, so shared folders had to go over NFS. AMD hosts crashed. VMs froze until you passed the right `cpuidset` flags. All solvable.
+
+Then people found it, and the actual problem showed up in the file listing: 13 GB for the Yosemite image, 14.1 GB for Sierra. You can't make a Mac smaller.
+
+## The bill
+
+I put the images on S3 and at the end of the first month the bill was about **$50,000**.
+
+Run that backwards through 2014 egress pricing - $0.12/GB for the first 10 TB, sliding down through $0.09, $0.07 and $0.05 as the volume climbs - and $50k buys you somewhere on the order of a petabyte of transfer. Divide by 14 GB. That's roughly 65,000 people typing `vagrant up` in thirty days.
+
+I wrote to AWS support eand they forgave the whole thing, no argument. Thank you AWS!
+
+## Cloudflare, for a while
+
+So I asked for help. Cloudflare sponsored the hosting and it worked great - free bandwidth for a free project that a lot of iOS teams were leaning on. When the sponsorship came up for renewal, they passed. Entirely fair. Nobody owes a hobby project a petabyte a month.
+
+## The email that ended it
+
+Then Mitchell Hashimoto wrote to me. HashiCorp had to pull the box from Vagrant Cloud, because Apple's position was that distributing a packaged macOS image isn't allowed - even though the box only ever made sense on Apple hardware, and even though Apple's own EULA lets you run two macOS VMs on a Mac you own.
+
+There was nothing to argue with, so I didn't.
+
+## What's left
+
+The repo is still up with 976 stars, demoted to an issue tracker. The Vagrant Cloud listing still shows 23,822 downloads. Somewhere in a CI closet there is probably still a Mac mini doing the job this was supposed to replace.
+
+I built it to solve a build-server annoyance and it turned into a lesson about everything around the code: bandwidth costs real money, sponsorships end, and the thing most likely to kill your side project isn't a bug, it's a sentence in a license agreement you never read.
