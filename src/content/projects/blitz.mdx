@@ -110,6 +110,12 @@ I moved everything to GitHub Actions (**$24k/year saved**) and built a proper CI
 
 ---
 
+## Year two (WIP)
+
+First we moved the data off Scylla Cloud and onto a Cassandra cluster we ran ourselves in GCP. Then we moved off GCP entirely. Cassandra and every service now run on bare metal we built and own, with Nomad scheduling the workloads. One CAPEX investiment and huge reduction in OPEX.
+
+---
+
 ## What I Learned
 
 This wasn't a language problem, a framework problem, or even really a scale problem. It was a **maintenance debt problem**. Systems don't stay healthy on their own - they need care, attention, and someone willing to roll up their sleeves and fix the boring stuff.
