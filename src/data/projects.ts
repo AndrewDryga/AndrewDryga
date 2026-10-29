@@ -460,6 +460,32 @@ export const allProjects: Project[] = [
 
   // Open Source
   {
+    id: "onlytty",
+    name: "OnlyTTY",
+    description:
+      "Share a shell or a single command through a link and control it from a browser or phone. Terminal traffic is end-to-end encrypted, and the relay never sees the session keys.",
+    impact: [
+      "Share a command or your whole shell without opening inbound ports",
+      "Mobile terminal with touch controls, reconnect and view-only sessions",
+      "Use the hosted relay or self-host the Elixir/Phoenix server",
+    ],
+    tech: ["Go", "Elixir", "Phoenix", "JavaScript", "xterm.js", "WebSocket"],
+    categories: ["Developer Tools", "Security", "Open Source"],
+    links: [
+      {
+        type: "website",
+        url: "https://onlytty.com/",
+        label: "Website",
+      },
+      {
+        type: "github",
+        url: "https://github.com/AndrewDryga/onlytty",
+        label: "GitHub",
+      },
+    ],
+    period: "2026 - Present",
+  },
+  {
     id: "sage",
     name: "Sage - Sagas Pattern in Elixir",
     description:
