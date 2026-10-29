@@ -1,0 +1,66 @@
+---
+title: "Your data warehouse is the wrong place to serve a dashboard"
+shortTitle: "Offloading the warehouse"
+description: "Customer-facing dashboards ask the same few questions all day, on data that's fine a few minutes stale - but every page load runs a live query against a warehouse that bills per query and was never built to sit behind a live screen. Here's the serving layer I built to move those reads onto cheap snapshots on my own infra."
+publishDate: 2026-10-29
+updatedDate: 2026-10-29
+category: "Databases"
+readTime: "6 min read"
+cardGradient: "from-terminal-yellow to-terminal-green"
+tags:
+  - Databases
+  - Analytics
+  - DuckDB
+  - Cost
+  - Architecture
+relatedProjects:
+  - offloader
+---
+
+Have your ever be surprised by your data warehouse bill? Not the one you pay for the storage or processing of your datalake but for the other side of it - serving?
+
+I'be been surprised for sure to lean that to serve 1 RPS on Databricks serving (and we tried all options they provided) we need to pay a few thousand dollars a month. Just for that alone. Not counting the 3-node caching cluster and CDN serving 150m requests per month / 8 TB of data in front of it. And this is typical for many domains. 
+
+Datalakes are do not exist just because your CIO wants a nice dashboard - they often used to provide customers the aggregates and analytics - usage screens, leaderboards, the "here are your numbers" pages people refresh all day. 
+
+Every one of those page loads ran a query against the warehouse. And warehouses are priced for that in the worst way: either you rent always-on compute sized for your peak and pay for it while it sits idle, or you're on a per-query meter where your most-used feature is also your biggest invoice. Either way, the more people use the product, the more it costs just to show them what they came to see.
+
+## Everything can be cached
+
+Think with what tho queries that hit your datalake actually are. A product dashboard asks the same shapes of questions constantly - "usage for this account, last 30 days," "the top ten this week," the same leaderboard everyone sees - against data that's completely fine a few minutes old. Nobody refreshing a stats page needs it accurate to the second.
+
+**That's not an analytics workload. That's a cache.**
+
+But a data warehouse is built for the opposite thing: big, ad-hoc, one-off questions over enormous data, where every query might be unique and freshness matters. It's a genuinely great tool for that. Putting it behind a live product screen to answer the same bounded question ten thousand times a day is like firing up a blast furnace to make toast. It works. You just wouldn't design it that way on purpose.
+
+## So I built a serving layer for it
+
+The fix is boring, which is how I like my software to work. Instead of every page load hitting the warehouse, you export a snapshot of each dataset - plain Parquet files - to object storage on whatever schedule you like: every few minutes, every hour, your call. A small service on your own servers loads the latest snapshot into an embedded database (DuckDB) and answers your product's REST calls from that. When a newer snapshot shows up, it swaps over with no downtime. The warehouse gets touched exactly once per snapshot, by the export - never by live traffic.
+
+I packaged that service as a single container and called it [Offloader](https://offloader.dryga.com). Point it at a bucket, hand it a little config describing your datasets and endpoints, and it serves your dashboards from cheap local reads instead of expensive remote queries. There's no Offloader cloud in the middle and nothing phones home - it runs on infrastructure you already operate, and your data never leaves your environment. When the data is real customers' numbers, that last part isn't a nice-to-have.
+
+## The hard part was the snapshot, not the serving
+
+Serving cached reads quickly is a solved problem. The part that ate the most time was the least glamorous one: knowing which files actually make up "the latest snapshot."
+
+When a warehouse like Databricks exports a table, it doesn't hand you a tidy folder. It writes files transactionally and leaves the old ones lying around until something vacuums them later. So the directory you're pointing at is a pile of Parquet from several different exports at once. Read "all the `.parquet` files in there" - the obvious move, the one I made first - and you can stitch half of one export together with half of another into a snapshot that never existed. The dashboard then shows numbers that are each individually real and collectively fiction.
+
+The correct answer is to stop trusting the files on disk and trust the commit marker instead: every finished export drops a small JSON file listing exactly which parts belong to it. You read the newest marker, serve only the files it names, and ignore everything else in the directory. Obvious in hindsight, invisible until it bites you.
+
+## The boring safety parts
+
+Two things had to be true before I'd put this in front of anyone's customers.
+
+Tenants can't see each other. Multi-customer data means the query for account A must never return account B's rows, and "the app remembers to add a `WHERE` clause" is not a security model. So the tenant filter isn't something the caller sends. It's bound to the API key, inserted by the query compiler, and there is no request parameter that can override it - the compiler treats everything that comes in from the request as a value to bind, never as SQL. That boundary is the whole job.
+
+And the cache is safe by construction. Every response is tagged with the exact snapshot it came from, so a cached answer can only ever be invalidated by a newer snapshot, not by a clock that might be wrong. Per-tenant responses are marked private and never land in a shared cache; only genuinely public data is allowed to. Which means for public data you can put a CDN in front and stop thinking about it.
+
+## Does it actually save money
+
+For the first real cutover serving workload doing about 136 million requests a month, roughly 8 TB out, went from around $3,000/month on warehouse compute to about $440/month running Offloader on two small VMs - with about 94% of requests answered straight from cache, never touching the warehouse at all. On a synthetic benchmark it does five to six thousand cached requests a second at a p99 under 60 milliseconds, though that's a relative number and I'd make you measure your own before believing it.
+
+The data engineers also loved it because it speed up their time to ship new data to the product greatly without changing the rest of their workflow. All their tools already export Parquet.
+
+That result is also the business model, and I've tried to make it hard to argue with: Offloader charges 20% of what it actually saves you, measured against your real bill. No saving, no fee. It's source-available under a license that flips to Apache 2.0 two years after each release ships, it comes as a signed container, and it's early - I've proven it on my own workload and I'm looking for the first outside ones to prove it on next.
+
+If your warehouse bill has a line that climbs every time a customer looks at their own data, that line is the reason I built this. It's at [offloader.dryga.com](https://offloader.dryga.com), with a calculator to put rough numbers on your own case before you ever talk to me.
