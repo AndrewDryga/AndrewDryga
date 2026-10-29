@@ -1,0 +1,139 @@
+---
+title: "Treating physical servers like cloud VMs"
+shortTitle: "Bare metal as cloud VMs"
+description: "Modern BMCs turned bare metal into something you can terraform apply: declare a node in git, reimage it over the network, verify it against a receipt. How our cloud-to-on-prem migration kept the cloud workflow - and why that's exactly what LLM agents needed."
+publishDate: 2026-09-02
+updatedDate: 2026-09-02
+category: "Infrastructure"
+readTime: "8 min read"
+cardGradient: "from-primary to-terminal-yellow"
+tags:
+  - Infrastructure
+  - Bare-Metal
+  - DevOps
+  - Terraform
+  - AI
+  - Agents
+relatedProjects:
+  - blitz
+draft: true
+---
+
+I run `terraform apply` from my laptop, and a physical server in our colo ejects its virtual DVD, mounts a fresh install image over HTTP, reboots, wipes its root disk, reinstalls Debian, and rejoins the cluster - same identity, workloads rescheduled - in about twenty minutes. Nobody at the datacenter gets a ticket. With one variable, it'll do that to all five Nomad machines, one at a time, in an order that keeps Raft quorum alive.
+
+We're migrating [Blitz](/projects/blitz/) from the cloud to bare metal. When I started, the part everyone warned me about wasn't the hardware - it was the workflow. In the cloud, instances are disposable: broken one? Delete it, the autoscaler makes another. On metal, the story goes, every server becomes a pet with a name, a history, and a two-page runbook for when it gets sick. That was true ten years ago. It stopped being true, and the reason is a little computer embedded in most servers you would buy.
+
+## The second computer taped to the first one
+
+Every serious server ships with a BMC - iDRAC on Dells, some MegaRAC flavor on most of the rest. It's a separate tiny computer with its own network port and its own OS, and it's alive even when the host is powered off. It can cut power, change boot order, stream the console, and mount an ISO over the network as if someone walked over with a USB stick. For years the only way in was a Java KVM applet that worked on one browser from 2011. What changed is Redfish: a plain JSON-over-HTTPS API that's now good enough to build on.
+
+For example, here's the entire "reinstall this machine" sequence - four calls with `curl`:
+
+```bash
+# 1. Eject whatever's in the virtual CD drive
+curl -ksu "$CRED" -X POST -d '{}' \
+  "https://$IDRAC/redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD/Actions/VirtualMedia.EjectMedia"
+sleep 5   # iDRAC vMedia can't pipeline; back-to-back calls wedge it
+
+# 2. Insert our install ISO - the BMC fetches it over HTTP itself
+curl -ksu "$CRED" -X POST \
+  "https://$IDRAC/redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD/Actions/VirtualMedia.InsertMedia" \
+  -d "{\"Image\":\"$ISO_URL\",\"Inserted\":true,\"WriteProtected\":true,\"TransferProtocolType\":\"HTTP\"}"
+
+# 3. Boot from it, once
+curl -ksu "$CRED" -X PATCH "https://$IDRAC/redfish/v1/Systems/System.Embedded.1" \
+  -d '{"Boot":{"BootSourceOverrideTarget":"Cd","BootSourceOverrideEnabled":"Once","BootSourceOverrideMode":"UEFI"}}'
+
+# 4. Pull the trigger
+curl -ksu "$CRED" -X POST \
+  "https://$IDRAC/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset" \
+  -d '{"ResetType":"ForceRestart"}'
+```
+
+Eject media, mount media, set boot target, power cycle. **Those are the same primitives a cloud API uses to rebuild a VM - except here the control plane is a chip bolted to the motherboard, and it's yours.**
+
+There's even a Terraform provider for the Dell side. For example, our RAID volumes are declared as `redfish_storage_volume` resources next to everything else, pretty much the same way I would do it for GCP or AWS.
+
+## This is not scary anymore
+
+With a bit of scripting and a good BMC, the node declaration became just 30 lines of Terraform code:
+
+```hcl
+nodes = {
+  "node01" = { role = "server", host_index = 101, idrac_ip = "10.9.9.11" }
+  "node02" = { role = "client", host_index = 102, idrac_ip = "10.9.9.12" }
+  # ...
+}
+
+module "node01" {
+  source = "../../../modules/bare-metal/nomad-node-iso"
+
+  name = "node01"
+  role = "server"
+
+  network = {
+    bond = {
+      slaves       = ["ens1f0np0", "ens3f0np0"]
+      mode         = "802.3ad"            # switch ports expect LACP
+      vlan_id      = 100
+      address_cidr = "10.0.10.101/24"
+      gateway      = "10.0.10.1"
+    }
+  }
+
+  idrac_ip  = "10.9.9.11"
+  roll_iso  = local.roll_iso_per_node["node01"]  # false by default
+  install_after = module.node03.install_id       # reinstalls are serial
+}
+```
+
+Everything shared is hoisted into locals; as a comment in the file puts it, the diff between two nodes is "just hostname + IP suffix + role."
+
+On `apply`, the module renders a Debian preseed and a cloud-init bundle from templates, repacks a pinned Debian netinst ISO (downloaded once, SHA-256-verified) into a single-entry "Automated install" image with `xorriso`, and uploads it to a bucket.
+
+Then the BMC pulls that ISO over HTTP, the installer runs unattended - bonded NICs, VLANs, LVM layout, all preseeded - and on first boot cloud-init brings up Tailscale, Consul, and Nomad.
+
+About three minutes after cloud-init starts, the node is back in the cluster taking work. No PXE server, no provisioning appliance, no golden image drifting in a corner. At our scale - a handful of machines per site - PXE infrastructure would cause more work than it saves.
+
+## Mimicking the cloud storage model
+
+Another thing that feels cool in the cloud is how you can mount storage and, optionally, treat it as persistent, even when the instance is disposable. This can be done on metal too, just with a little care.
+
+Each of our servers has two RAID-1 volumes: an 80 GiB one for the OS and a big one mounted at `/opt`. The OS volume is cattle - wiped on every roll. `/opt` survives, and the first-boot script refuses to format a disk that already has a filesystem:
+
+```bash
+# Idempotent: skips mkfs if the device already has a filesystem, so a
+# reinstall that re-uses the same data disk preserves Consul/Nomad/
+# Tailscale state. This is the seam that lets us treat the node like
+# a VM in the cloud - / is wiped on every roll but /opt survives.
+FSTYPE=$(blkid -s TYPE -o value "$DEVICE" || true)
+if [ -z "$FSTYPE" ]; then
+  mkfs.ext4 -F -m 0 "$DEVICE"                 # first boot ever
+else
+  echo "already has $FSTYPE; skipping mkfs."  # every boot after
+fi
+```
+
+SSH host keys and `/etc/machine-id` are stashed on that disk and restored after a reinstall, so the node comes back as *itself*: no "REMOTE HOST IDENTIFICATION HAS CHANGED" screaming, no new Nomad node ID, no storage array remapping. Raft state, allocation dirs, host volumes - all still there. It's not a new server with the old name. It's the same server with a fresh OS.
+
+## Where it stops being the cloud
+
+On bare metal, failures are more costly and take longer to recover from. Mistakes become physical.
+
+For example, Redfish `ForceRestart` sails straight past every graceful-shutdown hook you wrote. We learned this by corrupting a database volume. The fix was to drain the node through the Nomad API before touching the power.
+
+Also, BMCs are good now, but not uniformly. Our second vendor's BMC accepted the mount-this-ISO call, reported the media as inserted, resolved DNS, ARPed its gateway - and never sent a single TCP SYN to fetch the image. Three identical units, firmware up and down, factory resets; a packet capture on the BMC's own VLAN finally proved it wasn't us. (Its NFS mount path worked perfectly, so that's what those boxes use.) Every new hardware vendor seems to cost you a week you didn't plan for.
+
+And the ecosystem has sharp edges in funny places: iDRAC truncates the virtual-media URL at roughly 590 characters, which happens to be shorter than a signed GCS URL. iDRAC does it silently, so you'll have to scratch your head for a while trying to figure out what is happening and build a workaround.
+
+The migration itself had plenty of other war stories - storage that corrupted itself, false alerts, DNS being DNS - and those deserve an article of their own.
+
+But all in all, you just need time, patience and some dedication to get everything right. And once you do, the workflow is almost indistinguishable from the cloud, maybe just slower.
+
+## The migration is worth it
+
+I wrote this article to show you that even though the cloud is convenient, you can get a lot of the same workflow on bare metal if you have the right tools and good engineers on your team. And this will let you save lots of money. Even in the current market, buying hardware and running it yourself ends up being way cheaper than renting it. (Especially if you can run on used hardware.)
+
+And a lot of the struggles with bare metal can be automated away, and AI agents are a great fit for that. They are smart enough nowadays to do most of the setup unattended. You just need to be mindful of how you use them: an agent can hallucinate and do something destructive and expensive if you don't give it the right guardrails.
+
+That is why I built [co:op](https://coop.dryga.com/) and [emisar](https://emisar.dev). One ensures the agent runs in a sandbox and cannot do anything destructive without your explicit approval. The other one ensures that the agent has all the information it needs to make decisions and cannot hallucinate.
