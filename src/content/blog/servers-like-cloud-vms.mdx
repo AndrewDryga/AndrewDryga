@@ -16,7 +16,6 @@ tags:
   - Agents
 relatedProjects:
   - blitz
-draft: true
 ---
 
 I run `terraform apply` from my laptop, and a physical server in our colo ejects its virtual DVD, mounts a fresh install image over HTTP, reboots, wipes its root disk, reinstalls Debian, and rejoins the cluster - same identity, workloads rescheduled - in about twenty minutes. Nobody at the datacenter gets a ticket. With one variable, it'll do that to all five Nomad machines, one at a time, in an order that keeps Raft quorum alive.
