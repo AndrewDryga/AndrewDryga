@@ -1,6 +1,6 @@
 # dryga.com - Astro workspace
 
-This directory contains the new Astro 4 site for dryga.com. It preserves the existing visual design while moving the stack to a fast, content‑first, SSG‑first architecture with minimal JS by default.
+This directory contains the Astro 7 site for dryga.com. It preserves the existing visual design while moving the stack to a fast, content‑first, SSG‑first architecture with minimal JS by default.
 
 Key goals:
 - Design parity with the current site (tokens, typography, animations).
@@ -14,6 +14,12 @@ Note: This Astro app is currently scaffolded side-by-side. You can iterate here 
 ---
 
 ## Quick start
+
+Requires Node.js 26.3 or newer (CI uses Node 26).
+
+TypeScript stays on 6.0.x because `@astrojs/check` and `typescript-eslint` do not yet support TypeScript 7.
+
+The dependency overrides keep `deepmerge-ts` on its fixed 8.x release and Tailwind Typography's `postcss-selector-parser` on the patched 6.1.x line until their upstream constraints are updated.
 
 1) Install dependencies
 - From this directory:
@@ -43,8 +49,9 @@ Linting: A lint script exists, but an ESLint config has not been added yet in th
 - astro/
   - astro.config.mjs - Integrations: Tailwind, React (for small islands), MDX, Sitemap, Image
   - package.json - Scripts: dev, build, preview, check, typecheck, format
-  - postcss.config.cjs - Tailwind + Autoprefixer
-  - tailwind.config.ts - Tokens, animations, typography plugin
+  - src/styles/global.css - Tailwind 4 entrypoint, dynamic class sources, container sizing
+  - tailwind.config.ts - Shared tokens, animations, and plugins; loaded via CSS `@config`
+  - Tailwind runs through `@tailwindcss/vite`; no PostCSS or Autoprefixer config is needed
   - tsconfig.json - Strict TS + path aliases
   - env.d.ts - Env var typing
   - public/

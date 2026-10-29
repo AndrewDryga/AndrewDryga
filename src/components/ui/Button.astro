@@ -44,7 +44,7 @@ const buttonType = ((attributes.type as string | undefined) ?? "button") as "but
 delete attributes.type;
 
 const baseClass =
-  "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border-2 text-sm font-mono transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
+  "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border-2 text-sm font-mono transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terminal-cyan focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
 
 const variantClasses: Record<NonNullable<Props["variant"]>, string> = {
   default:
@@ -66,7 +66,7 @@ const variantClasses: Record<NonNullable<Props["variant"]>, string> = {
     "border-2 border-secondary text-secondary hover:bg-secondary/10",
   "outline-accent": "border-2 border-accent text-accent hover:bg-accent/10",
   shortcut:
-    "!justify-between border-2 border-terminal-cyan/50 bg-terminal-surface text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 hover:text-terminal-cyan shadow-[0_0_0_1px_rgba(94,234,212,0.08)] transition-colors",
+    "justify-between! border-2 border-terminal-cyan/50 bg-terminal-surface text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 hover:text-terminal-cyan shadow-[0_0_0_1px_rgba(94,234,212,0.08)] transition-colors",
 };
 
 const sizeClasses: Record<NonNullable<Props["size"]>, string> = {

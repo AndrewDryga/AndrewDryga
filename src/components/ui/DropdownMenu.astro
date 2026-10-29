@@ -36,7 +36,7 @@ const {
   <button
     type="button"
     data-dropdown-trigger
-    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    class="inline-flex items-center gap-2 rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-terminal-cyan transition-colors hover:bg-terminal-cyan/10 focus:outline-hidden focus:ring-2 focus:ring-terminal-cyan"
     aria-haspopup="menu"
     aria-expanded="false"
   >
@@ -58,7 +58,7 @@ const {
     data-dropdown-menu
     role="menu"
     tabindex="-1"
-    class="invisible pointer-events-none absolute left-0 top-full z-10 mt-0 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_0_30px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+    class="invisible pointer-events-none absolute left-0 top-full z-10 mt-0 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_0_30px_rgba(34,211,238,0.25)] backdrop-blur-sm transition-opacity"
   >
     {
       items.map((item) => (

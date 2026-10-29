@@ -4,20 +4,27 @@ import { setTimeout as delay } from "node:timers/promises";
 const PORT = 43210;
 const HOST = "127.0.0.1";
 
-const execPath = process.env.npm_execpath ?? "";
-const usePnpm = execPath.includes("pnpm");
-const command = usePnpm ? "pnpm" : "npm";
-const args = usePnpm
-  ? ["dev", "--", "--host", HOST, "--port", String(PORT)]
-  : ["run", "dev", "--", "--host", HOST, "--port", String(PORT)];
-
-const server = spawn(command, args, {
-  stdio: ["ignore", "pipe", "pipe"],
-  env: {
-    ...process.env,
-    FORCE_COLOR: "0",
+// Own a foreground process even when Astro detects an agent environment.
+// The isolated smoke server must not reuse or stop a developer's server.
+const server = spawn(
+  process.execPath,
+  [
+    "node_modules/astro/bin/astro.mjs",
+    "dev",
+    "--ignore-lock",
+    "--host",
+    HOST,
+    "--port",
+    String(PORT),
+  ],
+  {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      FORCE_COLOR: "0",
+    },
   },
-});
+);
 
 let resolved = false;
 

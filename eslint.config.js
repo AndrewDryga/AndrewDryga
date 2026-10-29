@@ -3,13 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: [
-      "dist/",
-      ".astro/",
-      "astro/",
-      "node_modules/",
-      "src/components/mdx/SequenceDiagram/Message.astro",
-    ],
+    ignores: ["dist/", ".astro/", "astro/", "node_modules/"],
   },
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs["flat/recommended"],

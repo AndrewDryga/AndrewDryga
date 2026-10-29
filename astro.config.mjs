@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import critters from "astro-critters";
+import tailwindcss from "@tailwindcss/vite";
 
 // Make @shikijs/twoslash optional to avoid crashes when the package isn't installed.
 // Use a dynamic import with a non-literal specifier to prevent build-time resolution.
@@ -19,6 +20,9 @@ try {
 
 export default defineConfig({
   site: "https://dryga.com/",
+  // Preserve spaces between inline elements across the Astro 7 upgrade.
+  compressHTML: true,
+  vite: { plugins: [tailwindcss()] },
   prefetch: {
     prefetchAll: true,
   },
@@ -26,7 +30,8 @@ export default defineConfig({
     mdx(),
     sitemap({
       // Component previews deliberately use noindex; discovery feeds must agree.
-      filter: (page) => !new URL(page).pathname.startsWith("/component-library"),
+      filter: (page) =>
+        !new URL(page).pathname.startsWith("/component-library"),
     }),
     critters(),
   ],

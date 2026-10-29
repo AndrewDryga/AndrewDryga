@@ -3,34 +3,9 @@ import typography from "@tailwindcss/typography";
 import animate from "tailwindcss-animate";
 
 export default {
-  darkMode: ["class"],
+  darkMode: "class",
   content: ["./src/**/*.{astro,html,js,jsx,ts,tsx,md,mdx}"],
-  safelist: [
-    // Used in templates with dynamic class binding
-    "bg-gradient-primary",
-    "shadow-glow",
-    "shadow-card",
-    "prose",
-    "prose-invert",
-    "animate-fade-in",
-    // Gradient utilities used by dataset-driven blog card gradients
-    "from-terminal-cyan",
-    "to-terminal-green",
-    "from-terminal-yellow",
-    "to-terminal-cyan",
-    "from-terminal-green",
-    "to-terminal-yellow",
-    "from-primary",
-    "to-primary",
-  ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
       fontFamily: {
         mono: ["JetBrains Mono", "monospace"],

@@ -238,8 +238,8 @@ const { class: className = "" } = Astro.props;
 
               arrowHead.className =
                 toPos > fromPos
-                  ? `sd-arrow-head sd-arrow-right absolute right-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] -translate-y-[calc(50%+1px)] ${existingClasses}`
-                  : `sd-arrow-head sd-arrow-left absolute left-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] -translate-y-[calc(50%+1px)] ${existingClasses}`;
+                  ? `sd-arrow-head sd-arrow-right absolute right-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-10 -translate-y-[calc(50%+1px)] ${existingClasses}`
+                  : `sd-arrow-head sd-arrow-left absolute left-0 top-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-10 -translate-y-[calc(50%+1px)] ${existingClasses}`;
             }
           }
 

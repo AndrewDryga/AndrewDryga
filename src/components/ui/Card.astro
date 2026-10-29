@@ -6,7 +6,7 @@ interface Props {
 const { class: className = "", ...rest } = Astro.props as Props & Record<string, unknown>;
 
 const classes = [
-  "rounded-lg border border-border bg-card text-card-foreground shadow-sm",
+  "rounded-lg border border-border bg-card text-card-foreground shadow-xs",
   className,
 ]
   .filter(Boolean)

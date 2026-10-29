@@ -1,6 +1,62 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@config "../../tailwind.config.ts";
+
+/* Dataset-driven classes must be present even when absent from templates. */
+@source inline("bg-gradient-primary shadow-glow shadow-card prose prose-invert animate-fade-in from-terminal-cyan to-terminal-green from-terminal-yellow to-terminal-cyan from-terminal-green to-terminal-yellow from-primary to-primary");
+
+/* Preserve the site's container sizing and terminal button affordances. */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+
+  @media (width >= 40rem) {
+    max-width: none;
+  }
+
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  dialog {
+    margin: auto;
+  }
+}
+
+@utility animate-delay-0 {
+  animation-delay: 0ms;
+}
+
+@utility animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+@utility animate-delay-150 {
+  animation-delay: 150ms;
+}
+
+@utility animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+@utility animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+@utility animate-delay-400 {
+  animation-delay: 400ms;
+}
+
+@utility animate-delay-500 {
+  animation-delay: 500ms;
+}
 
 /* Global tokens and base styles for Astro build.
    Keep HSL tokens to match the current design exactly. */
@@ -64,21 +120,23 @@
   }
 }
 
-/* Self-hosted font faces; ensure files exist under /public/fonts */
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/inter-var.woff2") format("woff2-variations");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+@layer utilities {
+  /* Self-hosted font faces; ensure files exist under /public/fonts */
+  @font-face {
+    font-family: "Inter";
+    src: url("/fonts/inter-var.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: "JetBrains Mono";
-  src: url("/fonts/jetbrains-mono.woff2") format("woff2");
-  font-weight: 100 800;
-  font-style: normal;
-  font-display: swap;
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("/fonts/jetbrains-mono.woff2") format("woff2");
+    font-weight: 100 800;
+    font-style: normal;
+    font-display: swap;
+  }
 }
 
 @layer base {
@@ -111,37 +169,15 @@
   }
 }
 
-/* Reduced motion support for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
 @layer utilities {
-  .animate-delay-0 {
-    animation-delay: 0ms;
-  }
-  .animate-delay-100 {
-    animation-delay: 100ms;
-  }
-  .animate-delay-150 {
-    animation-delay: 150ms;
-  }
-  .animate-delay-200 {
-    animation-delay: 200ms;
-  }
-  .animate-delay-300 {
-    animation-delay: 300ms;
-  }
-  .animate-delay-400 {
-    animation-delay: 400ms;
-  }
-  .animate-delay-500 {
-    animation-delay: 500ms;
+  /* Reduced motion support for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

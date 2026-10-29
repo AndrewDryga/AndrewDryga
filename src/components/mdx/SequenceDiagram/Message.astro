@@ -75,17 +75,16 @@ const isSelfCall = fromIndex === toIndex;
 ---
 
 {isSelfCall ? (
-  <!-- Self-call / loop -->
   <div
-    class={`sd-row sd-message sd-self-call relative min-h-[5rem] ${className}`.trim()}
+    class={`sd-row sd-message sd-self-call relative min-h-20 ${className}`.trim()}
     data-from={fromIndex}
     data-to={toIndex}
   >
     <div class="sd-message-arrow absolute top-1/2 -translate-y-1/2">
-      <!-- Will be positioned by JS -->
+      {/* Will be positioned by JS */}
       <div class={`sd-self-call-box border-2 rounded-r-lg rounded-l-none border-l-0 w-16 h-12 ${style.borderColor}`}>
-        <!-- Arrow pointing back to lifeline at bottom -->
-        <div class={`sd-arrow-head absolute left-0 bottom-0 translate-y-[calc(50%-1px)] w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[10px] ${style.arrowLeft}`}></div>
+        {/* Arrow pointing back to lifeline at bottom */}
+        <div class={`sd-arrow-head absolute left-0 bottom-0 translate-y-[calc(50%-1px)] w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-10 ${style.arrowLeft}`}></div>
       </div>
     </div>
     <div class="sd-message-label absolute top-1/2 -translate-y-1/2 pointer-events-none z-10">
@@ -95,9 +94,8 @@ const isSelfCall = fromIndex === toIndex;
     </div>
   </div>
 ) : (
-  <!-- Regular message between participants -->
   <div
-    class={`sd-row sd-message relative min-h-[4rem] ${className}`.trim()}
+    class={`sd-row sd-message relative min-h-16 ${className}`.trim()}
     data-from={fromIndex}
     data-to={toIndex}
   >

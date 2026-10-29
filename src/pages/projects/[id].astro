@@ -161,7 +161,7 @@ const projectLd = {
           prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
           prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
           prose-p:text-muted-foreground prose-p:leading-relaxed
-          prose-a:text-terminal-cyan prose-a:no-underline hover:prose-a:underline
+          prose-a:text-terminal-cyan prose-a:no-underline prose-a:hover:underline
           prose-strong:text-foreground prose-strong:font-semibold
           prose-ul:text-muted-foreground prose-ul:leading-relaxed
           prose-li:my-2
@@ -182,7 +182,7 @@ const projectLd = {
                 <ul class="space-y-3">
                   {project.impact.map((item) => (
                     <li class="flex items-start gap-3 text-lg leading-relaxed text-muted-foreground">
-                      <span class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-terminal-green" />
+                      <span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-terminal-green" />
                       <span>{item}</span>
                     </li>
                   ))}

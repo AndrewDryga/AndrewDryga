@@ -15,7 +15,7 @@ const diagramContent = content || (await Astro.slots.render("default"));
   <pre
     role="img"
     aria-label={label}
-    class={`ascii-diagram whitespace-pre !text-terminal-cyan font-mono text-sm leading-relaxed origin-top-left ${className}`.trim()}
+    class={`ascii-diagram whitespace-pre text-terminal-cyan! font-mono text-sm leading-relaxed origin-top-left ${className}`.trim()}
     set:text={diagramContent}
   />
 </div>

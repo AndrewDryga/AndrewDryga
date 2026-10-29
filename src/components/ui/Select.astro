@@ -23,7 +23,7 @@ const {
 <div class={['relative font-mono text-sm', className].filter(Boolean).join(' ')} data-select>
   <button
     type="button"
-    class="flex w-full items-center justify-between rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-left text-foreground transition-colors hover:border-terminal-cyan/70 focus:outline-none focus:ring-2 focus:ring-terminal-cyan"
+    class="flex w-full items-center justify-between rounded-md border border-terminal-cyan/40 bg-terminal-surface px-3 py-2 text-left text-foreground transition-colors hover:border-terminal-cyan/70 focus:outline-hidden focus:ring-2 focus:ring-terminal-cyan"
     data-select-trigger
   >
     <span data-select-label>{placeholder}</span>
@@ -34,7 +34,7 @@ const {
   <input type="hidden" name={name} data-select-input {...rest}>
   <div
     data-select-list
-    class="invisible pointer-events-none absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_10px_40px_rgba(34,211,238,0.25)] backdrop-blur transition-opacity"
+    class="invisible pointer-events-none absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-terminal-bg/95 p-1 text-xs shadow-[0_10px_40px_rgba(34,211,238,0.25)] backdrop-blur-sm transition-opacity"
   >
     {
       options.map((option) => (

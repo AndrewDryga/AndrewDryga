@@ -14,10 +14,9 @@
     "allowJs": true,
     "jsx": "preserve",
     "strict": true,
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"],
-      "@/*": ["src/*"]
+      "~/*": ["./src/*"],
+      "@/*": ["./src/*"]
     },
     "types": ["astro/client"]
   },

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Astro 6 site for dryga.com with Tailwind, MDX, Sitemap, and Image.",
+  "description": "Astro 7 site for dryga.com with Tailwind, MDX, Sitemap, and Image.",
   "engines": {
-    "node": ">=18.14.1"
+    "node": ">=26.3.0"
   },
   "scripts": {
     "predev": "LLMS_BUILD_IF_MISSING=true LLMS_EXPORT_TARGETS=public/llms-full.txt node scripts/generate-llms-full.mjs .llms-cache",
@@ -20,41 +20,33 @@
     "generate:llms-full": "node scripts/generate-llms-full.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.0",
-    "@astrojs/sitemap": "^3.7.1",
-    "@shikijs/twoslash": "^4.0.2",
-    "astro": "^6.0.1",
+    "@astrojs/mdx": "^8.1.2",
+    "@astrojs/sitemap": "^3.7.4",
+    "@shikijs/twoslash": "^4.5.0",
+    "astro": "^7.4.4",
     "astro-critters": "^2.2.1",
-    "sharp": "^0.34.5"
-  },
-  "overrides": {
-    "@astrojs/check": {
-      "lodash": ">=4.17.21",
-      "yaml-language-server": "^1.21.0"
-    },
-    "volar-service-yaml": {
-      "yaml-language-server": "^1.21.0"
-    },
-    "yaml-language-server": {
-      "yaml": "2.8.3"
-    },
-    "yaml": "2.8.3"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@tailwindcss/typography": "^0.5.16",
-    "@types/node": "^25.4.0",
-    "autoprefixer": "^10.4.21",
-    "baseline-browser-mapping": "^2.10.0",
-    "eslint": "^10.0.3",
-    "eslint-plugin-astro": "^1.6.0",
-    "html-to-text": "^9.0.5",
-    "postcss": "^8.5.6",
-    "prettier": "^3.3.0",
-    "prettier-plugin-astro": "^0.14.1",
-    "tailwindcss": "^3.4.17",
+    "@astrojs/check": "^0.9.12",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.6",
+    "baseline-browser-mapping": "^2.11.34",
+    "eslint": "^10.13.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "html-to-text": "^10.0.1",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.2",
+    "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.0.0",
-    "typescript-eslint": "^8.57.0"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2",
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "^6.1.5"
+    }
   }
 }

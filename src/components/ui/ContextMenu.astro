@@ -23,7 +23,7 @@ const { items, class: className = "", menuClass = "" } = Astro.props as Props;
 
   <div
     class={[
-      "invisible pointer-events-none fixed z-50 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 shadow-[0_0_40px_rgba(34,211,238,0.25)] backdrop-blur",
+      "invisible pointer-events-none fixed z-50 min-w-[200px] rounded-md border border-border bg-terminal-bg/95 p-1 shadow-[0_0_40px_rgba(34,211,238,0.25)] backdrop-blur-sm",
       "transition-opacity data-[open=true]:visible data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 opacity-0",
       menuClass,
     ]

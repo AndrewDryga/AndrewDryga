@@ -20,7 +20,7 @@ const { name, options, defaultValue, class: className = "", ...rest } = Astro.pr
     <label class="flex cursor-pointer items-start gap-3 rounded-md border border-border/60 bg-terminal-surface/80 px-3 py-2 transition-colors hover:border-terminal-cyan/60">
       <input
         type="radio"
-        class="mt-1 h-4 w-4 shrink-0 rounded-full border border-border text-terminal-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-cyan"
+        class="mt-1 h-4 w-4 shrink-0 rounded-full border border-border text-terminal-cyan focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terminal-cyan"
         name={name}
         value={option.value}
         checked={defaultValue === option.value}
