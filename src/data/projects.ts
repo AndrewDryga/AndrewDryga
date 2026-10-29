@@ -20,7 +20,7 @@ export const featuredProjects: Project[] = [
     id: "blitz",
     name: "Blitz",
     description:
-      "Single-handedly owned ~20 high-traffic backends end-to-end (77 Elixir umbrella apps, 70+ Redis/50+ PostgreSQL instances) serving ~25k RPS with peaks to 120k for a 7-figure DAU product.",
+      "Single-handedly owned ~20 high-traffic backends end-to-end (77 Elixir umbrella apps, 70+ Redis/50+ PostgreSQL instances) serving ~25k RPS with peaks to 150k for a 7-figure DAU product.",
     impact: [
       "Cut cloud spend ~91% ($220k/mo to $20k/mo), saving >$2M/yr",
       "Drove daily errors from six-figure to near-zero",
@@ -84,7 +84,7 @@ export const featuredProjects: Project[] = [
     description:
       "Co-designed and built the national platform behind reimbursements, EMR, e-prescriptions, and nationwide APIs for clinics and pharmacies. Led architecture, security, hiring, and hands-on Elixir + DevOps. All development open-sourced under Apache license.",
     impact: [
-      "35M+ patients, 350k+ healthcare workers, 16k+ facilities",
+      "35M+ patients, 400k+ healthcare workers, 16k+ facilities",
       "Billions of EMRs, e-prescriptions, and medical records",
       "From zero to production in ~6 months",
     ],

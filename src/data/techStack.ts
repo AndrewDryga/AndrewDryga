@@ -26,7 +26,7 @@ export const techHighlights: TechHighlight[] = [
     value:
       "29k contributions (13k this year), 5k+ stars, too many repos",
   },
-  { label: "Scale", value: "25k–120k RPS, 70+ services" },
+  { label: "Scale", value: "25k-150k RPS, 70+ services" },
   { label: "AI token spend", value: "~$42k/mo" },
 ];
 

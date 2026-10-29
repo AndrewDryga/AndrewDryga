@@ -16,7 +16,7 @@ Oh, and there was one more thing: the last backend engineer left a week after I 
 
 ### The Backend Was Drowning in Errors
 
-The Elixir apps were stable enough, but they were generating **tens of thousands** of Sentry events every day, requiring pretty sizeable Sentry cluster and sometimes taking it down requiring manual reset of Kafka queues. Most of it was noise-race conditions, failed inserts where upserts should've been used, unmaintained databases, and an overcomplicated architecture nobody fully understood.
+The Elixir apps were stable enough, but they were generating **100k+ Sentry events every day**, requiring pretty sizeable Sentry cluster and sometimes taking it down requiring manual reset of Kafka queues. Most of it was noise-race conditions, failed inserts where upserts should've been used, unmaintained databases, and an overcomplicated architecture nobody fully understood.
 
 I went heads-down for a month:
 - Added NIFs for JSON encoding (at our RPS, encoding/decoding JSON is expensive);
@@ -29,7 +29,7 @@ I went heads-down for a month:
 
 _I can't thank Elixir and Erlang enough for their outstanding debugging story. Being able to remote shell into an IEx console, run `:recon_trace`, inspect production state, or even hot-patch a fixed module directly into production saved my ass countless times. You can't do this stuff in most languages - it's a superpower when you're firefighting solo. This is **one of many** reasons why Elixir is my language of choise!_
 
-**Result:** Error rate dropped from six figures to ~42 events per day (mostly timeouts, which are occasionally fine at our scale).
+**Result:** Daily Sentry events dropped from 100k+ to ~42 (mostly timeouts, which are occasionally fine at our scale).
 
 ### Infrastructure Was a Mess
 
@@ -92,7 +92,7 @@ I moved everything to GitHub Actions (**$24k/year saved**) and built a proper CI
 
 ### When I've joined
 - **Cloud spend:** ~$220k/month
-- **Daily errors:** Six-figure Sentry events
+- **Daily errors:** 100k+ Sentry events
 - **Monitoring cost:** $50k/year for a 12-node cluster
 - **CI/CD cost:** CircleCI + custom tooling
 - **CDN cost:** GCP CDN + CSP billing disaster
