@@ -28,7 +28,7 @@ function initMixpanel() {
     Number(import.meta.env.PUBLIC_MIXPANEL_REPLAY_PERCENT ?? "10"),
   );
 
-  if (!token || shouldRespectDNT()) {
+  if (!token || isDev || location.hostname !== "dryga.com" || shouldRespectDNT()) {
     return;
   }
 

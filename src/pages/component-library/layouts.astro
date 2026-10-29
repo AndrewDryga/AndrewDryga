@@ -10,6 +10,7 @@ import HamburgerMenu from "@/components/ui/HamburgerMenu.astro";
 import AspectRatio from "@/components/ui/AspectRatio.astro";
 import NavigationMenu from "@/components/ui/NavigationMenu.astro";
 import ResizablePanel from "@/components/ui/ResizablePanel.astro";
+import AIProjects from "@/components/AIProjects.astro";
 
 if (import.meta.env.PROD) {
   return Astro.redirect("/");
@@ -60,6 +61,18 @@ const navigationLinks = [
       />
 
       <div class="space-y-12">
+        <section class="space-y-6">
+          <header class="space-y-3">
+            <h2 class="text-3xl font-bold">AI project showcase</h2>
+            <p class="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Three equal project cards pair a discipline and product mark with
+              plain-language copy and one project link.
+              Uses Card and Button primitives; stacks below the large breakpoint.
+            </p>
+          </header>
+          <AIProjects />
+        </section>
+
         <section class="space-y-6">
           <header class="space-y-3">
             <p class="font-mono text-sm text-terminal-green">

@@ -3,7 +3,7 @@ title: "Running an AI coding agent you can't trust"
 shortTitle: "Untrusted AI agents"
 description: "You can't trust an AI coding agent, and you shouldn't have to. Put it in a sandbox where the worst case is boring: one repo damaged, no secrets exposed, and a VM you can rebuild in a minute."
 publishDate: 2026-06-14
-updatedDate: 2026-06-14
+updatedDate: 2026-10-20
 category: "Engineering"
 readTime: "12 min read"
 cardGradient: "from-terminal-cyan to-terminal-green"
@@ -40,7 +40,9 @@ One shortcut before we start: I packaged this whole setup as a single Go binary,
 curl -fsSL https://raw.githubusercontent.com/AndrewDryga/coop/main/install.sh | sh
 ```
 
-The rest of this article is what `coop` does under the hood, written out as plain shell so nothing is hidden - because the point is the idea. Once you've seen it, you can roll your own in an afternoon or just run the tool.
+**Implementation update, October 2026:** the shell examples below explain the original design. Current co:op uses Docker for online provider sessions and a per-run credential broker; the Apple container example is not its current setup procedure. Use the [sandbox walkthrough](https://coop.dryga.com/sandbox-guide.html) to check files, credentials and networking, then the [overnight task walkthrough](https://coop.dryga.com/overnight-guide.html) for a separate fork and a reviewable queue. Known secret-path filtering still needs your project's exclusions; it cannot recognize every credential embedded in ordinary source.
+
+The rest of this article develops the design as plain shell so the boundaries are visible. Treat the examples as a design walkthrough, not a copy of the current launcher.
 
 ## Trust the sandbox, not the model
 

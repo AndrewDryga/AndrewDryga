@@ -22,7 +22,14 @@ export default defineConfig({
   prefetch: {
     prefetchAll: true,
   },
-  integrations: [mdx(), sitemap(), critters()],
+  integrations: [
+    mdx(),
+    sitemap({
+      // Component previews deliberately use noindex; discovery feeds must agree.
+      filter: (page) => !new URL(page).pathname.startsWith("/component-library"),
+    }),
+    critters(),
+  ],
 
   markdown: {
     shikiConfig: {

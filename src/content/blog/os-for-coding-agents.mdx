@@ -3,7 +3,7 @@ title: "One brain, two agents: an OS for autonomous coding agents"
 shortTitle: "An OS for your agents"
 description: "AI agents lose context, stop early, and skip work. The fix is not a smarter prompt. It is a small, file-based operating system: a queue they cannot abandon, hooks they cannot ignore, and one shared source of truth."
 publishDate: 2026-06-14
-updatedDate: 2026-06-14
+updatedDate: 2026-08-25
 category: "Engineering"
 readTime: "11 min read"
 cardGradient: "from-terminal-green to-terminal-cyan"
@@ -18,119 +18,203 @@ relatedProjects:
 
 ---
 
-I gave my AI coding agents three complaints and one demand. The complaints: *they lose context constantly, they stop before the work is done, and they skip work.* The demand: run my repo semi-autonomously, around eight hours a day, and when I hand it 300 tasks, finish **every single one** - to my taste, not a generic average. That part matters to me.
+I ask something simple of my AI coding agents: take a task, work on it end to end, ship the result to my taste, and do it autonomously. I want to hand them a list of 100 tasks and have them finish every single one without losing important context, stopping early, or skipping work. But that's exactly what they don't do.
 
-My first instinct was to fix this with a better prompt. A longer `CLAUDE.md`. A sterner "do not stop until you are finished." A queue of `/goal`s. I tried all of it.
+I initially tried to fix this with a better prompt. A stricter `CLAUDE.md`. A sterner "do not stop until you are finished." A queue of `/goal`s. I tried all of it, and none of it worked reliably enough - because `CLAUDE.md`, `AGENTS.md`, and memory are just part of the context and do not enforce the behaviour.
 
-So I stopped treating the agent like a chat window and built it an operating system instead. It's boring, file-based, and almost entirely made of markdown and three shell hooks. It refuses to stop while there's work left, it learns my style and turns my corrections into checks the model *can't* slip past, and - the part I'm quietly smug about - it runs on **both Claude Code and Codex from a single source of truth**. A Codex agent started using it on its own while I was still building it.
+There are three ways it goes wrong:
+
+- **Losing context** is really a *compaction* problem. When the window fills up, the conversation gets summarized away - everything except the project-root instruction file (which gets re-injected from disk) and memory. So your durable rules have to live in that root file, and your working *state* has to live on the filesystem, not in the chat.
+- **Stopping early and skipping work** isn't something you can fix by writing "don't stop" in a prompt. That's advice. Every model will interrupt itself to wait on a human decision instead of picking up the next task, every one of them has a limit on how long it can run before it stops and  Claude API going down 20 times a day also worth mentioning here. It needs a hook that mechanically rejects premature stop attempts. Ideally, it should also retry the turn.
+- **Learning your taste** can't lean on the model "remembering." A rule no machine enforces just gets violated again. It has to graduate into a check.
+
+The severity of these problems depends on the model, its version, and its effort level. For example, Sol can take on long-horizon tasks or a list of them, but compactions and context rot can steer it into heavy over-engineering. Opus will stop early when I give it a long list of things to do, no matter how I prompt it. Fable is simply too limited on most subscriptions to be practical for routing coding tasks. Things also get better or worse over time as harnesses and models change. The system around them has to remain stable regardless of all of that.
+
+So I built an "operating system". It's boring, pragmatic, file-based, and almost entirely made of markdown and three shell hooks. It refuses to stop while there's work left, it learns my style and turns my corrections into checks the model *can't* slip past, and, since I use multiple subscriptions, it runs on **both Claude Code and Codex from a single source of truth**.
 
 This assumes you can already run an agent without it wrecking your laptop. If you can't yet, start with the sandbox: [running an AI coding agent you can't trust](/blog/untrusted-ai-coding-agent/). This is the other half - what makes that safe box actually finish the job.
 
-## Docs are advice, hooks are law
-
-> `CLAUDE.md`, `AGENTS.md`, and memory are *context*, not enforcement. To guarantee a behavior regardless of what the model decides, you need a hook.
-
-That one sentence explains all three of my complaints, and each one wants a different fix:
-
-- **Losing context** is really a *compaction* problem. When the window fills up, the conversation gets summarized away - everything except the project-root instruction file (which gets re-injected from disk) and memory. So your durable rules have to live in that root file, and your working *state* has to live on the filesystem, not in the chat.
-- **Stopping early and skipping work** isn't something you can fix by writing "don't stop" in a prompt. That's advice. It needs a hook that mechanically refuses to end the turn while there's unfinished work.
-- **Learning my taste** can't lean on the model "remembering." A rule no machine enforces just gets violated again. It has to graduate into a check.
-
-Everything below is built on that one line: the stuff that *should* happen goes in markdown, and the stuff that *must* happen goes in hooks.
+Everything below is built on one line: the stuff that *should* happen goes in markdown, and the stuff that *must* happen goes in hooks.
 
 ## Beating amnesia: a boot protocol and a memory on disk
 
-Let's start with context loss, because it's the one everybody misreads as the model being dumb. It isn't. When the context window fills up, the harness summarizes the conversation and carries on. The session survives; the details don't. And here's the bit that took me embarrassingly long to figure out: **after a compaction, the project-root instruction file gets re-read from disk - nested ones don't.** My entire rulebook lived one directory down, in a nested `CLAUDE.md`, and every compaction quietly dropped it until the agent happened to touch a file in that directory again. The agent wasn't forgetting my rules. I'd put the rules in a file that doesn't survive.
+Context loss comes first because it's the failure everybody misreads as the model being dumb. It isn't. When the context window fills up, the harness summarizes the conversation and carries on. State is lost during this process, and harnesses try to work around that by injecting the root instruction file - only the root one - and memory back into the context.
 
-So treat the root file as a survival kernel - the forty lines that have to outlive any compaction. The first thing it defines is a **BOOT protocol**: the exact order to re-read whenever the context is fresh or freshly compacted.
+So treat the root file as a survival kernel - the core that has to outlive any compaction. The first thing my `AGENTS.md` defines is a **BOOT protocol**: the exact order to re-read whenever the context is fresh or freshly compacted.
 
 ```markdown
 # BOOT - read these, in order, before touching code:
-1. this file
-2. the project's AGENTS.md, in full
-3. .agent/LOG.md      (what I was doing and why)
-4. .agent/TASKS.md    (what's left)
+1. portal/AGENTS.md, ..            (project specific instructions for monorepos)
+2. .agent/kb/rules/                (the taste knowledge base)
+3. .agent/tasks/README.md          (the queue's own instructions)
+3. ls .agent/tasks/todo            (the work queue, in order of creation)
+4. .agent/tasks/in_progress/*.md   (the task in flight, if any)
 ```
 
-That's the whole antidote to amnesia. The *rules* survive because they're in the re-injected root file. The *intent* survives because the agent wrote it down somewhere the protocol reads back. Every project gets an `.agent/` folder that's exactly that - durable working memory on disk:
+In my setup, every project gets an `.agent/` folder for durable working memory that agents share on disk and humans can read:
 
-| File | What it is |
+| Path | What it is |
 |---|---|
-| `TASKS.md` | the work queue |
-| `LOG.md` | the agent's chain-of-thought: *what I did and why*, so reasoning survives a compaction |
-| `BACKLOG.md` | work discovered out of scope - captured so it's never lost, never auto-worked |
-| `PENDING_DECISIONS.md` | things blocked on a human call, each with options and a recommendation |
-| `rules/` | the taste knowledge base |
+| `tasks/` | the work queue - one folder per task, and its state is which directory it sits in |
+| `tasks/<status>/<id>/state.md` | the resume snapshot: the plan, current position, next concrete action, and traps |
+| `tasks/<status>/<id>/log.md` | the agent's working journal: what it did and why, so reasoning survives a compaction |
+| `tasks/<status>/<id>/decision.md` | the human call this task is parked on, with options and a recommendation |
+| `kb/rules/` | the taste knowledge base |
 
-`LOG.md` is the one people skip, and it's the one that pays off the most. A checklist tells a recovering agent *what's* left; the log tells it *why* the last three tasks were done the way they were - the decision it would otherwise re-litigate or quietly contradict. Reasoning is the first thing compaction throws away and the most expensive to rebuild, so the agent writes it down as it goes.
+The `<status>` directories are `00_todo/`, `10_in_progress/`, `50_blocked/`, `99_done/` and `xx_backlog/`. Model moves the task folders between those directories, making the queue and current work state durable.
 
-There's a second lever for the same problem: keep exploration out of the main context entirely. Subagents read files in their own window and hand back only the conclusion - one of them burns six thousand tokens reading code, and your main thread gets a four-hundred-token answer. The main context should hold decisions, not file dumps.
+For all those task files `log.md` is the one people skip, and it's the one that pays off the most. The task queue tells a recovering agent *what's* left but the log tells it *why* the last three tasks were done the way they were - the decision it would otherwise re-litigate or quietly contradict. Reasoning is the first thing compaction throws away and the most expensive to rebuild, so the agent is instructed to write important bits of it down as it goes. The queue's own README speaks directly to the agent, and BOOT reads it into every fresh or freshly compacted context:
 
-**Context is scratch space. The filesystem is the memory.** Once that clicks, the rest of the OS kind of designs itself.
+```markdown
+# .agent/tasks/README.md
+
+## log.md - the working journal
+Append-only history of what you did and **why** - the decisions, dead ends, and
+surprises a reviewer (or the next agent) needs. Add to the bottom; never rewrite
+it. This is the durable "why"; state.md is just "where am I now".
+
+## state.md - the resume snapshot
+The single most useful file for an unattended loop: each iteration is a fresh
+agent with no memory of the last, so this is how a task survives an interruption.
+**Overwrite the whole file** at every checkpoint (before a commit, before you
+pause) - it's a snapshot, not a log. Keep it to a few lines, and on resume read
+it first.
+```
+
+There's a second lever for the same problem: keep exploration out of the main context entirely by instructing your agent to use subagents for exploratory and mechanical work. Subagents read files in their own window and hand back only the conclusion - one of them burns six thousand tokens reading code, and your main thread gets a four-hundred-token answer. The main context doesn't grow so quickly and compactions happen less often.
+
+That's the whole antidote to amnesia. The *rules* and *intent* survive because they're in the re-injected root file. **The filesystem becomes the memory.** Once that clicks, the rest of the OS kind of designs itself.
 
 ## The contract: a queue with nowhere to hide
 
-If you want hours of unattended work, the task list can't live in the model's head - or in the chat scrollback, which is the same thing with extra steps. It lives in `.agent/TASKS.md`, and it has exactly four states:
+The task queue solves another problem: the model's natural tendency to skip work. If you want hours of unattended work, the task list can't live in the model's head - or in the chat scrollback, which is the same thing with extra steps. It lives in `.agent/tasks/`, where a task is a *folder* and its state is which directory it sits in.
 
-```markdown
-# .agent/TASKS.md
-# [ ] todo   [w] claimed/in-progress   [x] done+gated+committed   [B] blocked
+Every entry point gives the agent the same instruction:
 
-- [ ] Replace deprecated Logger.warn calls in lib/billing (done: zero compile warnings)
-- [ ] Add missing index on payments.inserted_at (done: migration committed, query plan in the log)
-- [ ] Bump tzdata and fix the three failing date tests (done: full suite green)
-```
+> Take the next folder in `00_todo/`, claim it by moving into `10_in_progress/` → do it → run the gate → commit → write the state snapshot → close it by moving to `99_done/`. Blocked? Move to `50_blocked/` plus add a `decision.md` describing the decisions you need to get from a human, provide options for the decision, argue about their tradeoofs and give your recommendation. Spot unrelated work? Small and ready goes straight on the queue, big or half-formed goes to the backlog - either way, **stay on task**. Never end a turn with a task still in `10_in_progress/`, and never stop while `00_todo/` still has tasks.
 
-Four states, and all the discipline is in the transitions. You claim a task by flipping it to `[w]` **right away** - before you do anything else - so a crashed-and-resumed agent can see exactly what was in flight. A task only reaches `[x]` when three things are true: the project gate is green, the change is committed, and there's a `LOG.md` entry. "Done" is mechanical here, not a vibe. And if a task can't move, it goes `[B]` and *has to* have a matching `PENDING_DECISIONS.md` entry with the options and a recommendation.
-
-Here's the work loop every entry point follows:
-
-> Take the first `[ ]`, flip it to `[w]` to claim it → do it → run the gate → commit → log it → flip to `[x]`. Blocked? `[B]` plus a decision entry. Spot unrelated work? Drop it in `BACKLOG.md` and **stay on task**. Never stop holding a `[w]`, and never stop while a `[ ]` remains.
-
-That `BACKLOG.md` line is doing quiet but important work. The *other* failure mode of an autonomous agent isn't skipping - it's the opposite. It wanders off to refactor something it noticed three files over and never comes back to the actual task. "Capture it, don't do it" gives the distraction a home, so the agent doesn't have to choose between losing the idea and losing the plot. It also spares you the nastiest kind of review: an unrelated change the agent slipped in four hours ago, buried in a diff you'd never have caught by eye.
-
-And "done" has to mean evidence, not the agent's say-so. The first real batch I ran through this had 269 items. My first pass was grep-driven and missed work. The second forced reading every touched function and caught what grep missed. The third was a mechanical sweep that re-checked every `[x]` against the git log - and caught what my eyeballs had quietly normalized away. Final score 269/269, but only because the protocol stopped trusting the model's self-reports at every step. That third pass is permanent now; you'll see it wired into the loop near the end.
+That backlog line matters prevents an agent to wander off and never come back when it spots something three files over, because a compaction wiped out what it set out to do initially. "Capture it, don't do it" gives the distraction a home, so the agent keeps the idea and stays on the task. It also saves you the worst kind of review: an unrelated change buried deep in the diff.
 
 ## Hooks: the rules that can't be argued with
 
-Everything so far is still advice - context the model reads, weighs, and sometimes loses. Two hooks turn the load-bearing parts into law. Hooks are just shell scripts the harness runs at fixed points in the agent's life; the model doesn't get a vote.
+Everything so far is still advice - context the model reads, weighs, and sometimes loses. I use only three hooks to enforce the parts that cannot be optional. Hooks are shell scripts the harness runs at fixed points in the agent's life; the harness controls them, not the model, so they can't be silently ignored.
 
-The one that changes everything for unattended runs is the **`Stop` hook**. It fires the moment the agent decides it's finished, and it gets to disagree:
+The most practical one is the **`Stop` hook**. It fires the moment the agent decides it's finished and lets the harness force it to continue:
 
 ```bash
 #!/bin/bash
-# .claude/hooks/stop-guard.sh - refuse to stop while work remains
-[ -f "$CLAUDE_PROJECT_DIR/.agent/active" ] || exit 0     # only during a batch
-queue="$CLAUDE_PROJECT_DIR/.agent/TASKS.md"
+# .agent/skills/sweep/queue-guard.sh - refuse to stop while work remains
+if [ -z "${CLAUDE_PROJECT_DIR:-}" ] || [ -z "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+  echo "Claude Code project or session ID is unavailable; cannot inspect the queue." >&2
+  exit 2
+fi
 
-remaining=$(grep -c '^- \[ \]' "$queue" 2>/dev/null || echo 0)
-if [ "$remaining" -gt 0 ]; then
-  echo "TASKS.md has $remaining unclaimed items. Keep going, or mark a blocker [B]" \
-       "with a PENDING_DECISIONS.md entry. Those are the only ways to end here." >&2
+queue="$CLAUDE_PROJECT_DIR/.agent/tasks"
+armed="$queue/.sweep-armed/$CLAUDE_CODE_SESSION_ID"
+
+# The hook is always installed, but only an armed /sweep session is gated.
+[ -d "$armed" ] || exit 0
+
+left=0
+for state in 00_todo 10_in_progress; do
+  [ -d "$queue/$state" ] || continue
+  left=$((left + $(find "$queue/$state" -mindepth 1 -maxdepth 1 -type d | wc -l)))
+done
+
+if [ "$left" -gt 0 ]; then
+  echo "$left actionable task(s) remain in 00_todo or 10_in_progress." \
+       "Finish them, or move genuinely blocked tasks to 50_blocked." >&2
+  exit 2
+fi
+
+# An empty actionable queue completes the sweep and disarms this session.
+if ! rmdir "$armed"; then
+  echo "Queue is empty, but the sweep guard could not disarm: $armed" >&2
   exit 2
 fi
 ```
 
-Exit code 2 blocks the stop, and that stderr message goes straight back to the agent. "I've completed the most important items, wrapping up!" - _no you didn't, 41 boxes are still unclaimed, back to work_. 
+Exit code 2 blocks the stop, and that stderr message goes straight back to the agent. When it says, "I've completed the most important items, wrapping up," the hook answers: _No. Forty-one folders are still sitting in `00_todo`; back to work._
 
-Two details make it livable. It's sentinel-gated: dead unless an `.agent/active` marker exists, so it never nags you during a quick interactive question and only arms when you start a batch. And it only blocks on `[ ]` - a `[w]` is somebody's live claim, `[x]` and `[B]` are done. If the agent gets genuinely stuck, you've still got Ctrl+C; the hook gates the agent's decision to quit, not yours.
+I do not leave that guard armed for every interaction. Otherwise a quick one-off question could force the agent through the entire queue. Instead, the Stop hook is installed once in `.claude/settings.json` and returns immediately unless the current session has been armed:
 
-The second hook is a commit gate on `PreToolUse`: intercept `git commit`, run the fast formatters over the *staged* files, and refuse the commit if they come back dirty. Scope it to staged files so an unrelated mess somewhere else can't block you, and make it fail *open* so a missing toolchain never wedges the whole run.
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash",
+            "args": ["${CLAUDE_PROJECT_DIR}/.agent/skills/sweep/queue-guard.sh"]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
-One honest caveat: hooks are the single genuinely tool-specific layer here. Claude Code has them; Codex doesn't have an equivalent yet. So the *enforcement* is Claude-side, while everything else - rules, queue, log, skills - is shared. More on how that sharing works in a second.
+The `/sweep` skill arms the guard as it loads:
+
+```yaml
+# .agent/skills/sweep/SKILL.md
+---
+name: sweep
+description: Drain this repo's .agent/tasks/ queue autonomously, one commit per task.
+disable-model-invocation: true
+allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+---
+!`mkdir -p "${CLAUDE_PROJECT_DIR}/.agent/tasks/.sweep-armed/${CLAUDE_SESSION_ID}" && printf 'Sweep guard armed for this session.\n'`
+
+Drain `.agent/tasks/` according to the root queue contract. Move genuinely
+blocked work to `50_blocked/`; do not leave it in an actionable state.
+
+If the human explicitly cancels the sweep, remove this session's marker before
+stopping. Otherwise the Stop guard removes it when the actionable queue is empty.
+```
+
+The marker includes Claude Code's session ID. A normal interactive session has no marker and the permanent hook is a no-op. Resuming the same sweep session keeps the guard armed; opening a different session does not inherit it. The script removes its own marker as soon as `00_todo/` and `10_in_progress/` are empty. `50_blocked/` is parked on a human, and `99_done/` has shipped. A human interrupt still wins.
+
+Claude Code marks a retry forced by a Stop hook with `stop_hook_active`. This guard uses the queue itself as the terminating condition and keeps blocking while actionable work remains. Claude Code still ends the turn after eight consecutive Stop blocks, so this hook applies pressure rather than creating an infinite process; the foreman later in this article handles restarts across sessions.
+
+The second hook is a commit gate on `PreToolUse`: intercept `git commit`, run the fast formatters over the *staged* files, and refuse the commit if they come back dirty.
+
+```bash
+#!/bin/bash
+# .claude/hooks/commit-gate.sh - format staged files, block the commit if they're dirty
+input=$(cat)                                                    # the tool call arrives on stdin
+echo "$input" | grep -q '"command"[^}]*git commit' || exit 0    # ignore every other command
+staged=$(git diff --cached --name-only --diff-filter=ACM) || exit 0
+
+go_files=$(echo "$staged" | grep '\.go$' || true)
+if [ -n "$go_files" ] && command -v gofmt >/dev/null 2>&1; then # no gofmt? fail open
+  bad=$(gofmt -l $go_files 2>/dev/null || true)
+  if [ -n "$bad" ]; then
+    echo "commit blocked - these need gofmt:" >&2; echo "$bad" >&2
+    exit 2
+  fi
+fi
+exit 0
+```
+
+Scope it to staged files so an unrelated mess somewhere else can't block you, and make it fail *open* - that `command -v gofmt` check is the whole trick, so a missing toolchain never wedges the whole run.
+
+One honest caveat: harness hooks are the single genuinely tool-specific layer here. Claude Code has them; Codex doesn't have an equivalent yet. That's what the third hook is for - a plain git `pre-commit` gate, tracked in the repo with `core.hooksPath` pointed at it, so the format check runs for *every* committer (Codex, Gemini, a bare `git commit`) and rides along on a fresh clone. Only the Stop guard stays Claude-side; everything else - rules, queue, log, skills - is shared. More on how that sharing works in a second.
 
 ## Teaching it your taste
 
-Here's how the thing learns to write code like *me* instead of like the average of all of GitHub. Every correction I give isn't a one-off fix - it gets recorded as a rule, in the same change:
+Here's how to make the agent write code like *you* instead of like the average of all of GitHub. Treat every correction you give it as more than a one-off fix - record it as a rule in the same change:
 
 1. **Fix** the flagged instance.
-2. **Record** it - a one-line entry in the project's rule index, plus a `rules/<slug>.md` with a worked ✅-good / ❌-bad example when the rule needs one.
+2. **Record** it - a one-line entry in the project's rule index, plus a `.agent/kb/rules/<slug>.md` with a worked ✅-good / ❌-bad example when the rule needs one.
 3. **Sweep** the codebase for other instances of the old shape - one correction usually has siblings.
 4. **Graduate** it - if it's mechanically checkable, add a real check: a custom lint, an AST rule, a hook. Now it can't regress.
 
-The `Sweep` step is the one most people skip, and skipping it bites you later: the model wanders back into the old, off-taste code still in the repo, decides that style must be fine, and copies it again. (I've found it just doesn't keep all your rules in its head while it's deep in a big file.)
+The `Sweep` step is the one most people skip, and skipping it bites you later: the model wanders back into the old, off-taste code still in the repo, decides that style must be fine, and copies it again. I learned this the hard way: while the agent is deep in a big file, it does not keep every rule in context.
 
-The `Graduate` step is the endpoint: the goal of "learning my taste" was never the model *remembering* - it's the violation becoming *impossible to commit*. A dozen of my rules have graduated into real static-analysis checks (Credo AST rules, on the Elixir side); the rest live as worked examples the agent reads on demand from `rules/`. Memory drifts. A static-analysis rule doesn't.
+The `Graduate` step is the endpoint: the goal of teaching your taste was never to make the model *remember* - it was to make the violation *impossible to commit*. In my setup, a dozen rules have graduated into real static-analysis checks (Credo AST rules on the Elixir side); the rest live as worked examples the agent reads on demand from `.agent/kb/rules/`. Memory drifts. A static-analysis rule doesn't.
 
 ## One brain, two agents
 
@@ -142,25 +226,33 @@ The spine is one file - `AGENTS.md` - the canonical, tool-neutral manual, at the
 
 ```
 myapp/
-  AGENTS.md                               # the creed, the BOOT protocol, the contract
-  CLAUDE.md -> AGENTS.md                  # symlink
-  GEMINI.md -> AGENTS.md                  # symlink
-  .agent/                                 # shared working memory (both tools read/write it)
-  control_plane/AGENTS.md                 # Elixir specifics
-  control_plane/AGENTS.md -> CLAUDE.md    # symlink
-  control_plane/GEMINI.md -> CLAUDE.md    # symlink
-  runner/AGENTS.md                        # Go specifics
-  runner/AGENTS.md -> CLAUDE.md           # symlink
-  runner/GEMINI.md -> CLAUDE.md           # symlink
-  .claude/skills/                         # the skills
-  .codex/skills -> ../.claude/skills      # one more symlink
+  AGENTS.md                            # the creed, the BOOT protocol, the contract
+  CLAUDE.md -> AGENTS.md               # symlink
+  GEMINI.md -> AGENTS.md               # symlink
+  .agent/                              # shared working memory (every tool reads/writes it)
+  .agent/skills/                       # the skills, in one tool-neutral place
+  .claude/settings.json                # Claude-only hook wiring
+  .claude/skills -> ../.agent/skills   # symlink
+  .codex/skills  -> ../.agent/skills   # symlink
+  .gemini/skills -> ../.agent/skills   # symlink
+  control_plane/AGENTS.md              # Elixir specifics
+  control_plane/CLAUDE.md -> AGENTS.md # symlink
+  runner/AGENTS.md                     # Go specifics
+  runner/CLAUDE.md -> AGENTS.md        # symlink
 ```
 
-Because everything lives in those shared files, nothing is duplicated per tool - one rulebook, one queue, one set of skills. While I was building this, a Codex agent in the same repo even picked the whole thing up on its own and started working the queue right alongside Claude. The only thing to get right is what you commit: keep `rules/` (the shared taste knowledge) in git and **git-ignore the rest of `.agent/`** - the queue and log are local working state, and two agents both committing `.agent/TASKS.md` is a merge-conflict machine.
+Because everything lives in those shared files, nothing is duplicated per tool - one rulebook, one queue, one set of skills. While I was building this, a Codex agent in the same repo even picked the whole thing up on its own and started working the queue right alongside Claude.
+
+The only thing you have to get right is what gets committed. Keep the knowledge - `kb/`, the skills, the presets - in git, and **git-ignore the working state**. The queue and its logs are local, and two agents committing the same queue is a merge-conflict machine. The one exception is the queue's own README: it is a BOOT entry point, so it has to survive a fresh clone.
 
 ```gitignore
-.agent/*
-!.agent/rules/
+**/.agent/*
+!**/.agent/kb/               # the taste KB is shared
+!**/.agent/skills/
+!.agent/project.yaml
+!**/.agent/tasks/            # the queue is local state...
+**/.agent/tasks/*
+!**/.agent/tasks/README.md   # ...but its layout doc is a BOOT entry point
 ```
 
 ## The foreman is a while loop
@@ -172,33 +264,36 @@ The `Stop` hook keeps a single session honest. It does nothing for the session t
 # bin/foreman - run disposable agents until the queue is provably done
 set -euo pipefail
 
-touch .agent/active && trap 'rm -f .agent/active' EXIT
-work_remains() { grep -q '^- \[ \]' .agent/TASKS.md; }
+work_remains() {
+  find .agent/tasks/00_todo .agent/tasks/10_in_progress \
+       -mindepth 1 -maxdepth 1 -type d 2>/dev/null | grep -q .
+}
 
 while true; do
   while work_remains; do
-    bin/agent -p "Boot, then work the next unclaimed tasks per the protocol." </dev/null || sleep 10
+    bin/agent -p "Boot, then claim and work the next task per the protocol." </dev/null || sleep 10
   done
 
-  bin/agent -p "Audit: for every [x] in .agent/TASKS.md, verify its gate passes and a commit
-    implementing it exists in the git log. Reopen any that fail - flip [x] back to [ ]
-    and note what's missing. Do not fix anything yourself." </dev/null || continue
+  bin/agent -p "Signoff: for every folder in .agent/tasks/99_done/, verify its acceptance
+    criteria are met, its gate passes, and a commit implementing it exists in the git log.
+    Reopen any that fail - move it back to 00_todo/ and say what's missing in its log.md.
+    Do not fix anything yourself." </dev/null || continue
 
   work_remains || break
 done
 echo "queue verified done"
 ```
 
-`bin/agent` is the sandboxed launcher from [the first article](/blog/untrusted-ai-coding-agent/), called headless. The trick is what the loop *doesn't* do: it never resumes a session. Every pass is a brand-new agent that boots, reads the queue, works a few items, commits, and dies. **Don't fight context rot - make sessions disposable.** A crash costs you the one item in flight; the next pass just finds its box still unclaimed. (For that to stay fast, the *environment* has to be durable even though the container isn't - toolchain in the image, deps cached in a volume, exactly as the first article set up.)
+`bin/agent` is the sandboxed launcher from [the first article](/blog/untrusted-ai-coding-agent/), called headless. The trick is what the loop *doesn't* do: it never resumes a session. Every pass is a brand-new agent that boots, reads the queue, works a few items, commits, and dies. **Don't fight context rot - make sessions disposable.** A crash costs you the one item in flight; the next pass finds it still sitting in `10_in_progress/` and picks it up from its `state.md`. (For that to stay fast, the *environment* has to be durable even though the container isn't - toolchain in the image, deps cached in a volume, exactly as the first article set up.)
 
-The audit pass at the end is where the quality comes from: a *fresh* agent that never saw the work get done re-checks every `[x]` against the real git log and reopens anything that doesn't hold up. If the worker and auditor ping-pong on an item more than twice, that's your cue to re-read it - it's underspecified, and that one's on you.
+The signoff pass at the end is where the quality comes from: a *fresh* agent that never saw the work get done re-checks every finished task against the real git log and reopens anything that doesn't hold up. There's a round cap on that, and it scales with the batch - when the worker and the reviewer keep ping-ponging on the same item past it, the task gets blocked for a human instead of being reported as done. That's your cue to re-read it: it's underspecified, and that one's on you.
 
 ## What a day looks like
 
-In the morning I write the queue - I point Claude at the open issues, throw ideas at it, and have it draft everything down into `.agent/TASKS.md`. Deciding what to build and what "done" means is the real work; once that's settled I start the foreman and close the tab. Around lunch I skim `PENDING_DECISIONS.md` and unblock a couple of items with a sentence each. In the evening I review the branch like a contractor's PR. The agents worked eight hours and interrupted me twice, both times for calls that were genuinely mine.
+In the morning I write the queue - I point Claude at the open issues, throw ideas at it, and have it draft everything down into `.agent/tasks/`. Deciding what to build and what "done" means is the real work; once that's settled I start the foreman and close the tab. Around lunch I run `coop tasks decisions` and unblock a couple of items with a sentence each. In the evening I review the branch like a contractor's PR. The agents worked eight hours and interrupted me twice, both times for calls that were genuinely mine.
 
 ## Final thoughts
 
-None of this makes the model smarter - it just stops depending on the model being smart, which is the only thing that's held up for me. There's no framework here either: an instruction file, a folder of markdown, three shell hooks, and a `while` loop. I packaged it all as a single binary, [coop](https://github.com/AndrewDryga/coop), so you can `coop loop` instead of copying scripts around - but it's the same boring markdown underneath.
+None of this makes the model smarter - it just stops depending on the model being smart, which is the only thing that's held up for me. There's no framework here either: an instruction file, a folder of markdown, three shell hooks, and a `while` loop. I packaged it all as a single binary, [coop](https://github.com/AndrewDryga/coop). You can run `coop loop` instead of copying scripts around, but it's the same boring markdown underneath.
 
 *It's simple - that's exactly why it works.*

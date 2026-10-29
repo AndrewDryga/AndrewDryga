@@ -369,6 +369,19 @@ const asciiHeading = [
           </header>
 
           <div class="space-y-6">
+            <div>
+              <TerminalPrompt
+                command={'find ~/projects -type d -iname "*ai-swarm*"'}
+                color="green"
+                variant="section"
+              />
+              <p class="text-sm text-muted-foreground">
+                Use TerminalPrompt's section variant for command lines above
+                section headings. The prompt and command share the selected
+                color, with consistent type size and spacing.
+              </p>
+            </div>
+
             <TerminalWindow
               tone="neutral"
               bodyClass="p-6 space-y-3 font-mono text-sm"

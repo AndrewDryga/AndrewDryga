@@ -1,0 +1,47 @@
+---
+import { aiProjects } from "../data/aiProjects";
+import Card from "./ui/Card.astro";
+import Button from "./ui/Button.astro";
+---
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  {
+    aiProjects.map((item, index) => (
+      <article id={`ai-${item.id}`} class="min-w-0 scroll-mt-24">
+        <Card class="flex h-full flex-col border-terminal-cyan/30 p-6 shadow-none transition-colors duration-200 hover:border-primary">
+          <div class="mb-8 flex items-center justify-between gap-4 font-mono text-xs">
+            <span class="text-terminal-cyan">{item.discipline}</span>
+            <span class="text-muted-foreground" aria-hidden="true">
+              0{index + 1}
+            </span>
+          </div>
+
+          <div class="mb-6 flex items-center gap-4">
+            <img
+              src={item.logo}
+              alt=""
+              width="48"
+              height="48"
+              class="h-12 w-12 shrink-0 rounded-lg object-contain"
+            />
+            <h3 class="font-sans text-3xl font-bold">{item.project.name}</h3>
+          </div>
+
+          <p class="mb-3 text-lg font-semibold leading-snug">{item.headline}</p>
+          <p class="mb-8 text-sm leading-relaxed text-muted-foreground">
+            {item.summary}
+          </p>
+
+          <Button
+            href={`/projects/${item.id}/`}
+            variant="outline-primary"
+            class="mt-auto w-full gap-2 hover:!bg-terminal-cyan hover:!text-background"
+            aria-label={`Explore ${item.project.name}`}
+          >
+            Explore {item.project.name} <span aria-hidden="true">↗</span>
+          </Button>
+        </Card>
+      </article>
+    ))
+  }
+</div>

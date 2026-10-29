@@ -35,11 +35,6 @@ const websiteLd = JSON.stringify({
   "@type": "WebSite",
   name: "dryga.com",
   url: site.toString(),
-  potentialAction: {
-    "@type": "SearchAction",
-    target: new URL("/blog/?q={search_term_string}", site).toString(),
-    "query-input": "required name=search_term_string",
-  },
 });
 
 const personLd = JSON.stringify({

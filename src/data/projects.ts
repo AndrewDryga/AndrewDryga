@@ -145,14 +145,32 @@ export const allProjects: Project[] = [
 
   // AI
   {
+    id: "ryker",
+    name: "Ryker",
+    description:
+      "A self-hosted AI teammate for engineering and on-call work. Ask in Slack or GitHub, share an alert, or give it a coding task. Ryker investigates, shows what it found, and keeps working as you follow up.",
+    impact: [
+      "Investigates alerts and answers questions in the thread where you asked",
+      "Writes and tests code in isolated co:op sessions, with draft pull requests and review follow-up",
+      "Carries out requested infrastructure actions through Emisar's access rules and approvals",
+    ],
+    tech: ["Elixir", "Phoenix", "PostgreSQL", "Slack", "GitHub", "MCP"],
+    categories: ["AI", "Developer Tools"],
+    links: [
+      { type: "website", url: "https://ryker.emisar.dev/", label: "Website" },
+      { type: "github", url: "https://github.com/AndrewDryga/ryker", label: "GitHub" },
+    ],
+    period: "2026 - Present",
+  },
+  {
     id: "emisar",
     name: "Emisar",
     description:
-      "Lets AI agents work on real production infrastructure without handing them an SSH key. Instead of a shell, an agent gets a fixed catalog of declared actions over MCP: read-only ones run on their own, anything risky stops for a human to approve, and every call lands in an audit you can search. A typed request you can still say no to, instead of a free-text command that already ran.",
+      "Gives AI agents a reviewed catalog of infrastructure actions over MCP. Policy decides which requests run, need approval or are denied. Typed inputs, checks on the host and searchable run records let an agent keep working within the access you intended.",
     impact: [
-      "Swaps raw SSH for a catalog of 70+ action packs (1,200+ declared operations) run as argv arrays, never shell strings",
-      "Default-deny policy with low/medium/high/critical risk tiers - risky actions block until a human approves",
-      "Hash-chained host journal and searchable cloud audit; 20+ secret patterns scrubbed before output leaves the box",
+      "Published and custom action packs with typed inputs and reviewed execution programs",
+      "Default-deny policy, runner scopes and approval rules enforced outside the model",
+      "Hash-chained host journal, searchable run history and output redaction before egress",
     ],
     tech: ["Elixir", "Phoenix", "Go", "MCP", "PostgreSQL", "YAML"],
     categories: ["AI", "Security"],
@@ -172,19 +190,18 @@ export const allProjects: Project[] = [
   },
   {
     id: "coop",
-    name: "Coop",
+    name: "co:op",
     description:
-      "A sandbox for autonomous AI coding agents - run Claude, Codex, or Gemini on your repo all day, unattended, without worrying they'll `rm -rf` your machine. Isolates the agent in a container, shadows your secrets out of reach and drives a disk-backed task queue so a fleet can run to completion.",
+      "A runtime and orchestrator for coding agents. Run Claude, Codex or Gemini in a container, limit the project files and network access it receives, and work through a task queue in a separate fork you can review.",
     impact: [
-      "Secret shadowing: .env, keys, and secret dirs are empty and unwritable inside the box",
-      "Unattended loop and fleet dispatch over a markdown work queue",
-      "Fusion mode: a governor model consults the others, anonymizes responses and synthesizes them, outperforming any single model - Fable 5 included",
-      "Drop-in ACP server for Zed, with per-repo toolchain and services",
+      "Known secret-path filtering, project-specific exclusions and a credential broker",
+      "A disk-backed task queue with stop conditions, review and a configured project gate",
+      "Consultation and delegation across configured model providers",
+      "ACP integration for Zed, with per-project toolchains and services",
     ],
     tech: [
       "Go",
       "Docker",
-      "Apple Container",
       "Claude Code",
       "Codex",
       "Gemini",
@@ -211,11 +228,11 @@ export const allProjects: Project[] = [
     id: "offloader",
     name: "Offloader",
     description:
-      "Customer-facing dashboards run the same expensive warehouse query on every page load. Offloader serves those reads from cheap pre-computed DuckDB snapshots on infra you already run instead - so the warehouse is only hit by a scheduled export, and your data never leaves your environment.",
+      "Serves repeated product queries from published Parquet snapshots through declared REST endpoints. DuckDB runs on your infrastructure; your data pipeline owns the exports. It fits customer-facing reads that can tolerate the snapshot's age.",
     impact: [
-      "First cutover: ~136M req/mo, ~$3,000/mo of warehouse serving down to ~$440/mo on two small VMs (~94% cached)",
-      "Snapshots swap in atomically with zero downtime; tenant filters pinned to the API key, never the request",
-      "Source-available (FSL, becomes Apache-2.0 after two years); priced at 20% of measured savings - no saving, no fee",
+      "Declared query parameters and columns, with tenant context supplied by the authenticated key",
+      "Responses identify the active snapshot and report its watermark, age and staleness",
+      "A reproducible pilot compares result parity, freshness, latency and removable warehouse costs",
     ],
     tech: ["Elixir", "Phoenix", "DuckDB", "Parquet", "Docker", "S3", "GCS"],
     categories: ["Data", "Infrastructure"],

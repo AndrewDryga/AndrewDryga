@@ -16,3 +16,6 @@ dist-ssr
 .wrangler
 public/llms-full.txt
 .llms-cache/
+
+# Local task state and private search/analytics evidence
+.agent/tasks/

@@ -6,6 +6,8 @@ import { featuredProjects } from "../data/projects";
 import Testimonials from "../components/Testimonials.astro";
 import { getFeaturedTestimonials } from "../data/testimonials";
 import TechStack from "../components/TechStack.astro";
+import AIProjects from "../components/AIProjects.astro";
+import TerminalPrompt from "../components/TerminalPrompt.astro";
 import Button from "../components/ui/Button.astro";
 import TerminalForm from "../components/ui/TerminalForm.astro";
 import { loadBlogSummaries, formatPublishDate } from "../lib/blog";
@@ -141,7 +143,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
           <div class="space-y-6 max-w-3xl mt-6 md:mt-8">
             <p class="text-lg text-muted-foreground leading-relaxed">
               I'm a multi-hat product-minded engineering leader who lives at the
-              intersection of product, infrastructure, and UX. Pragmatic by
+              intersection of product, infrastructure, security, AI and UX. Pragmatic by
               default: I ship what matters, measure outcomes, cut waste, and
               keep systems reliably boring where they should be - without
               slowing teams.
@@ -276,13 +278,11 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
   <section id="projects" class="py-16 md:py-24 px-4">
     <div class="max-w-6xl mx-auto">
       <div class="mb-12 animate-fade-in animate-delay-0">
-        <p
-          class="font-mono text-terminal-green mb-2 overflow-hidden whitespace-nowrap"
-        >
-          <span class="inline-block"
-            >$ find ~/projects -type f -name "README.md"</span
-          >
-        </p>
+        <TerminalPrompt
+          command={'find ~/projects -type f -name "README.md"'}
+          color="green"
+          variant="section"
+        />
         <h2 class="text-4xl md:text-5xl font-bold font-sans">
           Featured <span class="text-terminal-green">Projects</span>
         </h2>
@@ -304,6 +304,32 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
           View All Projects
         </a>
       </div>
+    </div>
+  </section>
+
+  <!-- AI projects -->
+  <section
+    id="ai-projects"
+    class="scroll-mt-16 px-4 py-14 md:py-20"
+    aria-labelledby="ai-projects-title"
+  >
+    <div class="mx-auto max-w-6xl">
+      <div class="mb-10 max-w-3xl">
+        <TerminalPrompt
+          command={'find ~/projects -type d -iname "*ai-swarm*"'}
+          color="green"
+          variant="section"
+        />
+        <h2 id="ai-projects-title" class="mb-4 text-3xl font-bold md:text-4xl">
+          AI trifecta, <span class="text-terminal-cyan">built to do real work.</span>
+        </h2>
+        <p class="text-lg leading-relaxed text-muted-foreground">
+          AI models are powerful when you give them room to work, but that
+          freedom comes with risks. I'm building these tools to let agents do
+          their best work while keeping their access and actions under control.
+        </p>
+      </div>
+      <AIProjects />
     </div>
   </section>
 

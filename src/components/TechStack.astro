@@ -5,7 +5,10 @@ const MAX_YEARS = 16;
 const BAR_WIDTH = 16;
 
 function renderBar(years: number): string {
-  const filled = Math.round((years / MAX_YEARS) * BAR_WIDTH);
+  const filled = Math.min(
+    BAR_WIDTH,
+    Math.round((years / MAX_YEARS) * BAR_WIDTH),
+  );
   const empty = BAR_WIDTH - filled;
   return "█".repeat(filled) + "░".repeat(empty);
 }
@@ -25,13 +28,18 @@ const colorMap: Record<string, string> = {
     {
       techHighlights.map((h) => (
         <div class="flex gap-2">
-          <span class="text-terminal-cyan w-20 shrink-0">{h.label}</span>
-          <span class="text-foreground/90">{h.value}</span>
+          <span class="text-terminal-cyan w-28 sm:w-36 shrink-0">
+            {h.label}
+          </span>
+          <span class="min-w-0 text-foreground/90">{h.value}</span>
         </div>
       ))
     }
 
-    <div class="text-terminal-green/40 select-none" aria-hidden="true">
+    <div
+      class="overflow-hidden text-terminal-green/40 select-none"
+      aria-hidden="true"
+    >
       ────────────────────────────────
     </div>
 
@@ -49,7 +57,9 @@ const colorMap: Record<string, string> = {
               ) : (
                 <span class="w-20 shrink-0" />
               )}
-              <span class="text-foreground/90 w-48 md:w-56 shrink-0 whitespace-pre-line">
+              <span
+                class={`text-foreground/90 min-w-0 flex-1 whitespace-pre-line ${item.years ? "sm:w-56 sm:flex-none" : ""}`}
+              >
                 {item.name}
               </span>
               {item.years ? (
