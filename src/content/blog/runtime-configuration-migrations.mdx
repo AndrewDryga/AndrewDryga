@@ -1,7 +1,7 @@
 ---
 title: "Runtime configuration, migrations and deployment for Elixir applications"
 shortTitle: "Runtime Config & Deployment"
-description: "Shortly after moving from PHP to Elixir I've faced a common issue, the way how do we deploy applications is totally different from the one I'm used to."
+description: "Shortly after moving from PHP to Elixir I've faced a common issue, the way we deploy applications is totally different from the one I'm used to."
 publishDate: 2017-08-20
 updatedDate: 2017-08-20
 category: "DevOps"
@@ -19,33 +19,33 @@ relatedProjects:
   - confex
 ---
 
-Shortly after moving from PHP to Elixir I've faced a common issue, the way how do we deploy applications is totally different from the one I'm used to.
+Shortly after moving from PHP to Elixir I've faced a common issue, the way we deploy applications is totally different from the one I'm used to.
 
-After running few production I want to share my experience and best practices with newcomers to reduce entry barrier for deploying our lovely Elixir code. This article is a little bit opinionated but I will try to list alternative approaches in case you want to explore them. And this is not step-by-step guide, you will need to figure out missing pieces.
+After running a few production applications I want to share my experience and best practices with newcomers to reduce entry barrier for deploying our lovely Elixir code. This article is a little bit opinionated but I will try to list alternative approaches in case you want to explore them. And this is not step-by-step guide, you will need to figure out missing pieces.
 
 ## Releasing your code
 
 I saw few guides that recommend you to simply copy your code to the server and run something like `mix phx.server`, but it's really bad to do that.
 
-To run your application in production you need to create an OTP release. Currently, there are few ways that allow archive this goal but most common and community-tested tool is [Distillery](https://github.com/bitwalker/distillery).
+To run your application in production you need to create an OTP release. Currently, there are few ways that allow us to achieve this goal but most common and community-tested tool is [Distillery](https://github.com/bitwalker/distillery).
 
-Distillery docs are comprehensive and include the view of it's developer on how you need to deal with runtime configuration. I recommend you to read it and pick whatever works best for you.
+Distillery docs are comprehensive and include the view of its developer on how you need to deal with runtime configuration. I recommend you to read it and pick whatever works best for you.
 
 ### What is an OTP release?
 
-OTP release is a set of applications that should run together and their configuration. It may include Erlang Run-Time System (ERTS) in case you want to deploy to the server that does not have pre-installed ERTS or it's version mismatch from the one that you used to build the release.
+OTP release is a set of applications that should run together and their configuration. It may include Erlang Run-Time System (ERTS) in case you want to deploy to the server that does not have pre-installed ERTS or its version differs from the one that you used to build the release.
 
-The first thing you need to keep in mind is that releases are platform-dependent, you can't build a release on you macOS laptop and use it on Ubuntu server. I will describe in the following sections possible ways to address this issue.
+The first thing you need to keep in mind is that releases are platform-dependent, you can't build a release on your macOS laptop and use it on Ubuntu server. I will describe in the following sections possible ways to address this issue.
 
-The second one is that lot's of your code would be resolved at compile time, so you need to pick a configuration strategy which works for you.
+The second one is that lots of your code would be resolved at compile time, so you need to pick a configuration strategy which works for you.
 
 ### Adding Distillery to the Elixir project
 
 It's very similar to adding any other Elixir dependency:
 
-1. Add `{:distillery, "~> 1.5", runtime: false}` to you `mix.exs`;
+1. Add `{:distillery, "~> 1.5", runtime: false}` to your `mix.exs`;
 2. Fetch dependencies by running `mix deps.get`;
-3. Add release configuration to the `rel/config.exs`, for most of my app it like this (simplified):
+3. Add release configuration to the `rel/config.exs`, for most of my apps it looks like this (simplified):
 
 ```elixir
 use Mix.Releases.Config,
@@ -74,16 +74,16 @@ release :myapp do
 end
 ```
 
-There are few things that a require explanation:
+There are few things that require explanation:
 
 - There is only one release environment. I've never faced a need to build an OTP release with separate settings for a development environment, so they are always built in the same way.
 - I do not include ERTS since we deploy code via Docker containers or to Heroku, that have ERTS pre-installed. This reduces the tarball size.
 - Erlang distribution cookie should be strong random, anyone who knows that cookie and has a network access to the server would be able to run any commands on it. Do not use the same value for microservices that should not communicate via Erlang distribution protocol to ensure that would not connect to each other with defaults.
-- You can generate `rel/config.ex` with defaults by running `mix release.init`.
+- You can generate `rel/config.exs` with defaults by running `mix release.init`.
 
 List of all available options is available at [Distillery docs](https://hexdocs.pm/distillery/).
 
-After completing this steps you can run `MIX_ENV=prod mix release` and use the release tarball which can be found at `_build/prod/rel/myapp/releases/0.1.0/my_app.tag.gz`, where `prod`, `myapp` and `0.1.0` should be replaced with you Mix environment, app name and version respectively.
+After completing these steps you can run `MIX_ENV=prod mix release` and use the release tarball which can be found at `_build/prod/rel/myapp/releases/0.1.0/my_app.tar.gz`, where `prod`, `myapp` and `0.1.0` should be replaced with your Mix environment, app name and version respectively.
 
 ```
 $ ls -l _build/prod/rel/myapp/releases/0.1.0
@@ -103,15 +103,15 @@ drwxr-xr-x   8 andrew  staff       272 Aug 18 17:28 libexec
 
 ## Configuration
 
-Since the by default configuration is resolved at compilation time, you need to take care of it or your DevOps would have a bad time trying to run your app.
+Since by default configuration is resolved at compilation time, you need to take care of it or your DevOps would have a bad time trying to run your app.
 
-Why? It's hard to have exactly the same production configuration environment on the build server, configuration tends to change and it's bad when you need to recompile and deploy everything to change a database password. That's only a few of many other the reason because of which more and more people are trying to follow [12-factor app](https://12factor.net/) guidelines.
+Why? It's hard to have exactly the same production configuration environment on the build server, configuration tends to change and it's bad when you need to recompile and deploy everything to change a database password. That's only a few of many other reasons why more and more people are trying to follow [12-factor app](https://12factor.net/) guidelines.
 
 Another issue is that you would have all your secrets compiled into release artifact and everybody who has access either to it or to the build environment would know actual production secrets.
 
-Phoenix suggests to use `config/prod.secret.exs` for storing production secrets, I don't like this approach since it makes configuration even more complicated and does not problems listed above. In all the projects we removed include for it in favor of fully configured `config/prod.exs` for all deployment environments. But I know people that avoid using environment variables entirely. Instead, they generate `prod.secrets.exs` via Ansible that is used to deploy an application to the standalone VM's.
+Phoenix suggests to use `config/prod.secret.exs` for storing production secrets, I don't like this approach since it makes configuration even more complicated and does not solve the problems listed above. In all the projects we removed include for it in favor of fully configured `config/prod.exs` for all deployment environments. But I know people that avoid using environment variables entirely. Instead, they generate `prod.secrets.exs` via Ansible that is used to deploy an application to the standalone VMs.
 
-I want to start with few examples of things that would not work unless they are build on with actual production configuration:
+I want to start with few examples of things that would not work unless they are built with actual production configuration:
 
 - `@my_attr System.get_env("FOO")`. Attributes are resolved at compile time, so the actual value would be `nil` if you don't have `FOO` environment variable on the build server or its value in case it's present there. Do not use attributes for configurable values.
 - `config :myapp_api, :key, System.get_env("FOO")`. The same here, `System.get_env("FOO")` would be evaluated at compile-time during `config.exs` conversion to `sys.config`. By the way, I recommend checking `sys.config` when something is not working after release due to configuration issues.
@@ -122,7 +122,7 @@ Luckily there are plenty of options how to deal with these, from simple to the s
 
 ### Application.put_env/3 in start/2 callback
 
-This is probably the simples way which really works if you have very few configurable values. Whenever Elixir application is started, `Application.start/2` callback is triggered, we can leverage it and set configuration value resolved from system environment before supervisors are started:
+This is probably the simplest way which really works if you have very few configurable values. Whenever Elixir application is started, `Application.start/2` callback is triggered, we can leverage it and set configuration value resolved from system environment before supervisors are started:
 
 ```elixir
 defmodule Sample.Application do
@@ -142,7 +142,7 @@ defmodule Sample.Application do
 end
 ```
 
-Notice: Don't try to set those values for other applications (eg. to set it for `:sample_web` from `:sample_lib`). There is a chance that invalid value would be resolved because you won't know in which order they are started.
+Notice: Don't try to set those values for other applications (e.g., to set it for `:sample_web` from `:sample_lib`). There is a chance that invalid value would be resolved because you won't know in which order they are started.
 
 ### REPLACE_OS_VARS env
 
@@ -158,11 +158,11 @@ config :myapp_api, :third_party_lib,
   frontend_url:  "${FRONTEND_URL}"
 ```
 
-Usually, you would fall to this method when you don't have control over the code that is using configuration, eg. when using some third party library that doesn't have init callback, support for `{:system, _}` tuples or passing all required options on function calls. There is a good article by [Michał Muskała](http://michal.muskala.eu/2017/07/30/configuring-elixir-libraries.html) for library developers on this topic.
+Usually, you would fall to this method when you don't have control over the code that is using configuration, e.g., when using some third party library that doesn't have init callback, support for `{:system, _}` tuples or passing all required options on function calls. There is a good article by [Michał Muskała](http://michal.muskala.eu/2017/07/30/configuring-elixir-libraries.html) for library developers on this topic.
 
 ### Init/2 callbacks
 
-`init` callbacks for Ecto and Phoenix allows you to define a function that can use custom logic to resolve configuration at application start. For me, this is the most convenient and useful way to configure a library.
+`init` callbacks for Ecto and Phoenix allow you to define a function that can use custom logic to resolve configuration at application start. For me, this is the most convenient and useful way to configure a library.
 
 Example for Ecto:
 
@@ -177,11 +177,11 @@ defmodule MyAppAPI.Repo do
 end
 ```
 
-You can notice that we use `DATABASE_URL` here. Passing a single environment variable is much easier and it's automatically set in some deployment environments, eg. on Heroku.
+You can notice that we use `DATABASE_URL` here. Passing a single environment variable is much easier and it's automatically set in some deployment environments, e.g., on Heroku.
 
 ### :system tuples
 
-For some apps, we use [Confex](https://github.com/Nebo15/confex) library that allows resolving `{:system, _}` tuples in `init/2` callbacks. It has a nice property-you can set a default value when the environment variable is not set.
+For some apps, we use [Confex](https://github.com/Nebo15/confex) library that allows resolving `{:system, _}` tuples in `init/2` callbacks. It has a nice property - you can set a default value when the environment variable is not set.
 
 When all your configuration can be covered with `:system` tuples you can have a single `config.exs` file without the need to worry about adding separate config macros in all per-env config files. Sometimes you would simply forget to set it and pay for it with debugging time.
 
@@ -203,7 +203,7 @@ defmodule MyAppAPI.Endpoint do
 end
 ```
 
-Confex allows you to write a custom configuration adapter, which makes it possible to use third-party tools for configuration management, eg. Hashicorp Vault.
+Confex allows you to write a custom configuration adapter, which makes it possible to use third-party tools for configuration management, e.g., HashiCorp Vault.
 
 ### Using Module callbacks
 
@@ -260,7 +260,7 @@ Notice: Modules compiled with HiPE can not use this module callback.
 
 ### Distillery Config Providers
 
-In version 2.0 (released on Aug 2018) Distillery introduces a new way to configure your application when it starts - Config Providers. They can be used to populate Application environment during boot process. I highly recommend read the [docs on this topic](https://hexdocs.pm/distillery/config/runtime.html) since it's one of the ways where Elixir community may go as a new defacto standard how to configure your applications in production.
+In version 2.0 (released on Aug 2018) Distillery introduces a new way to configure your application when it starts - Config Providers. They can be used to populate Application environment during boot process. I highly recommend reading the [docs on this topic](https://hexdocs.pm/distillery/config/runtime.html) since it's one of the ways where Elixir community may go as a new de facto standard how to configure your applications in production.
 
 ## Accessing priv directory
 
@@ -268,7 +268,7 @@ You probably have some migrations and other stuff inside `/priv` directory, to a
 
 ## Running migrations on production
 
-After making your release configurable, you would also need a way to run migrations. Even though there are few options how you can run them (eg. connecting to the node and issuing an RPC command), adding a release tasks seems most useful for me.
+After making your release configurable, you would also need a way to run migrations. Even though there are few options how you can run them (e.g., connecting to the node and issuing an RPC command), adding a release task seems most useful for me.
 
 First, you need to add a `ReleaseTasks` module to your app, here is an example that we use:
 
@@ -350,7 +350,7 @@ end
 
 You can call `migrate/0` and `seed/0` functions via Distillery commands `/path_to_release/bin/myapp command "Elixir.MyAppAPI.ReleaseTasks" migrate`. Notice that module name is prefixed with `Elixir.` because after releasing we need to use Erlang-style module names and all Elixir code lives within this namespace.
 
-Since this the command itself looks over-complicated, let's add two shell scripts to the `rel/commands/` as a shorthand to run them:
+Since the command itself looks over-complicated, let's add two shell scripts to the `rel/commands/` as a shorthand to run them:
 
 migrate.sh:
 ```elixir
@@ -364,7 +364,7 @@ seed.sh:
 /app/bin/myapp command "Elixir.MyAppAPI.ReleaseTasks" seed
 ```
 
-Add these scripts to `rel/commands` and run `chmod +x rel/commands/*` in you shell. After that, we can add a Distillery commands to make everything simpler:
+Add these scripts to `rel/commands` and run `chmod +x rel/commands/*` in your shell. After that, we can add Distillery commands to make everything simpler:
 
 ```elixir
 # rel_config.exs
@@ -476,7 +476,7 @@ rm -rf /tmp/app
 
 **5.** Optionally enable Heroku Postgres.
 
-Now you can make sure everything works and create a production app by forking staging by running `heroku fork - from myappapi-staging - to myappapi` or manually with steps above. After doing that update environment to use production secrets.
+Now you can make sure everything works and create a production app by forking staging by running `heroku fork --from myappapi-staging --to myappapi` or manually with steps above. After doing that update environment to use production secrets.
 
 Add all apps to the Heroku pipeline, they should look like this:
 
@@ -518,9 +518,9 @@ If you want more examples of apps that can be one-click deployed to Heroku - che
 
 ### Deploying to Kubernetes
 
-Kubernetes is a container orchestration tool used by many productions, including GitHub. From deployment side of view it is similar to the Heroku, but instead of Heroku slug, we need to build a Docker container.
+Kubernetes is a container orchestration tool used by many productions, including GitHub. From a deployment point of view it is similar to the Heroku, but instead of Heroku slug, we need to build a Docker container.
 
-I won't describe Kubernetes setup, there are lots of great guides for it and I expect that you familiar with it. You can even go [the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way). Most of the production systems I've build are running in Google Container Engine (a managed Kubernetes cluster) because we didn't want to have operational costs to manage the cluster itself.
+I won't describe Kubernetes setup, there are lots of great guides for it and I expect that you are familiar with it. You can even go [the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way). Most of the production systems I've built are running in Google Container Engine (a managed Kubernetes cluster) because we didn't want to have operational costs to manage the cluster itself.
 
 To build a Docker container add a Dockerfile to your project. Here is an example from [Annon API Gateway](https://github.com/Nebo15/annon.api):
 
@@ -608,7 +608,7 @@ EXPOSE ${GATEWAY_PUBLIC_PORT} ${GATEWAY_PUBLIC_HTTPS_PORT} ${GATEWAY_MANAGEMENT_
 CMD bin/${APPLICATION_NAME} foreground
 ```
 
-As you can see, I worry a lot about container size so we are using our own Apline Linux docker container. This example leverages multi-stage builds introduced in Docker 17.06 CE.
+As you can see, I worry a lot about container size so we are using our own Alpine Linux docker container. This example leverages multi-stage builds introduced in Docker 17.06 CE.
 
 I don't want to make this article even bigger, but you can find many samples in [Annon infrastructure repo](https://github.com/Nebo15/annon.infra), including yaml files for Kubernetes deployment.
 
@@ -618,17 +618,17 @@ YAMLs can also be improved by rewriting them to [Helm Charts](https://helm.sh/).
 
 I've never gone this path since operational costs for us never outweighed the benefits of this approach. (See comparison table below.)
 
-The main benefit of it is that you can upgrade your code without downtime. You would definitely value it if your app has long-living connections (eg. WebSockets for IoT devices) that are expensive to restart.
+The main benefit of it is that you can upgrade your code without downtime. You would definitely value it if your app has long-living connections (e.g., WebSockets for IoT devices) that are expensive to restart.
 
-Checkout [edeliver](https://github.com/edeliver/edeliver) package. It has all information that you need to get started.
+Check out [edeliver](https://github.com/edeliver/edeliver) package. It has all information that you need to get started.
 
 ## Want to know more?
 
-There is a really good book that I recommend you to read by Francesco Cesarini - ["Designing for Scalability with Erlang/OTP"](http://shop.oreilly.com/product/0636920024149.do). It has a section that covers OTP releases in-depth and provides much more useful details that would help you to archive proficiency in Elixir.
+There is a really good book that I recommend you to read by Francesco Cesarini - ["Designing for Scalability with Erlang/OTP"](http://shop.oreilly.com/product/0636920024149.do). It has a section that covers OTP releases in-depth and provides much more useful details that would help you to achieve proficiency in Elixir.
 
 Second recommended read is ["Learn You Some Erlang for great good"](http://learnyousomeerlang.com/) (free online version) by Fred Hebert.
 
-And ask you questions in comments. I am going to write more articles on topics that are requested by the community.
+And ask your questions in comments. I am going to write more articles on topics that are requested by the community.
 
 ## Thanks
 

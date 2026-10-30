@@ -6,7 +6,7 @@ draft: false
 
 ## The Ask
 
-When I joined, the business was in a tough spot. Leadership started the rewrite everything in Rust to fix performance issues, operational costs were through the roof, and development had basically stalled. The ask was simple: keep things running while the rewrite happens. The scale was pretty substantional - we served 25k RPS with peaks around 150k RPS _(and at times LLM bots/other scrapers tried to do as much as 1M RPS)_, tens of terrabytes of data per day, for a 7-figure DAU.
+When I joined, the business was in a tough spot. Leadership started to rewrite everything in Rust to fix performance issues, operational costs were through the roof, and development had basically stalled. The ask was simple: keep things running while the rewrite happens. The scale was pretty substantial - we served 25k RPS with peaks around 150k RPS _(and at times LLM bots/other scrapers tried to do as much as 1M RPS)_, tens of terabytes of data per day, for a 7-figure DAU.
 
 But here's the thing - after digging in, I realized the language and framework weren't the problem. It was infrastructure and lack of proper care. So instead of babysitting a dying system, I went all-in on fixing it.
 
@@ -16,18 +16,18 @@ Oh, and there was one more thing: the last backend engineer left a week after I 
 
 ### The Backend Was Drowning in Errors
 
-The Elixir apps were stable enough, but they were generating **100k+ Sentry events every day**, requiring pretty sizeable Sentry cluster and sometimes taking it down requiring manual reset of Kafka queues. Most of it was noise-race conditions, failed inserts where upserts should've been used, unmaintained databases, and an overcomplicated architecture nobody fully understood.
+The Elixir apps were stable enough, but they were generating **100k+ Sentry events every day**, requiring a pretty sizeable Sentry cluster and sometimes taking it down requiring manual reset of Kafka queues. Most of it was noise - race conditions, failed inserts where upserts should've been used, unmaintained databases, and an overcomplicated architecture nobody fully understood.
 
 I went heads-down for a month:
 - Added NIFs for JSON encoding (at our RPS, encoding/decoding JSON is expensive);
 - Mapped out internal dependencies and ripped out dead code;
 - Fixed race conditions one by one;
 - Did a maintenance pass on the billing system, which unlocked annual subscriptions and drove substantial growth in paying customers;
-- Removed places that were doing unnecessary remote RPC calls or inserting data to Riak just so that later Oban job can read it's payload;
+- Removed places that were doing unnecessary remote RPC calls or inserting data to Riak just so that a later Oban job can read its payload;
 - Later removed beefy Riak cluster - it was barely used and locked us on an old Erlang version;
 - *And did the most basic thing* - started every single day by just triaging Sentry, fixing issues, until there was nothing left.
 
-_I can't thank Elixir and Erlang enough for their outstanding debugging story. Being able to remote shell into an IEx console, run `:recon_trace`, inspect production state, or even hot-patch a fixed module directly into production saved my ass countless times. You can't do this stuff in most languages - it's a superpower when you're firefighting solo. This is **one of many** reasons why Elixir is my language of choise!_
+_I can't thank Elixir and Erlang enough for their outstanding debugging story. Being able to remote shell into an IEx console, run `:recon_trace`, inspect production state, or even hot-patch a fixed module directly into production saved my ass countless times. You can't do this stuff in most languages - it's a superpower when you're firefighting solo. This is **one of many** reasons why Elixir is my language of choice!_
 
 **Result:** Daily Sentry events dropped from 100k+ to ~42 (mostly timeouts, which are occasionally fine at our scale).
 
@@ -37,7 +37,7 @@ Manually provisioned, overprovisioned in some places, underprovisioned in others
 
 Since I already knew how the backend worked, I started by stopping everything unused. Then I spent three months moving everything to Terraform - the only viable way to manage this solo. Along the way, I right-sized everything: merged Redis instances, moved caching to ETS where it made sense, cut the cluster size and cloud bill substantially (saved seven figures annually).
 
-**One almost comical example:** A 6-node TypeSense cluster that was supposedly "overprovisioned for performance" and then another hand-written Rust search service was written to replace "slow TypeSense" - except **4 out of 6 nodes had been down for at least 5 months** and were many major versions behind. I fixed it, downscaled to 3 nodes, and later recreated the whole thing from scratch on Terraform-managed infra with proper alerting, the data was fully migrated along the way. We removed hand-rolled service and had zero issues since then.
+**One almost comical example:** A 6-node Typesense cluster that was supposedly "overprovisioned for performance" and then another hand-written Rust search service was written to replace "slow Typesense" - except **4 out of 6 nodes had been down for at least 5 months** and were many major versions behind. I fixed it, downscaled to 3 nodes, and later recreated the whole thing from scratch on Terraform-managed infra with proper alerting, the data was fully migrated along the way. We removed hand-rolled service and had zero issues since then.
 
 ### Monitoring Was Noisy and Expensive
 
@@ -47,13 +47,13 @@ I migrated everything to self-hosted VictoriaMetrics and Grafana running on **tw
 
 **Savings from monitoring alone:** $50k/year.
 
-I also found we were sending tons of metrics directly to Google Cloud Monitoring that were never queried, costing thousands per month just for storage. Disabled all unused metrics. Same story with logs - at our scale, verbose logs aren't that useful, but they were costing a lot to store. Never enable load balancer or HTTP requests logging on highload projects ;).
+I also found we were sending tons of metrics directly to Google Cloud Monitoring that were never queried, costing thousands per month just for storage. Disabled all unused metrics. Same story with logs - at our scale, verbose logs aren't that useful, but they were costing a lot to store. Never enable load balancer or HTTP request logging on high-load projects ;).
 
 ### Databases Needed Love
 
 Backend databases hadn't gotten proper care in a while. Oban queues didn't have reindexing and purging enabled, so queueing databases accumulated dead tuples and bloated indexes. Application databases had heavy queries running without proper indexes, and the default response to any performance issue was to upscale the database instead of tuning queries or looking at application behavior.
 
-I've spent a week going though each PostgreSQL instance, analyzing `pg_stat_statements`, application that used it and tuning queries and the database itself. I removed unused indexes, added missing ones, rebuilt bloated indexes and perfomed manual vacuuming during off-peak hours. Changing PostgreSQL flags in most cases reduced it's load by 20% right away and allowed further downscaling. Proper `AUTOVACCUM` settings ensured that I don't need to go back there and do manual actions anymore.
+I've spent a week going through each PostgreSQL instance, analyzing `pg_stat_statements`, the application that used it and tuning queries and the database itself. I removed unused indexes, added missing ones, rebuilt bloated indexes and performed manual vacuuming during off-peak hours. Changing PostgreSQL flags in most cases reduced its load by 20% right away and allowed further downscaling. Proper `AUTOVACUUM` settings ensured that I don't need to go back there and do manual actions anymore.
 
 ### Networking Costs Were Out of Control
 
@@ -61,23 +61,23 @@ GCP CDN and Media CDN are **extremely expensive**, mostly due to traffic replica
 
 I initiated a migration to **BunnyCDN**, which saved **$500k/year**. BunnyCDN required a bit more hands-on work and interactions with support, but they responded within 10 minutes every time and were great to work with.
 
-### DataBricks Serving was Slow and Expensive
+### Databricks Serving was Slow and Expensive
 
-We had a caching layer in front of our half-petabyte DataBricks warehouse, but even with CDN in front of that, a small percentage of requests still hit DataBricks directly — pushing P99 latency for data requests into seconds.
+We had a caching layer in front of our half-petabyte Databricks warehouse, but even with CDN in front of that, a small percentage of requests still hit Databricks directly — pushing P99 latency for data requests into seconds.
 
-I rebuilt the caching layer using DuckDB embedded in Elixir, and our data engineer (shoutout to Rafael) reworked the pyspark codebase to export parquet files to a GCS bucket. The new data layer watches for changes in those files, downloads them, and atomically swaps tables - never dropping a single request during updates. We stopped paying for DataBricks native serving (a few thousand per month) and P99 latency for data requests dropped to &lt;100ms.
+I rebuilt the caching layer using DuckDB embedded in Elixir, and our data engineer (shoutout to Rafael) reworked the PySpark codebase to export Parquet files to a GCS bucket. The new data layer watches for changes in those files, downloads them, and atomically swaps tables - never dropping a single request during updates. We stopped paying for Databricks native serving (a few thousand per month) and P99 latency for data requests dropped to &lt;100ms.
 
-We've also deployed a self-hosted Airflow instance and are experimenting with on-demand self-hosted Spark clusters to eliminate our DataBricks dependency entirely.
+We've also deployed a self-hosted Airflow instance and are experimenting with on-demand self-hosted Spark clusters to eliminate our Databricks dependency entirely.
 
 ### Frontend Was Slow
 
 Built on a home-grown React-based framework that sometimes took **seconds to server-render a single page**. It was a constant struggle to add new features, and improving performance was even harder.
 
-I didn't touch FE much, but I kept bringing up issues and need of taking proper care of it. One of other big issues was the number of JavaScript chunks that browser had to load per page view - 300 to 700 in some cases. With our request volume, it is a money-burning machine. The frontend team decided to rewrite everything in Svelte. It ended up being a great success! 
+I didn't touch FE much, but I kept bringing up issues and the need for taking proper care of it. One of the other big issues was the number of JavaScript chunks that the browser had to load per page view - 300 to 700 in some cases. With our request volume, it is a money-burning machine. The frontend team decided to rewrite everything in Svelte. It ended up being a great success!
 
 A few small things I did change myself:
 - Removed large headers in generated JS chunks (at up to 700 JS chunks per page and our request volume, those headers were costing real money);
-- Internal routing to CDN assets was done on JavaScript side - it means we served way more traffic using node.js than we needed to, leading to latency spikes and high CPU/RAM usage. I've added HAProxy in front of the FE containers route that traffic cheaply with an additional level of CDN-like caching;
+- Internal routing to CDN assets was done on JavaScript side - it means we served way more traffic using Node.js than we needed to, leading to latency spikes and high CPU/RAM usage. I've added HAProxy in front of the FE containers to route that traffic cheaply with an additional level of CDN-like caching;
 - Migrated from Cloud Run to Compute Engine to reduce costs and have better control / easier debugging;
 
 ### CI/CD Was a Gamble
@@ -90,7 +90,7 @@ I moved everything to GitHub Actions (**$24k/year saved**) and built a proper CI
 
 ## The Numbers
 
-### When I've joined
+### When I joined
 - **Cloud spend:** ~$220k/month
 - **Daily errors:** 100k+ Sentry events
 - **Monitoring cost:** $50k/year for a 12-node cluster
@@ -112,7 +112,7 @@ I moved everything to GitHub Actions (**$24k/year saved**) and built a proper CI
 
 ## Year two (WIP)
 
-First we moved the data off Scylla Cloud and onto a Cassandra cluster we ran ourselves in GCP. Then we moved off GCP entirely. Cassandra and every service now run on bare metal we built and own, with Nomad scheduling the workloads. One CAPEX investiment and huge reduction in OPEX.
+First we moved the data off Scylla Cloud and onto a Cassandra cluster we ran ourselves in GCP. Then we moved off GCP entirely. Cassandra and every service now run on bare metal we built and own, with Nomad scheduling the workloads. One CAPEX investment and a huge reduction in OPEX.
 
 ---
 
@@ -127,7 +127,7 @@ The biggest wins came from:
 4. **Boring infrastructure** - Terraform, Compute VMs (no k8s or anything like that for a small team), proper CI/CD, and reliable monitoring aren't sexy, but they're worth their weight in gold;
 5. **Focusing on what matters** - Error budgets, SLOs, observable systems and simply caring during the day let you sleep at night.
 
-The work proved that **systematic infrastructure improvements can deliver both cost savings and reliability gains without sacrificing performance**. 
+The work proved that **systematic infrastructure improvements can deliver both cost savings and reliability gains without sacrificing performance**.
 
 ### A Side Note on Rewrites
 

@@ -102,7 +102,7 @@ Each of our servers has two RAID-1 volumes: an 80 GiB one for the OS and a big o
 
 ```bash
 # Idempotent: skips mkfs if the device already has a filesystem, so a
-# reinstall that re-uses the same data disk preserves Consul/Nomad/
+# reinstall that reuses the same data disk preserves Consul/Nomad/
 # Tailscale state. This is the seam that lets us treat the node like
 # a VM in the cloud - / is wiped on every roll but /opt survives.
 FSTYPE=$(blkid -s TYPE -o value "$DEVICE" || true)

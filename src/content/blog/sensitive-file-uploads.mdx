@@ -26,7 +26,7 @@ import {
   Note,
 } from "@/components/mdx/SequenceDiagram";
 
-While working on a new project we faced a task where end-user needs to upload a file with the sensitive data (*eg. national ID of most people in a country, yay*), which should be persisted within a minimal security perimeter.
+While working on a new project we faced a task where end-user needs to upload a file with the sensitive data (*e.g., national ID of most people in a country, yay*), which should be persisted within a minimal security perimeter.
 
 > I do not think that this is the only right approach, there is always a tradeoff. This solution was the best for our use case.
 
@@ -58,18 +58,18 @@ Most projects I've seen take a simple approach where API consumers upload files 
   <Note text="The common approach" />
 </SequenceDiagram>
 
-The main advantage of it is that it is simple to understand and provides ability synchronously post process the data - crop the image, validate its mime-type, contents, etc and respond immediately to a client.
+The main advantage of it is that it is simple to understand and provides the ability to synchronously post-process the data - crop the image, validate its mime-type, contents, etc and respond immediately to a client.
 
-But what are the disadvantages:
+But what are the disadvantages?
 
 - Sensitive data is temporarily stored in the application, which extends security perimeters. It can be intercepted, accidentally persisted along with a VM snapshot, you can simply forget to remove temporary copies. This problem is magnified in microservice architectures, where those requests hit multiple application services;
 - You can run out of disk space while processing large uploads;
 - [Increased RAM usage](https://github.com/stavro/arc/issues/105), some API clients are not able to perform chunk uploads;
-- Credentials for cloud storage are long-living. More credential lives, less secure it is because the probability of leaking it grows over time. In monolith, any parts of the code can use them. Any microservice that works with these files needs a copy or a separate service account.
+- Credentials for cloud storage are long-living. The longer a credential lives, the less secure it is because the probability of leaking it grows over time. In monolith, any parts of the code can use them. Any microservice that works with these files needs a copy or a separate service account.
 
 Can we do better?
 
-## Signed URL's
+## Signed URLs
 
 Most of the cloud storage providers ([1](https://cloud.google.com/storage/docs/access-control/create-signed-urls-program), [2](http://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html), [3](https://docs.openstack.org/icehouse/config-reference/content/object-storage-tempurl.html)) allow signing a URL that can be used as temporary access token to send a file directly to the cloud storage. This URL can grant only a fraction of what application IAM role allows, limiting to only a single file upload within a limited time frame.
 
@@ -94,7 +94,7 @@ IAM role itself can allow only write access, thus even by holding a service acco
 There are plenty of options for how to run post-processing for uploads:
 
 - Spin up a worker GenServer with a delayed message and timeout greater than signed URL TTL;
-- Depending on your storage provider you might also be able to define a callback (eg. with AWS lambda or Google Cloud pub/sub) that triggers file processing pipeline in your back-end;
+- Depending on your storage provider you might also be able to define a callback (e.g., with AWS lambda or Google Cloud pub/sub) that triggers file processing pipeline in your back-end;
 - Or make your front-end responsible for notifying on successful file upload by posting related metadata to the back-end, as we did.
 
 <SequenceDiagram>
@@ -123,7 +123,7 @@ Also, it negates most of the performance benefits we discussed above, but allows
 
 ## Secret management for Cloud Storage
 
-We took one more step further and built a Cloud Storage secret management around this idea. Similarly to [Hashicorp Vault](http://vaultproject.io), each time some part of our application or a front-end (that verifies document contents) needs an access to the file in storage, it requests a Signed URL with only the rights that it needs and a reasonable TTL.
+We took one more step further and built a Cloud Storage secret management around this idea. Similarly to [HashiCorp Vault](http://vaultproject.io), each time some part of our application or a front-end (that verifies document contents) needs an access to the file in storage, it requests a Signed URL with only the rights that it needs and a reasonable TTL.
 
 <SequenceDiagram>
   <Participants>

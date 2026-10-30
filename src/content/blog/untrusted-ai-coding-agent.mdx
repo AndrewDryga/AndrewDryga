@@ -227,6 +227,6 @@ Can't the agent just install what it needs? It can try, and it will fail. It run
 
 No, and we don't have to. Nothing here requires you to trust the model. The container doesn't trust it with your machine. The mounts don't trust it with your secrets. The clone doesn't trust it with your remotes. And precisely because nothing trusts it, you can finally stop hovering.
 
-So stop asking "can I trust the agent?" and start asking "what's the worst this system lets it do?". When the honest answer is "lose one commit of work inside a VM I can rebuild in a minute" - the fear just goes away, and you've got a box that's safe to walk away from.
+So stop asking "can I trust the agent?" and start asking "what's the worst this system lets it do?" When the honest answer is "lose one commit of work inside a VM I can rebuild in a minute" - the fear just goes away, and you've got a box that's safe to walk away from.
 
 And walking away is the next part we should build. An agent that can't wreck your laptop is still an agent that loses its context, stops before the job's done, and quietly skips half of it. Turning this safe box into something that runs your repo for eight hours straight - and actually finishes every task - is the next article: [an OS for autonomous coding agents](/blog/os-for-coding-agents/).

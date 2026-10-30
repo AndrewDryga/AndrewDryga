@@ -18,7 +18,7 @@ Elixir · Phoenix/LiveView
 HTML · JavaScript · Tailwind · UX
 
 **Data & Messaging**
-PostgreSQL · RabbitMQ · TypeSense · Redis · Cassandra · ScyllaDB
+PostgreSQL · RabbitMQ · Typesense · Redis · Cassandra · ScyllaDB
 
 **Infra & Cloud**
 Terraform · Kubernetes · GCP · AWS · Nomad · Bare-Metal

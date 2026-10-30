@@ -63,7 +63,7 @@ export const techCategories: TechCategory[] = [
       { name: "Redis, RabbitMQ", years: 9 },
       { name: "MongoDB", years: 2 },
       { name: "Cassandra/ScyllaDB", years: 2 },
-      { name: "TypeSense, Sphinx Search", years: 3 },
+      { name: "Typesense, Sphinx Search", years: 3 },
     ],
   },
   {

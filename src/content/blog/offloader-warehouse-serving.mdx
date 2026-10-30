@@ -17,17 +17,17 @@ relatedProjects:
   - offloader
 ---
 
-Have your ever be surprised by your data warehouse bill? Not the one you pay for the storage or processing of your datalake but for the other side of it - serving?
+Have you ever been surprised by your data warehouse bill? Not the one you pay for the storage or processing of your data lake but for the other side of it - serving?
 
-I'be been surprised for sure to lean that to serve 1 RPS on Databricks serving (and we tried all options they provided) we need to pay a few thousand dollars a month. Just for that alone. Not counting the 3-node caching cluster and CDN serving 136 million requests per month / 8 TB of data in front of it. And this is typical for many domains.
+I've been surprised for sure to learn that to serve 1 RPS on Databricks serving (and we tried all options they provided) we need to pay a few thousand dollars a month. Just for that alone. Not counting the 3-node caching cluster and CDN serving 136 million requests per month / 8 TB of data in front of it. And this is typical for many domains.
 
-Datalakes are do not exist just because your CIO wants a nice dashboard - they often used to provide customers the aggregates and analytics - usage screens, leaderboards, the "here are your numbers" pages people refresh all day. 
+Data lakes do not exist just because your CIO wants a nice dashboard - they are often used to provide customers with the aggregates and analytics - usage screens, leaderboards, the "here are your numbers" pages people refresh all day.
 
 Every one of those page loads ran a query against the warehouse. And warehouses are priced for that in the worst way: either you rent always-on compute sized for your peak and pay for it while it sits idle, or you're on a per-query meter where your most-used feature is also your biggest invoice. Either way, the more people use the product, the more it costs just to show them what they came to see.
 
 ## Everything can be cached
 
-Think with what tho queries that hit your datalake actually are. A product dashboard asks the same shapes of questions constantly - "usage for this account, last 30 days," "the top ten this week," the same leaderboard everyone sees - against data that's completely fine a few minutes old. Nobody refreshing a stats page needs it accurate to the second.
+Think about what the queries that hit your data lake actually are. A product dashboard asks the same shapes of questions constantly - "usage for this account, last 30 days," "the top ten this week," the same leaderboard everyone sees - against data that's completely fine a few minutes old. Nobody refreshing a stats page needs it accurate to the second.
 
 **That's not an analytics workload. That's a cache.**
 
@@ -55,11 +55,11 @@ Tenants can't see each other. Multi-customer data means the query for account A 
 
 And the cache is safe by construction. Every response is tagged with the exact snapshot it came from, so a cached answer can only ever be invalidated by a newer snapshot, not by a clock that might be wrong. Per-tenant responses are marked private and never land in a shared cache; only genuinely public data is allowed to. Which means for public data you can put a CDN in front and stop thinking about it.
 
-## Does it actually save money
+## Does it actually save money?
 
-For the first real cutover serving workload doing about 136 million requests a month, roughly 8 TB out, went from around $3,000/month on warehouse compute to about $440/month running Offloader on two small VMs - with about 94% of requests answered straight from cache, never touching the warehouse at all. On a synthetic benchmark it does five to six thousand cached requests a second at a p99 under 60 milliseconds, though that's a relative number and I'd make you measure your own before believing it.
+For the first real cutover, a serving workload doing about 136 million requests a month, roughly 8 TB out, went from around $3,000/month on warehouse compute to about $440/month running Offloader on two small VMs - with about 94% of requests answered straight from cache, never touching the warehouse at all. On a synthetic benchmark it does five to six thousand cached requests a second at a p99 under 60 milliseconds, though that's a relative number and I'd make you measure your own before believing it.
 
-The data engineers also loved it because it speed up their time to ship new data to the product greatly without changing the rest of their workflow. All their tools already export Parquet.
+The data engineers also loved it because it sped up their time to ship new data to the product greatly without changing the rest of their workflow. All their tools already export Parquet.
 
 That result is also the business model, and I've tried to make it hard to argue with: Offloader charges 20% of what it actually saves you, measured against your real bill. No saving, no fee. It's source-available under a license that flips to Apache 2.0 two years after each release ships, it comes as a signed container, and it's early - I've proven it on my own workload and I'm looking for the first outside ones to prove it on next.
 

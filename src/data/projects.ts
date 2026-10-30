@@ -34,7 +34,7 @@ export const featuredProjects: Project[] = [
       "Redis",
       "PostgreSQL",
       "Cassandra",
-      "TypeSense",
+      "Typesense",
       "Riak",
       "HAProxy",
     ],
@@ -286,7 +286,7 @@ export const allProjects: Project[] = [
     id: "contractbook",
     name: "Contractbook",
     description:
-      "Built the self-service billing system, B2B API and marketing pipeline that let kicked off the business growt.",
+      "Built the self-service billing system, B2B API and marketing pipeline that kicked off the business growth.",
     impact: [
       "Billing integrations for B2B clients",
       "API platform for third-party integrations",
@@ -697,7 +697,7 @@ export const allProjects: Project[] = [
       "Storytelling social network that helps see other people's lives through their eyes. Capture moments through the day and share them with descriptions - from special forces in Belarus to a family visit to a film museum in South Korea.",
     impact: [
       "Invented and built Instagram before it existed",
-      "Failed at marketing miserabily and learned in the process",
+      "Failed at marketing miserably and learned in the process",
     ],
     tech: ["PHP", "MySQL", "HTML", "JavaScript", "CSS"],
     categories: ["Other"],
