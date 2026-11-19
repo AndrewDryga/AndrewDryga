@@ -31,7 +31,8 @@ export default defineConfig({
     sitemap({
       // Component previews deliberately use noindex; discovery feeds must agree.
       filter: (page) =>
-        !new URL(page).pathname.startsWith("/component-library"),
+        !new URL(page).pathname.startsWith("/component-library") &&
+        !/^\/(blog|projects)\/page\/1\/?$/.test(new URL(page).pathname),
     }),
     critters(),
   ],

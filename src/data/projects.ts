@@ -2,6 +2,7 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  seoDescription?: string;
   impact: string[];
   tech: string[];
   categories: string[];
@@ -18,6 +19,7 @@ export interface Project {
 export const featuredProjects: Project[] = [
   {
     id: "blitz",
+    seoDescription: "Engineering work at Blitz: rebuilt infrastructure, reduced cloud costs and improved reliability for a high-traffic gaming platform.",
     name: "Blitz",
     description:
       "Single-handedly owned ~20 high-traffic backends end-to-end (77 Elixir umbrella apps, 70+ Redis/50+ PostgreSQL instances) serving ~25k RPS with peaks to 150k for a 7-figure DAU product.",
@@ -51,6 +53,7 @@ export const featuredProjects: Project[] = [
   },
   {
     id: "firezone",
+    seoDescription: "Engineering work on Firezone, an open-source WireGuard access platform. Built control-plane components and managed infrastructure on Google Cloud.",
     name: "Firezone",
     description:
       "WireGuard-based replacement for legacy VPNs. Re-architected and developed key components of the enterprise product. Led infrastructure as code with Terraform on GCP. Open source, YC W22.",
@@ -80,6 +83,7 @@ export const featuredProjects: Project[] = [
   },
   {
     id: "ehealth",
+    seoDescription: "Built Ukraine’s national eHealth platform for medical records, prescriptions and reimbursements, with open-source Elixir services.",
     name: "eHealth: National Health Service of Ukraine",
     description:
       "Co-designed and built the national platform behind reimbursements, EMR, e-prescriptions, and nationwide APIs for clinics and pharmacies. Led architecture, security, hiring, and hands-on Elixir + DevOps. All development open-sourced under Apache license.",
@@ -107,6 +111,7 @@ export const featuredProjects: Project[] = [
   },
   {
     id: "hammer",
+    seoDescription: "Built an advertising platform for automotive dealerships, connecting vehicle inventory, ad publishing, lead collection and conversion tracking.",
     name: "Hammer Corp",
     description:
       "Advertising platform for thousands of US automotive dealerships: ingests inventory, syndicates ads to major channels (at peak accountable for 30%+ cars on Facebook Marketplace), measures conversion, and collects leads to a unified interface with 24/7 human first-responder reps answering within 60 seconds.",
@@ -146,6 +151,7 @@ export const allProjects: Project[] = [
   // AI
   {
     id: "ryker",
+    seoDescription: "Ryker is a self-hosted AI teammate for Slack and GitHub. It investigates issues, tests code and opens draft pull requests for human review.",
     name: "Ryker",
     description:
       "A self-hosted AI teammate for engineering and on-call work. Ask in Slack or GitHub, share an alert, or give it a coding task. Ryker investigates, shows what it found, and keeps working as you follow up.",
@@ -164,6 +170,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "emisar",
+    seoDescription: "Emisar is a control plane for AI infrastructure access. Agents call defined actions through MCP, with policy checks, approvals and audit records.",
     name: "Emisar",
     description:
       "Gives AI agents a reviewed catalog of infrastructure actions over MCP. Policy decides which requests run, need approval or are denied. Typed inputs, checks on the host and searchable run records let an agent keep working within the access you intended.",
@@ -190,6 +197,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "coop",
+    seoDescription: "co:op runs coding agents in containers with limited file and network access. Its orchestrator works through tasks in separate, reviewable forks.",
     name: "co:op",
     description:
       "A runtime and orchestrator for coding agents. Run Claude, Codex or Gemini in a container, limit the project files and network access it receives, and work through a task queue in a separate fork you can review.",
@@ -226,6 +234,7 @@ export const allProjects: Project[] = [
   // Data
   {
     id: "offloader",
+    seoDescription: "Offloader serves REST endpoints from Parquet snapshots using DuckDB. It supports tenant-scoped queries and freshness tied to your refresh schedule.",
     name: "Offloader",
     description:
       "Serves repeated product queries from published Parquet snapshots through declared REST endpoints. DuckDB runs on your infrastructure; your data pipeline owns the exports. It fits customer-facing reads that can tolerate the snapshot's age.",
@@ -254,6 +263,7 @@ export const allProjects: Project[] = [
   // AdTech
   {
     id: "bullpen",
+    seoDescription: "Built Bullpen, a CRM and virtual workspace where sales teams could collaborate remotely, then developed it into a standalone product.",
     name: "Bullpen - Virtual Sales Floor + CRM",
     description:
       "When COVID hit, our sales team lost the buzz of the office. We built a platform that brought it back - a CRM with virtual space where reps could collaborate, learn from each other in real time, and keep the same drive. Then we turned it into a standalone product with AI sprinkled around it.",
@@ -268,6 +278,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "talkinto",
+    seoDescription: "Built messaging and voice infrastructure for sales products, connecting SMS, chat, call recording and routing through shared APIs.",
     name: "TalkInto - Omnichannel Messaging Platform and CRM",
     description:
       "Messaging/voice backbone powering products like Hammer, Bullpen, and Text2Buy: SMS, voice, various chat integrations, and web chat with clean agent UI and APIs. Features included local numbers, call recording, and routing.",
@@ -343,6 +354,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "mbill",
+    seoDescription: "Built mBill for online payments and P2P transfers, with shareable payment pages, configurable payment buttons and transaction reports.",
     name: "Mbill - P2P Transfers",
     description:
       "P2P transfer service for individuals and small-to-medium online merchants. Create a page for your card and share a link to receive payments. Includes customer cabinet, payment button constructor, and transaction reports.",
@@ -388,6 +400,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "best-wallet",
+    seoDescription: "Built an eWallet platform for payments and money transfers, with consumer services and white-label wallets for banks.",
     name: "Best Wallet (ex. MBank)",
     description:
       "eWallet cloud for worldwide money transfers. For B2C: pay for 2,700+ services across CIS, send money to phone numbers, cash out via partnered banks or cards. For B2B: free SaaS white-label eWallets for banks with simple integration.",
@@ -461,6 +474,7 @@ export const allProjects: Project[] = [
   // Open Source
   {
     id: "onlytty",
+    seoDescription: "OnlyTTY shares a terminal command with a browser over an encrypted connection. Your files and tools stay on the host, with optional view-only access.",
     name: "OnlyTTY",
     description:
       "Share a shell or a single command through a link and control it from a browser or phone. Terminal traffic is end-to-end encrypted, and the relay never sees the session keys.",
@@ -487,6 +501,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "sage",
+    seoDescription: "Sage implements the Sagas pattern in Elixir: run a sequence of transactions and compensate for completed steps when a later step fails.",
     name: "Sage - Sagas Pattern in Elixir",
     description:
       "Dependency-free implementation of the Sagas pattern for distributed transactions with explicit compensation. Guarantees that either all transactions complete successfully, or compensating transactions amend partial execution.",
@@ -514,6 +529,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "logger-json",
+    seoDescription: "Structured JSON logging for Elixir, with formatters for Google Cloud Logging, Datadog and Elastic, plus runtime configuration helpers.",
     name: "LoggerJSON",
     description:
       "Structured JSON logging for Elixir with first-class formatters for Google Cloud Logging, Datadog, and Elastic (ECS). Drop-in :logger formatter/handler with runtime config helpers.",
@@ -531,6 +547,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "confex",
+    seoDescription: "Confex loads and validates Elixir application configuration from environment variables and files, with type casting and custom adapters.",
     name: "Confex",
     description:
       "Runtime configuration from environment variables with type casting and adapters (:system, :system_file). 12-factor friendly configuration for Elixir applications.",
@@ -548,6 +565,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "elixir-bench",
+    seoDescription: "Elixir Bench runs benchmarks on each commit to track performance changes. A Spawnfest winner later accepted into Google Summer of Code.",
     name: "Elixir Bench",
     description:
       "Continuous benchmarking platform for the Elixir ecosystem. Automatically runs performance benchmarks on each commit to detect regressions and track language performance improvements over time. Won Spawnfest 2017 and later accepted into Google Summer of Code.",
@@ -579,6 +597,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "annon",
+    seoDescription: "Annon is an open-source API gateway with authentication, access rules, validation and request logging. Built to share these controls across services.",
     name: "Annon API Gateway",
     description:
       "Configurable API gateway acting as a reverse proxy with a plugin system (ACL, Auth, Validation, CORS, Idempotency), request/response storage, metrics, management UI, and auth provider. Reduces boilerplate across services.",
@@ -600,6 +619,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "ecto-mnesia",
+    seoDescription: "An Ecto adapter for Mnesia, the database built into Erlang/OTP. Store data alongside an Elixir application without running a separate database.",
     name: "Ecto Mnesia Adapter",
     description:
       "Ecto adapter for OTP's built-in Mnesia database that works in the same memory space as the application, providing extremely low latency without deploying a separate database.",
@@ -637,6 +657,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "man",
+    seoDescription: "A service that renders localized HTML and PDF documents from templates through a REST API, with a management interface.",
     name: "Man - Template Rendering Engine",
     description:
       "Stores iex, mustache, or markdown templates and renders them with localization to HTML or PDF via REST JSON API. Includes an easy-to-use management UI. Free one-click deployment to Heroku.",
@@ -657,6 +678,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "vagrant-box-osx",
+    seoDescription: "A former project distributing macOS Vagrant boxes for development and testing with VirtualBox. Retired after Apple licensing concerns.",
     name: "Vagrant Box OS X",
     description:
       "macOS Vagrant boxes for VirtualBox. Run UX tests or build iOS/Mac applications on any machine with a few CLI commands. Used by many teams worldwide, including Boxen. Got a $50k S3 bill in month one, was sponsored by Cloudflare for a while, and eventually taken down over Apple licensing.",
@@ -692,6 +714,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "onedayofmine",
+    seoDescription: "OneDayOfMine was a storytelling network for sharing a day through photos and descriptions, showing the daily lives of people around the world.",
     name: "OneDayOfMine",
     description:
       "Storytelling social network that helps see other people's lives through their eyes. Capture moments through the day and share them with descriptions - from special forces in Belarus to a family visit to a film museum in South Korea.",
@@ -706,6 +729,7 @@ export const allProjects: Project[] = [
   },
   {
     id: "l15",
+    seoDescription: "L15 combined a coworking space and nightclub in Kyiv, with a shared office by day and music events on the terrace and inside.",
     name: "L15 - Night Club x Coworking",
     description:
       "Experimental mix of coworking space and a night club ('clubworking') in Kyiv. Turned the office into a best-in-class night club and ran terrace events with world-class DJs every weekend for an entire summer.",

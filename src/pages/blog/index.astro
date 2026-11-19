@@ -44,10 +44,10 @@ const start = (safePage - 1) * PAGE_SIZE;
 const pagePosts = postsFiltered.slice(start, start + PAGE_SIZE);
 
 // Helpers
-const title = "Blog - Andrew Dryga";
+const title = safePage === 1 ? "Blog - Andrew Dryga" : `Blog, page ${safePage} - Andrew Dryga`;
 const description =
   "Practical notes from shipping real systems: Elixir, reliability, and delivery. What worked, what didn't, and the tools I keep reaching for.";
-const canonical = url.href;
+const canonical = new URL(safePage === 1 ? "/blog/" : `/blog/page/${safePage}/`, Astro.site).href;
 
 function pageHref(page: number) {
   const params = new URLSearchParams(url.searchParams);

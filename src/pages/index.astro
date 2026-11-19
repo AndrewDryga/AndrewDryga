@@ -14,7 +14,7 @@ import { loadBlogSummaries, formatPublishDate } from "../lib/blog";
 
 const title = "Andrew Dryga - Making things work";
 const description =
-  "I lead engineering and bring value to the business by turning fragile systems into reliable, observable, cost-sane platforms - shipping what matters, measuring results, and cutting waste without slowing teams.";
+  "Andrew Dryga builds reliable software, leads engineering teams and reduces infrastructure costs. Explore projects, technical articles and open-source tools.";
 const testimonials = await getFeaturedTestimonials();
 const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 ---
@@ -104,7 +104,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
           </Button>
 
           <Button
-            href="/blog"
+            href="/blog/"
             variant="ghost"
             size="lg"
             class="w-full sm:w-auto border-terminal-yellow! text-terminal-yellow hover:bg-terminal-yellow/10! hover:text-terminal-yellow! hover:shadow-[0_0_20px_hsl(var(--terminal-yellow)/0.3)]"
@@ -284,7 +284,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 
       <div class="text-center mt-12">
         <a
-          href="/projects"
+          href="/projects/"
           class="inline-flex items-center justify-center font-mono border-2 border-terminal-green bg-transparent text-terminal-green hover:bg-terminal-green hover:text-background transition-all rounded-md px-5 py-3"
         >
           View All Projects
@@ -380,7 +380,7 @@ const latestPosts = (await loadBlogSummaries()).slice(0, 3);
 
         <div class="flex justify-center pt-8">
           <a
-            href="/blog"
+            href="/blog/"
             class="inline-flex items-center justify-center font-mono border-2 border-terminal-yellow bg-transparent text-terminal-yellow hover:bg-terminal-yellow hover:text-background transition-all rounded-md px-5 py-3"
           >
             View All Posts

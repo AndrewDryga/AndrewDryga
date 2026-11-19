@@ -26,6 +26,22 @@ const computedUnique = Array.from(
 ).sort();
 
 const CATEGORY_META = {
+  AI: {
+    description: "AI tools built by Andrew Dryga: coding-agent sandboxes, controlled infrastructure access and engineering work in Slack and GitHub.",
+    accent: "green" as const,
+  },
+  Data: {
+    description: "Data projects by Andrew Dryga, including database adapters and APIs over Parquet snapshots. Explore the systems, code and engineering decisions.",
+    accent: "green" as const,
+  },
+  "Developer Tools": {
+    description: "Developer tools by Andrew Dryga for terminal sharing, coding agents, logging and configuration. Browse project details and source repositories.",
+    accent: "cyan" as const,
+  },
+  Infrastructure: {
+    description: "Infrastructure projects by Andrew Dryga, from virtual machines to controlled AI operations. Read how each tool works and find its source code.",
+    accent: "cyan" as const,
+  },
   AdTech: {
     description:
       "Advertising platforms, lead generation, and sales automation - high-traffic systems that drive revenue.",
@@ -134,7 +150,7 @@ function categoryHref(cat: string | null) {
       <SectionHeader
         breadcrumbs={[
           { label: "Home", href: "/" },
-          { label: "Projects", href: "/projects" },
+          { label: "Projects", href: "/projects/" },
         ]}
         consoleLine={consoleLine}
         titleLeading="Projects:"

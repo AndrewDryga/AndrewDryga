@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from "astro:content";
+import { tagHref } from "../../lib/urls";
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
@@ -102,7 +103,7 @@ const projectLd = {
 };
 ---
 
-<BaseLayout {title} {description}>
+<BaseLayout title={`${project.name} | Andrew Dryga`} description={project.seoDescription ?? description} {canonical}>
   <Header slot="header" variant="header" />
 
   <article class="max-w-4xl mx-auto px-4 py-12 md:py-20">
@@ -143,9 +144,9 @@ const projectLd = {
         project.tech && project.tech.length > 0 && (
           <div class="flex flex-wrap gap-2">
             {project.tech.map((tech) => (
-              <span class="px-3 py-1 rounded bg-terminal-surface text-sm font-mono text-foreground/80">
+              <a href={tagHref(tech)} class="px-3 py-1 rounded bg-terminal-surface text-sm font-mono text-foreground/80 hover:text-terminal-cyan focus-visible:outline focus-visible:outline-2 focus-visible:outline-terminal-cyan">
                 {tech}
-              </span>
+              </a>
             ))}
           </div>
         )

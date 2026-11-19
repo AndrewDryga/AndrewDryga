@@ -153,10 +153,14 @@ async function main() {
   const sections = await Promise.all(
     htmlFiles.map(async (file) => {
       const html = await readFile(file, "utf8");
+      // Discovery exports follow the same public canonical inventory as search.
+      if (/<meta\b[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html)) return "";
+      const { rel, url } = routeFromFile(file);
+      const canonical = html.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)/i)?.[1];
+      if (canonical && new URL(canonical, baseUrl).href !== url) return "";
       const stats = await stat(file);
       const text = toPlainText(html);
       if (!text) return "";
-      const { rel, url } = routeFromFile(file);
       const chars = text.length;
       const words = text.split(/\s+/).filter(Boolean).length;
       const title = extractTitle(html) ?? "Untitled";

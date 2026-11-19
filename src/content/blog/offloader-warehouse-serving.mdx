@@ -1,4 +1,5 @@
 ---
+seoDescription: "How Offloader serves repeated product queries from Parquet snapshots with DuckDB, and where data freshness and query limits affect that choice."
 title: "Your data warehouse is the wrong place to serve a dashboard"
 shortTitle: "Offloading the warehouse"
 description: "Customer-facing dashboards ask the same few questions all day, on data that's fine a few minutes stale - but every page load runs a live query against a warehouse that bills per query and was never built to sit behind a live screen. Here's the serving layer I built to move those reads onto cheap snapshots on my own infra."

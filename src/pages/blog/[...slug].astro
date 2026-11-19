@@ -1,4 +1,5 @@
 ---
+import { tagHref } from "../../lib/urls";
 import BaseLayout from "../../components/BaseLayout.astro";
 import { getCollection, getEntry, render } from "astro:content";
 import Header from "../../components/Header.astro";
@@ -28,8 +29,8 @@ const { Content, headings } = await render(post);
 
 const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL(`/blog/${post.id}/`, site).toString();
-const title = `${post.data.title} - Andrew Dryga`;
-const description = post.data.description;
+const title = `${post.data.seoTitle ?? post.data.shortTitle ?? post.data.title} - Andrew Dryga`;
+const description = post.data.seoDescription ?? post.data.description;
 
 const publishISO = post.data.publishDate?.toISOString?.();
 const updatedISO = (post.data.updatedDate ?? post.data.publishDate)?.toISOString?.();
@@ -120,7 +121,7 @@ void breadcrumbLd;
                 {tags.map((t: string) => (
                   <li>
                     <a
-                      href={`/tags/${t.toLowerCase().replace(/\//g, "-")}`}
+                      href={tagHref(t)}
                       class="inline-flex items-center font-mono text-xs px-2 py-1 rounded border border-terminal-yellow/30 text-terminal-yellow hover:border-terminal-yellow hover:bg-terminal-yellow/10 transition-colors"
                       rel="tag"
                     >

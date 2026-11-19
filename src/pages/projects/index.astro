@@ -5,10 +5,10 @@ import SectionHeader from "../../components/SectionHeader.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import { allProjects, projectCategories } from "../../data/projects";
 
-const title = "Projects - Andrew Dryga";
+
 const description =
   "Work I'm proud of - from platforms processing medical records for an entire country to open-source libraries with millions of downloads.";
-const canonical = Astro.url.href;
+
 const selectedCategory = "All";
 
 const PAGE_SIZE = 6;
@@ -27,6 +27,8 @@ const totalPages = Math.max(1, Math.ceil(allProjects.length / PAGE_SIZE));
 const safePage = Math.min(Math.max(1, currentPage), totalPages);
 const start = (safePage - 1) * PAGE_SIZE;
 const pageProjects = allProjects.slice(start, start + PAGE_SIZE);
+const title = safePage === 1 ? "Projects - Andrew Dryga" : `Projects, page ${safePage} - Andrew Dryga`;
+const canonical = new URL(safePage === 1 ? "/projects/" : `/projects/page/${safePage}/`, Astro.site).href;
 
 function pageHref(page: number) {
   const params = new URLSearchParams(url.searchParams);

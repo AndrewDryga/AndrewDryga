@@ -37,6 +37,8 @@ if (!currentCategory) {
 }
 
 const CATEGORY_INTRO: Record<string, string> = {
+  Infrastructure:
+    "Infrastructure notes from real deployments: cloud costs, bare-metal servers, Terraform and the trade-offs behind running production systems.",
   Architecture:
     "Practical architecture notes from systems that shipped. Trade-offs, diagrams, and patterns that stayed simple under real load.",
   Engineering:
@@ -49,7 +51,7 @@ const CATEGORY_INTRO: Record<string, string> = {
     "Delivery pipelines, observability, and ops hygiene that keep teams shipping. Fewer surprises, calmer on-call.",
 };
 
-const title = "Blog - Andrew Dryga";
+const title = `${currentCategory} articles - Andrew Dryga`;
 const description =
   (currentCategory && CATEGORY_INTRO[currentCategory]) ??
   "Posts from this category. Practical notes from shipping real systems.";

@@ -1,4 +1,5 @@
 ---
+seoDescription: "Designing an institutional P2P lending marketplace: service boundaries, data flow and the architecture behind a platform built for large-scale use."
 title: "Designing a P2P Lending platform with Elixir in mind"
 shortTitle: "P2P Lending Platform"
 description: "With this post, I want to share with you the design process on one of our latest projects - a P2P marketplace that was intended to be used by hundreds of thousands of users."
@@ -86,7 +87,7 @@ Prior to the marketplace development our team was completely in PHP, MongoDB, Pu
 > Writing code became easy and I felt productive as never before, until I’ve tried to release my microservice. Compilation turned out to be platform-dependent. I’ve used to spin off a VM for this single purpose. Another option was to release a Docker container, which had friendlier delivering and development lifecycle. Also, I was able to write acceptance tests for containers to make sure that code would work in all environments after compiling it into OTP release - feature that I felt missing in my past “PHP” life.
 > 
 > 
-> Release configuration was another difficulty in dealing with. To use one container in all environments [it must be configurable at runtime](https://12factor.net/config), but Elixir itself does not allow you to do that (at least there is no easy way). You could set REPLACE_OS_VARS environment variable in a container and start using bash-style variables in configs, but what if you need some value to be an integer? [Confex](https://github.com/Nebo15/confex) was born to solve that problem. UPD: I’ve written [an article on this topic](/blog/runtime-configuration-migrations).
+> Release configuration was another difficulty in dealing with. To use one container in all environments [it must be configurable at runtime](https://12factor.net/config), but Elixir itself does not allow you to do that (at least there is no easy way). You could set REPLACE_OS_VARS environment variable in a container and start using bash-style variables in configs, but what if you need some value to be an integer? [Confex](https://github.com/Nebo15/confex) was born to solve that problem. UPD: I’ve written [an article on this topic](/blog/runtime-configuration-migrations/).
 > 
 > 
 > Because I did not want to deal with server setups anymore, Kubernetes was picked to run these containers. Deploying and maintaining an application in it is a separate love story.

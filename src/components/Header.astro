@@ -23,8 +23,8 @@ const blogPosts = await loadBlogSummaries();
 
 function isActive(href: string) {
   if (href === "/") return pathname === "/";
-  if (href.startsWith("/blog")) return pathname.startsWith("/blog");
-  if (href.startsWith("/projects")) return pathname.startsWith("/projects");
+  if (href.startsWith("/blog/")) return pathname.startsWith("/blog/");
+  if (href.startsWith("/projects/")) return pathname.startsWith("/projects/");
   if (href.startsWith("/#")) {
     // Hash links are activated via client-side scrollspy on the home page
     return false;
@@ -38,8 +38,8 @@ const groupedPalette: CommandGroup[] = (() => {
   const items: { label: string; href: string; group: string; description?: string; shortcut?: string }[] = [
     { label: "Home", href: "/", group: "Navigation", shortcut: "g h" },
     { label: "About", href: "/#about", group: "Navigation", shortcut: "g a" },
-    { label: "Projects", href: "/projects", group: "Navigation", shortcut: "g p" },
-    { label: "Blog", href: "/blog", group: "Navigation", shortcut: "g b" },
+    { label: "Projects", href: "/projects/", group: "Navigation", shortcut: "g p" },
+    { label: "Blog", href: "/blog/", group: "Navigation", shortcut: "g b" },
     { label: "Contact", href: "/#contact", group: "Navigation", shortcut: "g c" },
     ...allProjects.map((p) => ({
       label: p.name,
@@ -60,8 +60,8 @@ const groupedPalette: CommandGroup[] = (() => {
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "About", href: "/#about" },
-  { name: "Projects", href: "/projects" },
-  { name: "Blog", href: "/blog" },
+  { name: "Projects", href: "/projects/" },
+  { name: "Blog", href: "/blog/" },
   { name: "Contact", href: "/#contact" },
 ];
 ---
@@ -111,7 +111,7 @@ const navLinks = [
   id="nav-palette"
   placeholder="Search pages, posts, projects..."
   groups={groupedPalette}
-  chords={{ h: "/", a: "/#about", p: "/projects", b: "/blog", c: "/#contact" }}
+  chords={{ h: "/", a: "/#about", p: "/projects/", b: "/blog/", c: "/#contact" }}
 />
 
 {(variant === "footer" || variant === "both") && (

@@ -1,4 +1,5 @@
 ---
+import { tagSlug, tagHref } from "../../lib/urls";
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
@@ -13,7 +14,7 @@ export async function getStaticPaths() {
 
   // Collect tags from both blog posts and project tech arrays
   const tagMap = new Map<string, string>();
-  const toSlug = (t: string) => t.toLowerCase().replace(/\//g, "-");
+  const toSlug = tagSlug;
   for (const p of posts) {
     for (const t of p.data.tags ?? []) {
       const key = toSlug(t);
@@ -44,7 +45,7 @@ const allPosts = await getCollection(
 );
 const posts = allPosts
   .filter((p: CollectionEntry<"blog">) =>
-    (p.data.tags ?? []).some((t: string) => t.toLowerCase().replace(/\//g, "-") === lowerTag),
+    (p.data.tags ?? []).some((t: string) => tagSlug(t) === lowerTag),
   )
   .sort((a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) => {
     const at = a.data.publishDate?.getTime?.() ?? 0;
@@ -54,12 +55,12 @@ const posts = allPosts
 
 // Projects matching tech (case-insensitive)
 const projects = allProjects.filter((p) =>
-  p.tech.some((t) => t.toLowerCase().replace(/\//g, "-") === lowerTag),
+  p.tech.some((t) => tagSlug(t) === lowerTag),
 );
 
 const site = Astro.site ?? new URL("https://dryga.com/");
 const canonical = new URL(
-  `/tags/${encodeURIComponent(lowerTag)}/`,
+  tagHref(lowerTag),
   site,
 ).toString();
 
@@ -83,10 +84,11 @@ const TAG_INTROS: Record<string, string> = {
 };
 
 const totalCount = posts.length + projects.length;
-const title = `#${displayTag} - Andrew Dryga`;
+const title = `${displayTag}: projects and articles | Andrew Dryga`;
+const examples = [...projects.map((project) => project.name), ...posts.map((post) => post.data.shortTitle ?? post.data.title)].slice(0, 2).join(" and ");
 const description =
   TAG_INTROS[displayTag.toLowerCase()] ??
-  `Notes on ${displayTag.toLowerCase()} from shipping real systems.`;
+  `Projects and articles about ${displayTag} by Andrew Dryga. Includes ${examples}.`;
 ---
 
 <BaseLayout {title} {description} {canonical}>

@@ -1,4 +1,5 @@
 ---
+seoDescription: "Give AI agents the production context they need through defined tools and access policies. Why I built Emisar instead of handing agents unrestricted SSH."
 title: "Your AI is brilliant. And blind"
 shortTitle: "Brilliant and blind LLMs"
 description: "AI agents got good at writing code - and they're still flying blind on your infrastructure, guessing at problems they can't see. The obvious fix is to hand them SSH and let them run wild. Here's why I didn't, and what I built instead."
@@ -61,7 +62,7 @@ Walk through what that actually means:
 
 And you can't fence it at the shell level either - no amount of patterns, allowlists, or even supervising agents will stop a free-form text model from finding a phrasing that works. The shell access itself is the problem, not the agent holding it.
 
-Locally those problems can be solved by [sandboxing the agent](/blog/untrusted-ai-coding-agent) so a bad command can't escape the repo. But you can't sandbox production - production is the thing you're trying to maintain and protect.
+Locally those problems can be solved by [sandboxing the agent](/blog/untrusted-ai-coding-agent/) so a bad command can't escape the repo. But you can't sandbox production - production is the thing you're trying to maintain and protect.
 
 And that's the whole reason I want this to work. I'd happily hand the infra babysitting to an LLM - it buys back the hours I'd rather spend on code I actually like writing. What I won't do is buy those hours by leaving the laptop `caffeinate`d with a model still loose on production, hoping I come back to find everything where I left it.
 
