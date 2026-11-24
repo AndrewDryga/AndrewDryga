@@ -51,7 +51,8 @@ export const techCategories: TechCategory[] = [
     items: [
       { name: "Terraform, GCP/AWS", years: 9, barColor: "cyan" },
       { name: "Kubernetes/Helm/Nomad", years: 6 },
-      { name: "Linux, Nginx/HAProxy, CI/CD", years: 12 },
+      { name: "Bare-metal clusters\npfSense, Arista EOS", years: 2 },
+      { name: "Linux, CI/CD\nNginx, HAProxy", years: 12 },
       { name: "Prometheus, Metabase", years: 8 },
     ],
   },
