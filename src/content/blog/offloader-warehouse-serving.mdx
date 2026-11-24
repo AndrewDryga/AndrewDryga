@@ -4,7 +4,7 @@ title: "Your data warehouse is the wrong place to serve a dashboard"
 shortTitle: "Offloading the warehouse"
 description: "Customer-facing dashboards ask the same few questions all day, on data that's fine a few minutes stale - but every page load runs a live query against a warehouse that bills per query and was never built to sit behind a live screen. Here's the serving layer I built to move those reads onto cheap snapshots on my own infra."
 publishDate: 2026-10-29
-updatedDate: 2026-10-29
+updatedDate: 2026-11-23
 category: "Databases"
 readTime: "6 min read"
 cardGradient: "from-terminal-yellow to-terminal-green"
@@ -24,7 +24,7 @@ I've been surprised for sure to learn that to serve 1 RPS on Databricks serving 
 
 Data lakes do not exist just because your CIO wants a nice dashboard - they are often used to provide customers with the aggregates and analytics - usage screens, leaderboards, the "here are your numbers" pages people refresh all day.
 
-Every one of those page loads ran a query against the warehouse. And warehouses are priced for that in the worst way: either you rent always-on compute sized for your peak and pay for it while it sits idle, or you're on a per-query meter where your most-used feature is also your biggest invoice. Either way, the more people use the product, the more it costs just to show them what they came to see.
+A dashboard request that missed our cache still ran a warehouse query. And warehouses are priced for that in the worst way: either you rent always-on compute sized for your peak and pay for it while it sits idle, or you're on a per-query meter where your most-used feature is also your biggest invoice. Either way, the more people use the product, the more it costs just to show them what they came to see.
 
 ## Everything can be cached
 
@@ -36,7 +36,7 @@ But a data warehouse is built for the opposite thing: big, ad-hoc, one-off quest
 
 ## So I built a serving layer for it
 
-The fix is boring, which is how I like my software to work. Instead of every page load hitting the warehouse, you export a snapshot of each dataset - plain Parquet files - to object storage on whatever schedule you like: every few minutes, every hour, your call. A small service on your own servers loads the latest snapshot into an embedded database (DuckDB) and answers your product's REST calls from that. When a newer snapshot shows up, it swaps over with no downtime. The warehouse gets touched exactly once per snapshot, by the export - never by live traffic.
+The fix is boring, which is how I like my software to work. Instead of every page load hitting the warehouse, you export a snapshot of each dataset - plain Parquet files - to object storage on whatever schedule you like: every few minutes, every hour, your call. A small service on your own servers loads the latest snapshot into an embedded database (DuckDB) and answers your product's REST calls from that. For Databricks exports, you can set how often Offloader looks for a completed snapshot. It serves the current one in the meantime. If you use a static manifest, [publishing an update takes a separate step](https://offloader.dryga.com/docs/warehouse-to-api.html). The warehouse gets touched exactly once per snapshot, by the export - never by live traffic.
 
 I packaged that service as a single container and called it [Offloader](https://offloader.dryga.com). Point it at a bucket, hand it a little config describing your datasets and endpoints, and it serves your dashboards from cheap local reads instead of expensive remote queries. There's no Offloader cloud in the middle and nothing phones home - it runs on infrastructure you already operate, and your data never leaves your environment. When the data is real customers' numbers, that last part isn't a nice-to-have.
 
@@ -56,12 +56,18 @@ Tenants can't see each other. Multi-customer data means the query for account A 
 
 And the cache is safe by construction. Every response is tagged with the exact snapshot it came from, so a cached answer can only ever be invalidated by a newer snapshot, not by a clock that might be wrong. Per-tenant responses are marked private and never land in a shared cache; only genuinely public data is allowed to. Which means for public data you can put a CDN in front and stop thinking about it.
 
+## Would a response cache be enough?
+
+I ran the same 100 dashboard requests three ways to see how often each went back to the source. Direct queries made 100 reads. A response cache handled 76 requests and sent the other 24 to the source. With Offloader, DuckDB answered all 100 from two exports. Halfway through I changed one customer's usage total. All three paths picked up the change.
+
+This was a 36-row SQLite fixture on my laptop. For a real dashboard, I'd price the queries that miss the cache first. If they're cheap, paying to export the whole dataset and run another service may make little sense. Here's the [replay script, raw results and cost worksheet](https://offloader.dryga.com/docs/benchmarks.html#how-often-does-a-dashboard-query-the-source).
+
 ## Does it actually save money?
 
 For the first real cutover, a serving workload doing about 136 million requests a month, roughly 8 TB out, went from around $3,000/month on warehouse compute to about $440/month running Offloader on two small VMs - with about 94% of requests answered straight from cache, never touching the warehouse at all. On a synthetic benchmark it does five to six thousand cached requests a second at a p99 under 60 milliseconds, though that's a relative number and I'd make you measure your own before believing it.
 
 The data engineers also loved it because it sped up their time to ship new data to the product greatly without changing the rest of their workflow. All their tools already export Parquet.
 
-That result is also the business model, and I've tried to make it hard to argue with: Offloader charges 20% of what it actually saves you, measured against your real bill. No saving, no fee. It's source-available under a license that flips to Apache 2.0 two years after each release ships, it comes as a signed container, and it's early - I've proven it on my own workload and I'm looking for the first outside ones to prove it on next.
+That result is also the business model, and I've tried to make it hard to argue with: For a paid rollout, we start with a diagnostic to measure which costs would go away. On the savings plan, the ongoing fee is 20% of what you save after paying to run Offloader. If there's no saving, there's no ongoing fee. [See pricing](https://offloader.dryga.com/#pricing). It's source-available under a license that flips to Apache 2.0 two years after each release ships, it comes as a signed container, and it's early - I've proven it on my own workload and I'm looking for the first outside ones to prove it on next.
 
 If your warehouse bill has a line that climbs every time a customer looks at their own data, that line is the reason I built this. It's at [offloader.dryga.com](https://offloader.dryga.com), with a calculator to put rough numbers on your own case before you ever talk to me.
