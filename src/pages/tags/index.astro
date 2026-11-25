@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../../components/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { loadTopics } from "../../lib/topics";
+import { tagHref } from "../../lib/urls";
+
+const topics = [...(await loadTopics()).values()].sort((a, b) => a.localeCompare(b, "en"));
+---
+<BaseLayout title="Engineering topics | Andrew Dryga" description="Find Andrew Dryga’s projects and articles by topic, from Elixir and PostgreSQL to infrastructure, payments and healthcare software.">
+  <Header slot="header" variant="header" />
+  <section class="mx-auto max-w-4xl px-4 py-12">
+    <SectionHeader title="Browse by topic" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Topics" }]} />
+    <ul class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+      {topics.map(label => <li><a class="text-terminal-cyan underline underline-offset-4" href={tagHref(label)}>{label}</a></li>)}
+    </ul>
+  </section>
+  <Header slot="footer" variant="footer" />
+</BaseLayout>

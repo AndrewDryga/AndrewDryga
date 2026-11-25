@@ -1,0 +1,20 @@
+---
+import type { Project } from "../data/projects";
+interface Props {
+  projects: Project[];
+  name: string;
+}
+const { projects, name } = Astro.props;
+const projectList = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name,
+  itemListElement: projects.map((project, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: project.name,
+    url: new URL(`/projects/${project.id}/`, Astro.site).href,
+  })),
+};
+---
+<script type="application/ld+json" is:inline set:html={JSON.stringify(projectList).replace(/</g, "\\u003c")} />

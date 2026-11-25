@@ -2,6 +2,7 @@
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
+import ProjectListSchema from "../../components/ProjectListSchema.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import { allProjects, projectCategories } from "../../data/projects";
 
@@ -47,6 +48,7 @@ function categoryHref(cat: string) {
 ---
 
 <BaseLayout {title} {description} {canonical}>
+  <ProjectListSchema name={title} projects={pageProjects} />
   <Header slot="header" variant="header" />
 
   <section class="py-16 md:py-24 px-4">
@@ -81,6 +83,7 @@ function categoryHref(cat: string) {
             )
           }
         </div>
+        <a class="mt-4 inline-block text-sm text-terminal-cyan underline underline-offset-4" href="/tags/">Browse by topic</a>
       </SectionHeader>
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">

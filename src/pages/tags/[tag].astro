@@ -1,5 +1,6 @@
 ---
 import { tagSlug, tagHref } from "../../lib/urls";
+import { loadTopics } from "../../lib/topics";
 import BaseLayout from "../../components/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
@@ -8,26 +9,7 @@ import { formatPublishDate } from "../../lib/blog";
 import { allProjects } from "../../data/projects";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", (entry: CollectionEntry<"blog">) =>
-    import.meta.env.PROD ? !entry.data.draft : true,
-  );
-
-  // Collect tags from both blog posts and project tech arrays
-  const tagMap = new Map<string, string>();
-  const toSlug = tagSlug;
-  for (const p of posts) {
-    for (const t of p.data.tags ?? []) {
-      const key = toSlug(t);
-      if (!tagMap.has(key)) tagMap.set(key, t);
-    }
-  }
-  for (const proj of allProjects) {
-    for (const t of proj.tech) {
-      const key = toSlug(t);
-      if (!tagMap.has(key)) tagMap.set(key, t);
-    }
-  }
-
+  const tagMap = await loadTopics();
   return Array.from(tagMap.entries()).map(([slug, label]) => ({
     params: { tag: slug },
     props: { displayTag: label },
@@ -65,6 +47,74 @@ const canonical = new URL(
 ).toString();
 
 const TAG_INTROS: Record<string, string> = {
+  "codex":
+    "Run Codex in a local container with co:op. See how to choose which files the agent can read and which network connections it can make.",
+  "claude code":
+    "Run Claude Code in a local sandbox, give it a queue of small tasks and review its work when you return to the terminal.",
+  "docker":
+    "Two projects that use Docker in different ways. co:op isolates coding agents on your machine. Offloader serves warehouse snapshots through a REST API.",
+  "gemini":
+    "See how co:op runs Gemini CLI in a local sandbox and how file and network permissions affect what a coding agent can do.",
+  "mcp":
+    "Ryker investigates engineering tasks from Slack and GitHub. Emisar gives agents an MCP interface to approved infrastructure actions.",
+  "go":
+    "Source code and project notes for Go tools that share a terminal, sandbox coding agents and give them controlled access to infrastructure.",
+  "duckdb":
+    "See how Offloader uses DuckDB to answer dashboard queries from Parquet snapshots and when it makes sense to keep querying the warehouse directly.",
+  "parquet":
+    "Offloader copies warehouse data into Parquet snapshots and queries them with DuckDB. Explore the trade-offs for dashboards that can use slightly older data.",
+  "cost":
+    "What happens to warehouse costs when a dashboard keeps asking the same question? See how Offloader moves those reads to snapshots.",
+  "analytics":
+    "See how a product dashboard can read from Parquet through a REST API and how the snapshot refresh schedule affects what customers see.",
+  "apis":
+    "Which API responses can a CDN reuse? A guide to designing endpoints and cache keys so repeat requests can skip a trip to the origin.",
+  "caching":
+    "How API design affects CDN cache hits. Walk through the choices that let more requests share a cached response and reduce work at the origin.",
+  "performance":
+    "Explore how a CDN can serve repeat API requests from cache and how endpoint design affects the load that reaches your application.",
+  "terraform":
+    "See how Andrew Dryga used Terraform to manage infrastructure for Blitz, Firezone and Ukraine’s national eHealth platform.",
+  "bare-metal":
+    "How to provision bare-metal servers with Terraform, reimage them remotely and check that each machine came back with the right configuration.",
+  "infrastructure":
+    "Two views of running production systems. Provision bare-metal servers with Terraform and give AI agents controlled access to investigate them.",
+  "slack":
+    "Ryker takes engineering requests in Slack, investigates issues and opens a draft pull request so a teammate can review the change.",
+  "github":
+    "Ryker connects Slack requests with work in GitHub. Follow an engineering task from the original report to a draft pull request.",
+  "sandbox":
+    "What can a coding agent read on your laptop? See how co:op limits access to project files, credentials and the network while the agent works.",
+  "websocket":
+    "OnlyTTY streams a terminal session to a browser. See how it handles encrypted connections and lets you choose who can type.",
+  "xterm.js":
+    "OnlyTTY uses xterm.js to display a live terminal in the browser. The command runs on the host, and the viewer can join from a phone.",
+  "management":
+    "How to judge engineering work by what it does for the business, choose better problems and keep the team’s maintenance workload manageable.",
+  "blockchain":
+    "How signed records and hashes can help reveal changes to medical records without publishing sensitive patient data on a public blockchain.",
+  "immutability":
+    "A design for spotting changes to signed medical records in a centralized database, even when someone with administrator access edits the data.",
+  "mix":
+    "Use Mix to run the Elixir tests affected by a code change. See how stale tests can shorten the wait between editing code and getting feedback.",
+  "otp":
+    "Use the Mnesia database that ships with Erlang/OTP from an Elixir project. Explore the Ecto adapter and the source behind it.",
+  "macos":
+    "A look back at Vagrant Box OS X, which distributed macOS development and test environments for VirtualBox before the project was retired.",
+  "virtualbox":
+    "Vagrant Box OS X packaged macOS environments for local development with VirtualBox. Read how the project worked and why it was retired.",
+  "storage":
+    "What happens to a sensitive file between upload and storage? Follow the design choices behind handling private files in a web application.",
+  "s3":
+    "Compare two uses of object storage, serving warehouse snapshots with Offloader and distributing development environments with Vagrant Box OS X.",
+  "fintech":
+    "How an institutional peer-to-peer lending marketplace was designed, from the boundaries between services to the way financial data moves between them.",
+  "ehealth":
+    "How Ukraine’s national eHealth platform was built with Elixir and Kubernetes to handle medical records, prescriptions and reimbursements.",
+  "gcp":
+    "Explore the Google Cloud infrastructure behind Blitz, Firezone and Hammer Corp, from high-traffic gaming services to a WireGuard access platform.",
+  "phoenix":
+    "Explore Elixir and Phoenix projects including Firezone, Hammer Corp and Ryker, with details on what each application does and how it was built.",
   architecture:
     "Practical architecture notes from systems that shipped. Trade-offs, diagrams, and patterns that stayed simple under real load.",
   engineering:
@@ -85,10 +135,9 @@ const TAG_INTROS: Record<string, string> = {
 
 const totalCount = posts.length + projects.length;
 const title = `${displayTag}: projects and articles | Andrew Dryga`;
-const examples = [...projects.map((project) => project.name), ...posts.map((post) => post.data.shortTitle ?? post.data.title)].slice(0, 2).join(" and ");
-const description =
-  TAG_INTROS[displayTag.toLowerCase()] ??
-  `Projects and articles about ${displayTag} by Andrew Dryga. Includes ${examples}.`;
+const names = [...projects.map(project => project.name), ...posts.map(post => post.data.shortTitle ?? post.data.title)];
+const examples = new Intl.ListFormat("en").format(names.slice(0, 3));
+const description = TAG_INTROS[lowerTag] ?? `Projects and articles about ${displayTag} by Andrew Dryga. Includes ${examples}.`;
 ---
 
 <BaseLayout {title} {description} {canonical}>
@@ -99,7 +148,7 @@ const description =
       <!-- Header -->
       <header class="mb-8">
         <Breadcrumbs
-          items={[{ label: "Home", href: "/" }, { label: `#${displayTag}` }]}
+          items={[{ label: "Home", href: "/" }, { label: "Topics", href: "/tags/" }, { label: `#${displayTag}` }]}
           class="mb-2"
         />
         <p class="font-mono text-sm text-terminal-green mb-3">

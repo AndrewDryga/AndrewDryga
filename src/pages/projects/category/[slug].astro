@@ -2,6 +2,7 @@
 import BaseLayout from "../../../components/BaseLayout.astro";
 import Header from "../../../components/Header.astro";
 import SectionHeader from "../../../components/SectionHeader.astro";
+import ProjectListSchema from "../../../components/ProjectListSchema.astro";
 import ProjectCard from "../../../components/ProjectCard.astro";
 import {
   allProjects as allProjectsData,
@@ -59,7 +60,7 @@ const CATEGORY_META = {
   },
   LegalTech: {
     description:
-      "Contract management and legal workflow automation for B2B clients.",
+      "How Andrew Dryga helped build Contractbook, the software businesses use to draft, sign and manage contracts.",
     accent: "cyan" as const,
   },
   Security: {
@@ -69,12 +70,12 @@ const CATEGORY_META = {
   },
   "Open Source": {
     description:
-      "Libraries, tools, and frameworks contributed to the Elixir and other ecosystems.",
+      "Find the source code for Sage, Confex and LoggerJSON, and see what each library adds to an Elixir application.",
     accent: "green" as const,
   },
   Other: {
     description:
-      "Side projects, experiments, and advisory work across various domains.",
+      "Browse Andrew Dryga’s side projects, including a photo storytelling network and a Kyiv coworking space that doubled as a nightclub.",
     accent: "yellow" as const,
   },
 } satisfies Record<
@@ -143,6 +144,7 @@ function categoryHref(cat: string | null) {
 ---
 
 <BaseLayout {title} {description} {canonical}>
+  <ProjectListSchema name={`${currentCategory} projects`} projects={projectsFiltered} />
   <Header slot="header" variant="header" />
 
   <section class="py-16 md:py-24 px-4">

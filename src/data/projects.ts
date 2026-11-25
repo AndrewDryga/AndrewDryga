@@ -441,7 +441,7 @@ export const allProjects: Project[] = [
     id: "ecommpay",
     name: "ECommPay - Mobile App",
     description:
-      "iOS and Android business application for partners to manage payment platform on the go.",
+      "Built the iOS and Android apps that let ECommPay partners track payment metrics from a phone and respond when those numbers changed.",
     impact: ["Brought critical KPIs to mobile for faster responses"],
     tech: ["Objective-C", "Java"],
     categories: ["FinTech"],
@@ -520,7 +520,7 @@ export const allProjects: Project[] = [
       },
       {
         type: "article",
-        url: "/blog/introducing-sage",
+        url: "/blog/introducing-sage/",
         label: "Read article",
       },
     ],
