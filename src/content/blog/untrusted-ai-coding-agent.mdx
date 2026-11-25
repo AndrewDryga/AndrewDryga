@@ -2,9 +2,9 @@
 seoDescription: "How co:op limits a coding agent’s file, secret and network access, and why a sandbox still needs carefully chosen permissions."
 title: "Running an AI coding agent you can't trust"
 shortTitle: "Untrusted AI agents"
-description: "You can't trust an AI coding agent, and you shouldn't have to. Put it in a sandbox where the worst case is boring: one repo damaged, no secrets exposed, and a VM you can rebuild in a minute."
+description: "I wanted to leave my coding agent running without giving it my laptop. Here's how I chose which files to share, where to keep credentials and what to do with its changes."
 publishDate: 2026-06-14
-updatedDate: 2026-10-20
+updatedDate: 2026-11-24
 category: "Engineering"
 readTime: "12 min read"
 cardGradient: "from-terminal-cyan to-terminal-green"
@@ -35,15 +35,9 @@ Some people frame this as a trust problem: can I trust the model? Wrong question
 
 This article builds that box. A follow-up - [an OS for autonomous coding agents](/blog/os-for-coding-agents/) - is about what you do once you have it: leave it running for hours without babysitting it. You need the box first.
 
-One shortcut before we start: I packaged this whole setup as a single Go binary, [coop](https://github.com/AndrewDryga/coop). If you just want the box and not the theory:
+I packaged this as [co:op](https://coop.dryga.com/). Try it with [Claude Code](https://coop.dryga.com/claude-code-sandbox.html) or [Codex](https://coop.dryga.com/codex-sandbox.html). The walkthrough puts a README and a test secret in the same folder. You can see which one the agent can read, then allow one more website and check the network log.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/AndrewDryga/coop/main/install.sh | sh
-```
-
-**Implementation update, October 2026:** the shell examples below explain the original design. Current co:op uses Docker for online provider sessions and a per-run credential broker; the Apple container example is not its current setup procedure. Use the [sandbox walkthrough](https://coop.dryga.com/sandbox-guide.html) to check files, credentials and networking, then the [overnight task walkthrough](https://coop.dryga.com/overnight-guide.html) for a separate fork and a reviewable queue. Known secret-path filtering still needs your project's exclusions; it cannot recognize every credential embedded in ordinary source.
-
-The rest of this article develops the design as plain shell so the boundaries are visible. Treat the examples as a design walkthrough, not a copy of the current launcher.
+I built the first version with Apple containers. That’s the shell code below. Today co:op uses Docker and keeps the provider credential outside the agent’s container. For private files outside its built-in rules, I add the paths to `.coopignore`. It can’t spot a password I’ve pasted into ordinary source code.
 
 ## Trust the sandbox, not the model
 
@@ -51,13 +45,7 @@ Here's the thing about how agents fail: it's almost never malice. It's statistic
 
 You're not going to fix that with prompting. "Please be careful" is not a security boundary. The fix is the oldest idea in the book: least privilege, enforced by something the agent can't talk its way around. The agent should see exactly one thing - the repo it's working on. Not your home directory, not your SSH keys, not your browser profile, not the rest of your disk.
 
-"But don't the CLIs sandbox themselves now?" They do, and the built-in sandboxes are genuinely useful - [Claude Code's `/sandbox`](https://code.claude.com/docs/en/sandboxing) wraps bash in Seatbelt on macOS and bubblewrap on Linux, [Gemini CLI ships the same idea](https://geminicli.com/docs/cli/sandbox/) with configurable profiles. Turn them on. They're free.
-
-But read the fine print before you bet an unattended run on one. Claude Code's sandbox blocks *writes* outside the working directory - but *reads* of your entire disk, `~/.ssh` and `~/.aws/credentials` included, are allowed by default until you go and deny-list them yourself. So nothing actually stops the agent from SSHing into production to "investigate" something and breaking it. And if you use Tailscale SSH or Teleport, it's worse - the model can reach your whole fleet through them, and you might not even notice it happened.
-
-The sandbox also only covers bash subprocesses - not the harness itself, not the other tools. And every developer-friendly sandbox ships escape hatches on purpose: a retry-outside-the-sandbox flag, an excluded-commands list, a documented "if it gets in your way, turn it off" toggle. All of that is reasonable for interactive use, when you're sitting there watching. But for eight unattended hours I want the opposite default: nothing readable, nothing reachable, unless I explicitly put it there. That's a VM.
-
-Anthropic basically says this themselves - their docs recommend running `--dangerously-skip-permissions` only inside an isolated container. So let's build one.
+For an overnight run, I don’t want Claude reading my personal files through any tool. Its Bash sandbox covers shell commands and their children. The built-in file tools have their own permissions, and hooks run outside Bash. I put Claude itself inside the container so I could leave my home directory out altogether. [Anthropic’s sandbox guide](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox)
 
 ## A VM with one door
 
@@ -101,8 +89,6 @@ One hole first, though: that bind mount carried the whole repo into the VM - `.e
 ## Keeping secrets out of reach
 
 "Give it the repo" almost always means "give it the repo except a few files": `.env`, `secrets/`, deploy keys, `terraform.tfvars`, `*.tfstate`.
-
-You'd think there's a setting for this. There isn't. The built-in sandboxes and the popular Seatbelt wrappers guard secrets in your *home* directory and leave a nested `project/.env` perfectly readable - masking secrets inside the working tree is a gap every tool I tried leaves to you. So we close it ourselves.
 
 There are two layers here, and they're not equally strong. The strong one is the filesystem. A path that was never mounted into the VM simply can't be read by anything inside it - not the file tools, not a clever bash one-liner, not a little python script the agent writes to "debug the config". The bytes aren't there.
 

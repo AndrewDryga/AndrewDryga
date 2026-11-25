@@ -4,7 +4,7 @@ title: "One brain, two agents: an OS for autonomous coding agents"
 shortTitle: "An OS for your agents"
 description: "AI agents lose context, stop early, and skip work. The fix is not a smarter prompt. It is a small, file-based operating system: a queue they cannot abandon, hooks they cannot ignore, and one shared source of truth."
 publishDate: 2026-06-14
-updatedDate: 2026-08-25
+updatedDate: 2026-11-24
 category: "Engineering"
 readTime: "11 min read"
 cardGradient: "from-terminal-green to-terminal-cyan"
@@ -202,7 +202,7 @@ exit 0
 
 Scope it to staged files so an unrelated mess somewhere else can't block you, and make it fail *open* - that `command -v gofmt` check is the whole trick, so a missing toolchain never wedges the whole run.
 
-One honest caveat: harness hooks are the single genuinely tool-specific layer here. Claude Code has them; Codex doesn't have an equivalent yet. That's what the third hook is for - a plain git `pre-commit` gate, tracked in the repo with `core.hooksPath` pointed at it, so the format check runs for *every* committer (Codex, Gemini, a bare `git commit`) and rides along on a fresh clone. Only the Stop guard stays Claude-side; everything else - rules, queue, log, skills - is shared. More on how that sharing works in a second.
+I want the same format check whether Claude, Codex, Gemini or I make the commit. I put it in a Git `pre-commit` hook and set `core.hooksPath` to the hook directory in each new checkout.
 
 ## Teaching it your taste
 

@@ -4,7 +4,7 @@ title: "Your AI is brilliant. And blind"
 shortTitle: "Brilliant and blind LLMs"
 description: "AI agents got good at writing code - and they're still flying blind on your infrastructure, guessing at problems they can't see. The obvious fix is to hand them SSH and let them run wild. Here's why I didn't, and what I built instead."
 publishDate: 2026-06-29
-updatedDate: 2026-08-24
+updatedDate: 2026-11-24
 category: "DevOps"
 readTime: "7 min read"
 cardGradient: "from-terminal-cyan to-primary"
@@ -38,7 +38,7 @@ For a while you just bridge the gap by hand. It asks what `nomad alloc status` s
 
 There's an obvious fix, and most people reach for it within about five minutes: give it a shell.
 
-Drop it onto the box over SSH. Tell it about `tailscale ssh` once and it'll shell into production on its own, including the times you'd rather it didn't. Wire up an MCP server that runs `bash`. Point it at `gcloud ssh` or your kubeconfig. Pick your poison - the effect is the same, and the blindness just evaporates.
+Give it your SSH account with sudo on production. Or hand it a kubeconfig that can change the cluster. Either way, the agent can finally look for itself.
 
 Now it can look. It runs the status command, tails the logs, greps the config, spots the full disk in thirty seconds flat, and proposes the fix. The first time you watch it track down the problem and apply the fix on its own, it lands like a trick - and you catch yourself thinking you might actually sleep through the next incident.
 
@@ -48,16 +48,14 @@ And then, if you've run infrastructure for any length of time, you start to feel
 
 When was the last time somebody on X posted about an AI agent deleting something it shouldn't have? Yeah, today. You gave a process that hallucinates - confidently, in fluent complete sentences - a root shell on production and permission to run anything in it, even when you're not watching.
 
-And the guardrails you're counting on don't work with SSH - when the agent asks you to approve the next command, all it shows is `ssh iamnaive@mycorpprod.com '<50 lines of bash truncated to 50 chars>'` (or, even worse, `cat script.sh | ssh ...`). There is no easy way to review that, and right underneath there's an option to approve every command with "this prefix". You click it once out of fatigue, and now the agent has more freedom on your production than it has on your dev machine.
-
-None of this is a bug in the permission system. It just can't see past the first quote.
+The approval prompt matters here. I might be happy for the agent to check uptime over SSH. If I save a rule that matches just the SSH command and hostname, it can ask that same host to do something else next time. Before saving a rule, I want to see exactly what it covers.
 
 Walk through what that actually means:
 
 - **It can run anything** you can do in a shell.
 - **It guesses on a live system**. The most innocent mistake it can make is a syntax error. But it can also run a `nomad job stop` on the wrong job, or an `rm -rf` where a variable quietly expanded to `/`. A perfectly valid command pointed at the wrong thing does damage too.
-- **It leaks**. No matter how hard you try, your agent will eventually read your kubeconfig, your tokens, or your access keys. Now your production credentials are in your scrollback and in some model provider's logs.
-- **There's no record**. When it goes sideways, the entire forensic story is "scroll up and hope you can reconstruct what happened."
+- **Secrets can end up in the chat**. If the agent prints a kubeconfig with a live token, anyone with access to that transcript may be able to use it.
+- **SSH records the login**. To find out which commands ran, I also need command or session logging.
 - **An SSH key can be reused**. One SSH key gives the agent lateral movement into every other VM that key opens.
 
 And you can't fence it at the shell level either - no amount of patterns, allowlists, or even supervising agents will stop a free-form text model from finding a phrasing that works. The shell access itself is the problem, not the agent holding it.
@@ -78,18 +76,16 @@ The agent gets a catalog of declared actions - a fixed allowlist, each entry a s
 
 It's built as an MCP server and a CLI tool, so any AI agent (Claude, ChatGPT, Cursor, and pretty much any other) can drive it directly, or you can call it from a script. The runner that does the work sits on your host and dials out over TLS, so there's no new port to open.
 
-Every action carries a risk tier. When the agent wants to read something - tail a log, list allocations - it just runs, so investigation stays fast and autonomous. When it reaches for something destructive - stop a job, restart a database - the action freezes and waits for approval: I see who asked, the exact arguments, the target host, and the policy rule that tripped the gate, and nothing executes until I say yes.
+I let the agent check whether a service is up. If its logs contain customer data, I can require approval before it reads them. When it asks for a restart, I see exactly which host and service it picked.
 
 Policy is default-deny, so anything not explicitly allowed is simply refused. And every call - allowed, approved, or denied - lands in a hash-chained journal on the host and a searchable audit in the cloud, with known secret patterns scrubbed from the output before it leaves the box.
 
 ## How does it feel?
 
-Yes, I'm biased, but I have to say it - using this thing feels like magic. You ask an agent to build packs of actions covering your entire infrastructure, review them once (they're just YAML), deploy them, and from then on you can run it in YOLO mode all day long without the downsides we just discussed.
+I let the agent draft the packs. They're YAML, so I can read the commands before I give it access. If an incident needs a command I left out, I have to open a terminal myself. I’ll take that trade if it means I can step away.
 
-A careful reader might ask: "what if the agent needs something that isn't in the catalog?" And it's a fair question. The catalog is only as good as what you thought to put in it. The agent can draft the packs, but deciding what belongs in them is on you - and when something lands outside of what's declared, policy is default-deny, so the agent stops and you have to go open a terminal yourself. That's the trade, and one I'd take again: spending a little more time up front to buy the ability to walk away.
+A storage driver once erased 33 hours of my metrics during a node drain. VictoriaMetrics was running, so its health check looked fine. The volume had a fresh filesystem and one directory, `lost+found`. The agent used the driver logs to work out why the volume had been formatted. When it needed to stop the affected allocation, it asked me. I wrote up the [investigation and the change I approved](https://emisar.dev/use-cases/csi-data-loss).
 
-For example, a few months ago a storage driver bug wiped a chunk of my telemetry - a CSI driver raced the kernel and ran `mkfs` over a live volume during a node drain. The agent worked the incident through declared actions across half a dozen packs, traced it to a multipath path-group race, and when it wanted to stop the affected allocation - a high-risk action - it stopped and asked me first. Then it shipped proper Terraform changes to prevent this from happening again. The whole thing took a few hours, and it only took that long because I was slow to respond.
+Emisar couldn't have prevented the driver bug. It did let me send the agent to investigate without also giving it permission to stop a live workload.
 
-And yes, emisar wouldn't have prevented that wipe - that was a driver fighting the kernel - and no amount of gating will fix the model's judgment either. What it changes is everything around the incident.
-
-Just try it. It's at [emisar.dev](https://emisar.dev) - source-available, and free for a few runners, which is plenty for a home lab or a staging setup. It's early, so go break it, and tell me what broke.
+You can [try the same approval on a disposable nginx container](https://emisar.dev/docs/investigate-a-service). Ask the agent to read a log entry, then request a restart. While the request waits for you, check the container’s start time. Check it again after you approve.
